@@ -1,0 +1,226 @@
+# This is a Taskfile, run it via task [target] - exactly as you would expect it with make
+# https://github.com/go-task/task
+
+# TODO:
+# - hid is not compiled as an module on raspberry pi 3, this is the default - we should offer an udev-rule therefore too
+
+
+# BUILD FOR LOCAL MACHINE
+
+default:
+  cmds:
+    - task: local
+
+local:
+  desc: builds the modules for the local system
+  cmds:
+    - task local_main
+  env:
+    K_VER_LONG:
+      sh: uname -r
+    K_VER:
+      sh: uname -r | sed -e 's?-.*??'
+    
+local_main:
+  cmds:
+    - task: download
+      vars: {DL_DIR: "dl", LINK: "https://www.kernel.org/pub/linux/kernel/v4.x/linux-{{.K_VER}}.tar.gz"}
+    - task: unpack
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", FILE: "dl/linux-{{.K_VER}}.tar.gz", DEST_DIR: "build"}
+    - task: copy_driver
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: patch_src
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", PATCHES_DIR: "src/patches"}
+    - task: configure_src_from_local
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: make_modulesymvers
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: build_hid
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: build_xpad
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: build_bluetooth
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+    - task: backup_modules
+      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
+    
+
+# BUILD FOR RASPBERRY PI 3
+
+raspi3:
+  desc: builds the modules for an raspberry pi 3
+  cmds:
+    - task raspi3_main
+  env:
+    ARCH: 'arm'
+    CROSS_COMPILE: 'arm-linux-gnueabihf-'
+    KERNEL: 'kernel7'
+    ROOT_DIR: "build/linux-raspberrypi-kernel_1.20171029-1"
+    PATCHES_DIR: "src/patches/raspi3"
+    BCK_DIR: "out/arm"
+    DL_DIR: "dl"
+    CONF_ARCH: "arm"
+    CONF_PATH: "src/"
+    CONF_NAME: "bcm2709_defconfig"
+    DEFCONFIG: "bcm2709_defconfig"
+    LINK: "https://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20171029-1.tar.gz"
+    
+raspi3_main:
+  cmds:
+    - task: download
+    - task: unpack
+      vars: {FILE: "dl/raspberrypi-kernel_1.20171029-1.tar.gz", DEST_DIR: "build"}
+    - task: copy_driver
+    - task: patch_src
+    - task: copy_defconfig
+    - task: make_defconfig
+    - task: make_modulesymvers
+    - task: build_xpad
+    - task: build_bluetooth
+    - task: backup_modules_raspi
+    
+
+clean:
+  desc: remove everything within the 'build'-directory
+  cmds:
+    - rm --force --recursive build/*
+
+    
+# SHARED SUBROUTINES
+
+unpack:
+  cmds:
+    - tar --totals --extract --ungzip --file={{.FILE}} --directory={{.DEST_DIR}}/
+  status:
+    # todo: dirty test...
+    - test -d {{.ROOT_DIR}}
+    
+download:
+  cmds:
+    - wget --quiet --timestamping --show-progress --continue {{.LINK}} --directory-prefix={{.DL_DIR}}/
+  status:
+    - test -f {{.DL_DIR}}/{{base .LINK}}
+
+bckdir_exists:
+  cmds:
+    - mkdir --parents {{.BCK_DIR}}
+  status:
+    - test -d {{.BCK_DIR}}
+
+backup_modules:
+  deps:
+    - task: bckdir_exists
+      vars: {BCK_DIR: "{{.BCK_DIR}}"}
+  cmds:
+    - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
+    - cp --force {{.ROOT_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
+    - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
+    - cp --force src/99-xpadneo.rules {{.BCK_DIR}}/
+    
+backup_modules_raspi:
+  cmds:
+    - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
+    - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
+    - cp --force src/99-xpadneo-raspi.rules {{.BCK_DIR}}/
+    
+make_modulesymvers:
+  cmds:
+    - make --directory={{.ROOT_DIR}} -j6 scripts
+    - make --directory={{.ROOT_DIR}} -j6 modules
+  status:
+    - test -f {{.ROOT_DIR}}/Module.symvers
+
+patch_src:
+  cmds:
+    - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch
+  status:
+    - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch -R --check
+
+copy_config_from_local:
+  cmds:
+    - |
+      if [ -f /proc/config.gz ] ; then
+        gzip --decompress < /proc/config.gz > {{.ROOT_DIR}}/.config
+      elif [ -f /boot/config-{{.K_VER}}/.config] ; then
+        cp /boot/config-{{.K_VER}}/.config {{.ROOT_DIR}}/
+      elif [ -f /usr/lib/modules/{{.K_VER_LONG}}/build/.config ] ; then
+        cp /usr/lib/modules/{{.K_VER_LONG}}/build/.config {{.ROOT_DIR}}/
+      fi;
+  
+configure_src_from_local:
+  cmds:
+    - task: copy_config_from_local
+      vars: {ROOT_DIR: "{{.ROOT_DIR}}"}
+    - task: patch_config
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setXpadNeo"}
+    - task: patch_config
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setDebug"}
+    - make --directory={{.ROOT_DIR}} -j6 oldconfig
+    - make --directory={{.ROOT_DIR}} -j6 prepare
+  vars:
+    K_VER_LONG:
+      sh: uname -r
+  status:
+    - test -f {{.ROOT_DIR}}/.config
+
+copy_defconfig:
+  cmds:
+    - cp {{.CONF_PATH}}/{{.CONF_NAME}} {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/
+  status:
+    - test -f {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/{{.CONF_NAME}}
+
+make_defconfig:
+  cmds:
+    - make --directory={{.ROOT_DIR}} {{.DEFCONFIG}}
+    - task: patch_config
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setXpadNeo"}
+    - task: patch_config
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setDebug"}
+    - make --directory={{.ROOT_DIR}} -j6 oldconfig
+    - make --directory={{.ROOT_DIR}} -j6 prepare
+  status:
+    - test -f {{.ROOT_DIR}}/.config
+    
+patch_config:
+  cmds:
+    - ./{{.SCRIPTS_DIR}}/kconfig/merge_config.sh -O {{.OUT_DIR}} -m {{.BASE_FILE}} {{.PATCH_FILE}}
+    
+build_xpad:
+  sources:
+    - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
+  generates:
+    - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko
+  cmds:
+    - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
+
+build_bluetooth:
+  sources:
+    - ./{{.ROOT_DIR}}/net/bluetooth/l2cap_core.c
+  generates:
+    - ./{{.ROOT_DIR}}/net/bluetooth/bluetooth.ko
+  cmds:
+    - make --directory={{.ROOT_DIR}} -j6 M=net/bluetooth
+    
+build_hid:
+  sources:
+    - ./{{.ROOT_DIR}}/drivers/hid/hid-core.c
+  generates:
+    - ./{{.ROOT_DIR}}/drivers/hid/hid.ko
+  cmds:
+    - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
+    
+copy_driver:
+  sources:
+    - src/hid-xpadneo.c
+  generates:
+    - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
+  cmds:
+    - cp src/hid-xpadneo.c {{.ROOT_DIR}}/drivers/hid/
+
+zip:
+  sources:
+    - ./{{.ROOT_DIR}}/{{.REL_FILE_PATH}}
+  generates:
+    - ./{{.ROOT_DIR}}/{{.REL_FILE_PATH}}.xz
+  cmds:
+    - xz --keep {{.ROOT_DIR}}/{{.REL_FILE_PATH}}

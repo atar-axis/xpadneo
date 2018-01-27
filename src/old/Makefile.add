@@ -1,0 +1,1 @@
+obj-$(CONFIG_HID_XPADNEO)	+= hid-xpadneo.o
