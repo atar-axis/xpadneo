@@ -1,3 +1,8 @@
+*This is a BETA version! It works, but there is still A LOT to do.*
+
+---
+
+
 # Linux Driver for Xbox One S Wireless Gamepad
 
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
