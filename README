@@ -1,9 +1,0 @@
-please install go-task (simply copy ./task to your /usr/bin directory)
-
-# build driver(s) for your local system
-task
-alternatively: task default
-alternatively: task local
-
-# build driver(s) for raspberry pi 3 (linux-raspberrypi-kernel_1.20171029-1)
-task raspi3
