@@ -31,8 +31,8 @@ To install the driver, copy the hid-xpadneo module to extramodules and replace t
 ### Remove the original versions
 
   ```
-  mv $(modinfo -n bluetooth) $(modinfo -n bluetooth)_bck
-  mv $(modinfo -n hid) $(modinfo -n hid)_bck
+  sudo mv $(modinfo -n bluetooth) $(modinfo -n bluetooth)_bck
+  sudo mv $(modinfo -n hid) $(modinfo -n hid)_bck
   ```
 
 ### Install the new ones
@@ -51,4 +51,4 @@ Register the new drivers by running `sudo depmod` afterwards.
 
 - If bluetooth isn't a module, you can alternatively run `sudo /bin/bash -c "echo 1 > /sys/module/bluetooth/parameters/disable_ertm"` before connecting the controller to the computer.
 
-- If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/`
+- If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
