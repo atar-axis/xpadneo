@@ -20,9 +20,8 @@ To do so we offer a Taskfile (you will need go-task https://github.com/go-task/t
 - build driver(s) for your local system
   ```
   task
-  alternatively: task default
-  alternatively: task local
   ```
+  Alternatively, you can also run either `task default` or `task local`
 
 - build driver(s) for raspberry pi 3 (linux-raspberrypi-kernel_1.20171029-1)
   ```
