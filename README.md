@@ -7,15 +7,14 @@
 
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
 
-At the moment of development there was no driver available (and there still is none at January 2018) which supports force feedback (Rumble) one the wireless version (over Bluetooth). If this driver is in a more presentable condition I will try to submit it to the linux kernel.
+At the moment of development there was no driver available which supports force feedback (Rumble) - at least not for the wireless version (Bluetooth). There still is none at January 2018), but until this driver is in a bit more presentable condition I won't submit it to the linux kernel.
 
-The buildsystem also fixes a bug I found in L2CAP (which forced us to disable ertm before) and adds the new driver to the hid-core (this automatically loads the new driver when the controller is attached).
-Alternatively, it offers a way to load the driver via UDev whenever you are not able to recompile hid-core (e.g. if it is not a module - on Raspbian).
+The buildsystem consists not only of the driver itself, it also fixes a bug I found in L2CAP (which initially forced us to disable ertm completely), futhermore it adds the new driver to the hid-core (this way it automatically loads the new driver whenever the controller is registered). As an alternative, it offers a Udev-rule to load the driver, this is a workaround which is useful whenever you are not able to recompile hid-core (e.g. if it is not a module - e.g. on Raspbian - and you don't want to recompile the whole kernel).
 
 ## Build
 
-You have to build yourself if there is not suitable version available in out/.
-To do so we offer a Taskfile (you will need go-task https://github.com/go-task/task).
+You have to build the driver yourself if there is no suitable version available in out/.
+To make life a bit easier, we offer you a Taskfile at the moment (you will need go-task https://github.com/go-task/task to execute that).
 
 - build driver(s) for your local system
   ```
@@ -30,7 +29,7 @@ To do so we offer a Taskfile (you will need go-task https://github.com/go-task/t
 
 ## Installation
 
-To install the driver, copy the hid-xpadneo module to extramodules and replace the other two modules in you system:
+To install the driver after building, simply copy the hid-xpadneo module to extramodules and replace the other two modules in your system:
 
 ### Remove the original versions
 
