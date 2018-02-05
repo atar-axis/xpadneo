@@ -1,0 +1,4 @@
+# Ignore downloaded and built files
+build/**
+dl/**
+
