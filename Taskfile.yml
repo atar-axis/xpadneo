@@ -20,29 +20,31 @@ local:
       sh: uname -r
     K_VER:
       sh: uname -r | sed -e 's?-.*??'
+    K_VER_DL:
+      sh: uname -r | sed -e 's?\.0-.*\|-.*??'
     
 local_main:
   cmds:
     - task: download
-      vars: {DL_DIR: "dl", LINK: "https://www.kernel.org/pub/linux/kernel/v4.x/linux-{{.K_VER}}.tar.gz"}
+      vars: {DL_DIR: "dl", LINK: "https://www.kernel.org/pub/linux/kernel/v4.x/linux-{{.K_VER_DL}}.tar.gz"}
     - task: unpack
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", FILE: "dl/linux-{{.K_VER}}.tar.gz", DEST_DIR: "build"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", FILE: "dl/linux-{{.K_VER_DL}}.tar.gz", DEST_DIR: "build"}
     - task: copy_driver
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: patch_src
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", PATCHES_DIR: "src/patches"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", PATCHES_DIR: "src/patches"}
     - task: configure_src_from_local
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: make_modulesymvers
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: build_hid
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: build_xpad
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: build_bluetooth
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: backup_modules
-      vars: {ROOT_DIR: "build/linux-{{.K_VER}}", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
     
 
 # BUILD FOR RASPBERRY PI 3
