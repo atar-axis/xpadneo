@@ -141,7 +141,7 @@ copy_config_from_local:
     - |
       if [ -f /proc/config.gz ] ; then
         gzip --decompress < /proc/config.gz > {{.ROOT_DIR}}/.config
-      elif [ -f /boot/config-{{.K_VER}}/.config] ; then
+      elif [ -f /boot/config-{{.K_VER}}/.config ] ; then
         cp /boot/config-{{.K_VER}}/.config {{.ROOT_DIR}}/
       elif [ -f /boot/config-{{.K_VER_LONG}} ] ; then
         cp /boot/config-{{.K_VER_LONG}} {{.ROOT_DIR}}/.config
