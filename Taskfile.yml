@@ -22,6 +22,8 @@ local:
       sh: uname -r | sed -e 's?-.*??'
     K_VER_DL:
       sh: uname -r | sed -e 's?\.0-.*\|-.*??'
+    EXTRAVERSION:
+      sh: uname -r | sed  's/[^-]*\(.*\)/\1/'
     
 local_main:
   cmds:
@@ -45,7 +47,7 @@ local_main:
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: backup_modules
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
-    
+        
 
 # BUILD FOR RASPBERRY PI 3
 
