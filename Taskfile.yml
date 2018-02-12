@@ -22,7 +22,7 @@ local:
       sh: uname -r | sed -e 's?-.*??'
     K_VER_DL:
       sh: uname -r | sed -e 's?\.0-.*\|-.*??'
-    EXTRAVERSION:
+    LOCALVERSION:
       sh: uname -r | sed  's/[^-]*\(.*\)/\1/'
     
 local_main:
@@ -129,7 +129,7 @@ backup_modules_raspi:
     
 make_modulesymvers:
   cmds:
-    - make --directory={{.ROOT_DIR}} -j6 scripts
+    - make LOCALVERSION={{.LOCALVERSION}} --directory={{.ROOT_DIR}} -j6 scripts
     - make --directory={{.ROOT_DIR}} -j6 modules
   status:
     - test -f {{.ROOT_DIR}}/Module.symvers
@@ -157,6 +157,8 @@ configure_src_from_local:
   cmds:
     - task: copy_config_from_local
       vars: {ROOT_DIR: "{{.ROOT_DIR}}"}
+    - task: patch_config
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_emptyLocalversion"}
     - task: patch_config
       vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setXpadNeo"}
     - task: patch_config
