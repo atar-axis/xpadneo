@@ -1,4 +1,4 @@
-*This is a BETA version! It works, but there is still A LOT to do.*
+*This is a ALPHA version! It works, but there is still A LOT to do.*
 
 ---
 
