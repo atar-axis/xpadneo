@@ -874,7 +874,7 @@ module_exit(xpadneo_exitModule);
 
 
 
-
+#if 0
 
 //////////////////////
 /// REWORK SECTION ///
@@ -1021,3 +1021,5 @@ u8 map_hid_to_input_2 (struct hid_usage *usage, struct input_ev *map_to) {
 
 	return MAP_IGNORE;
 };
+
+#endif
