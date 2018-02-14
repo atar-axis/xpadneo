@@ -19,11 +19,11 @@ local:
     K_VER_LONG:
       sh: uname -r
     K_VER:
-      sh: uname -r | sed -e 's?-.*??'
+      sh: uname -r | sed -E 's/([^-]*)(.*)/\1/'
     K_VER_DL:
-      sh: uname -r | sed -e 's?\.0-.*\|-.*??'
+      sh: uname -r | sed -E 's/([^-]*)(.*)/\1/' | sed -E 's/(.*)(\.0)/\1/'
     LOCALVERSION:
-      sh: uname -r | sed  's/[^-]*\(.*\)/\1/'
+      sh: uname -r | sed -E 's/([^-]*)(.*)/\2/'
     
 local_main:
   cmds:
@@ -90,26 +90,43 @@ clean:
     - rm --force --recursive build/*
 
     
+    
 # SHARED SUBROUTINES
 
+folder_exists:
+  cmds:
+    - mkdir {{.FOLDER}}
+  status:
+    - test -d {{.FOLDER}}
+
+
 unpack:
+  deps:
+    - task: folder_exists
+      vars: {FOLDER: "build"}
   cmds:
     - tar --totals --extract --ungzip --file={{.FILE}} --directory={{.DEST_DIR}}/
   status:
     # todo: dirty test...
     - test -d {{.ROOT_DIR}}
-    
+
+
 download:
+  deps:
+    - task: folder_exists
+      vars: {FOLDER: "dl"}
   cmds:
     - wget --quiet --timestamping --show-progress --continue {{.LINK}} --directory-prefix={{.DL_DIR}}/
   status:
     - test -f {{.DL_DIR}}/{{base .LINK}}
+
 
 bckdir_exists:
   cmds:
     - mkdir --parents {{.BCK_DIR}}
   status:
     - test -d {{.BCK_DIR}}
+
 
 backup_modules:
   deps:
@@ -120,13 +137,15 @@ backup_modules:
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
     - cp --force src/99-xpadneo.rules {{.BCK_DIR}}/
-    
+
+
 backup_modules_raspi:
   cmds:
     - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
     - cp --force src/99-xpadneo-raspi.rules {{.BCK_DIR}}/
-    
+
+
 make_modulesymvers:
   cmds:
     - make LOCALVERSION={{.LOCALVERSION}} --directory={{.ROOT_DIR}} -j6 scripts
@@ -134,11 +153,13 @@ make_modulesymvers:
   status:
     - test -f {{.ROOT_DIR}}/Module.symvers
 
+
 patch_src:
   cmds:
     - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch
   status:
     - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch -R --check
+
 
 copy_config_from_local:
   cmds:
@@ -152,7 +173,8 @@ copy_config_from_local:
       elif [ -f /usr/lib/modules/{{.K_VER_LONG}}/build/.config ] ; then
         cp /usr/lib/modules/{{.K_VER_LONG}}/build/.config {{.ROOT_DIR}}/
       fi;
-  
+
+
 configure_src_from_local:
   cmds:
     - task: copy_config_from_local
@@ -171,11 +193,13 @@ configure_src_from_local:
   status:
     - test -f {{.ROOT_DIR}}/.config
 
+
 copy_defconfig:
   cmds:
     - cp {{.CONF_PATH}}/{{.CONF_NAME}} {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/
   status:
     - test -f {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/{{.CONF_NAME}}
+
 
 make_defconfig:
   cmds:
@@ -188,7 +212,8 @@ make_defconfig:
     - make --directory={{.ROOT_DIR}} -j6 prepare
   status:
     - test -f {{.ROOT_DIR}}/.config
-    
+
+
 patch_config:
   cmds:
     - ./{{.SCRIPTS_DIR}}/kconfig/merge_config.sh -O {{.OUT_DIR}} -m {{.BASE_FILE}} {{.PATCH_FILE}}
@@ -201,6 +226,7 @@ build_xpad:
   cmds:
     - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
 
+
 build_bluetooth:
   sources:
     - ./{{.ROOT_DIR}}/net/bluetooth/l2cap_core.c
@@ -208,7 +234,8 @@ build_bluetooth:
     - ./{{.ROOT_DIR}}/net/bluetooth/bluetooth.ko
   cmds:
     - make --directory={{.ROOT_DIR}} -j6 M=net/bluetooth
-    
+
+
 build_hid:
   sources:
     - ./{{.ROOT_DIR}}/drivers/hid/hid-core.c
@@ -216,7 +243,8 @@ build_hid:
     - ./{{.ROOT_DIR}}/drivers/hid/hid.ko
   cmds:
     - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
-    
+
+
 copy_driver:
   sources:
     - src/hid-xpadneo.c
@@ -224,6 +252,7 @@ copy_driver:
     - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
   cmds:
     - cp src/hid-xpadneo.c {{.ROOT_DIR}}/drivers/hid/
+
 
 zip:
   sources:
