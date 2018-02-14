@@ -136,14 +136,14 @@ backup_modules:
     - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
-    - cp --force src/99-xpadneo.rules {{.BCK_DIR}}/
+    - cp --force src/udev_rules/99-xpadneo.rules {{.BCK_DIR}}/
 
 
 backup_modules_raspi:
   cmds:
     - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
-    - cp --force src/99-xpadneo-raspi.rules {{.BCK_DIR}}/
+    - cp --force src/udev_rules/99-xpadneo-raspi.rules {{.BCK_DIR}}/
 
 
 make_modulesymvers:
@@ -180,11 +180,11 @@ configure_src_from_local:
     - task: copy_config_from_local
       vars: {ROOT_DIR: "{{.ROOT_DIR}}"}
     - task: patch_config
-      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_emptyLocalversion"}
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_emptyLocalversion"}
     - task: patch_config
-      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setXpadNeo"}
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
     - task: patch_config
-      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setDebug"}
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
     - make --directory={{.ROOT_DIR}} -j6 oldconfig
     - make --directory={{.ROOT_DIR}} -j6 prepare
   vars:
@@ -205,9 +205,9 @@ make_defconfig:
   cmds:
     - make --directory={{.ROOT_DIR}} {{.DEFCONFIG}}
     - task: patch_config
-      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setXpadNeo"}
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
     - task: patch_config
-      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_setDebug"}
+      vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
     - make --directory={{.ROOT_DIR}} -j6 oldconfig
     - make --directory={{.ROOT_DIR}} -j6 prepare
   status:
