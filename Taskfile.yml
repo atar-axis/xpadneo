@@ -22,7 +22,7 @@ local:
       sh: uname -r | sed -E 's/([^-]*)(.*)/\1/'
     K_VER_DL:
       sh: uname -r | sed -E 's/([^-]*)(.*)/\1/' | sed -E 's/(.*)(\.0)/\1/'
-    LOCALVERSION:
+    K_VER_LOCAL_EXTRA:
       sh: uname -r | sed -E 's/([^-]*)(.*)/\2/'
     
 local_main:
@@ -148,7 +148,7 @@ backup_modules_raspi:
 
 make_modulesymvers:
   cmds:
-    - make LOCALVERSION={{.LOCALVERSION}} --directory={{.ROOT_DIR}} -j6 scripts
+    - make LOCALVERSION={{.K_VER_LOCAL_EXTRA}} --directory={{.ROOT_DIR}} -j6 scripts
     - make --directory={{.ROOT_DIR}} -j6 modules
   status:
     - test -f {{.ROOT_DIR}}/Module.symvers
