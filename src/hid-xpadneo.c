@@ -1,4 +1,4 @@
-/*  
+/*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *
  * This driver was developed for a student project at fortiss GmbH in Munich.
@@ -69,15 +69,15 @@ MODULE_PARM_DESC(dpad_as_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 
 /*
  * FF Output Report
- * 
+ *
  * This is the structure for the rumble output report.
  * For more information about the structure please take
  * a look in the hid-report description.
- * 
+ *
  * Please notice that the structs are __packed,
  * therefore there is no "padding" between the elements
  * (they behave more like an array).
- * 
+ *
  * TODO:
  * use a variable which is aware of the endianess!
  * (something like __le16 and __le16_to_cpu(...))
@@ -109,7 +109,7 @@ static const struct ff_data ff_clear;
 
 /*
  * Device Data
- * 
+ *
  * This Structure will be nearly globally accessbile via hid_get_drvdata(hdev).
  * We use it therefore to store information about the device centralized.
  * It is attached to the hid_device via hid_set_drvdata(hdev) in the
@@ -124,7 +124,7 @@ struct xpadneo_devdata {
 
 /*
  * FORCE FEEDBACK CALLBACK
- * 
+ *
  * This function is called by the Input Subsystem.
  * The effect data is set in userspace and sent to the driver via ioctl.
  */
@@ -163,7 +163,7 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 	 * All WE need to do is to play the effect at least 32767 ms long.
 	 * Take a look here:
 	 * https://stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
-	 * 
+	 *
 	 * We therefore simply play the effect as long as possible
 	 * which is (2,55s * 255 = 650,25s = 10min)
 	 */
@@ -177,7 +177,7 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 
 /*
  * Device (Controller) Initialization
- * 
+ *
  * This function is called "by hand" inside the probe-function.
  */
 
@@ -250,12 +250,12 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 
 /*
  * General Input Mapping Structure Definition
- * 
+ *
  * NOTE:
  * this is still not the most efficient way since
  * 1) a lot of elements store "0" (e.g. if the first entry is 0x30 like in generic_desktop)
  * 2) we have to store max "by hand", which is error-prone
- * 
+ *
  * possible solution (problem 1):
  * can we use macros to "translate" each index depending on the time we declared it?
  * like FORWARD(GENDESK, 0x31) gives 0,
@@ -302,10 +302,10 @@ static const struct device_input_mapping xboxone_s_map = {
 		.max = 0x0f,
 		.input_ev = (struct map_entry[]) {
 			/* [HID_USAGE] = {MAPPING_TYPE, MAP_TO_EVENT_TYPE, MAP_TO_INPUT_CODE} */
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_SOUTH},
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_EAST},
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_WEST},
-			[0x05] = {MAP_STATIC, EV_KEY, BTN_NORTH},
+			[0x01] = {MAP_STATIC, EV_KEY, BTN_A,
+			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},
+			[0x04] = {MAP_STATIC, EV_KEY, BTN_X},
+			[0x05] = {MAP_STATIC, EV_KEY, BTN_Y},
 			[0x07] = {MAP_STATIC, EV_KEY, BTN_TL},
 			[0x08] = {MAP_STATIC, EV_KEY, BTN_TR},
 			[0x0C] = {MAP_STATIC, EV_KEY, BTN_START},
@@ -351,14 +351,14 @@ static const struct device_input_mapping xboxone_s_map = {
 };
 
 static const struct device_input_mapping xboxone_x_map = {
-	
+
 	.button = {
 		.max = 0x0a,
 		.input_ev = (struct map_entry[]) {
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_SOUTH},     /* A */
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_EAST},      /* B */
-			[0x03] = {MAP_STATIC, EV_KEY, BTN_WEST},      /* X */
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_NORTH},     /* Y */
+			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},         /* A */
+			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},         /* B */
+			[0x03] = {MAP_STATIC, EV_KEY, BTN_X},         /* X */
+			[0x04] = {MAP_STATIC, EV_KEY, BTN_Y},         /* Y */
 			[0x05] = {MAP_STATIC, EV_KEY, BTN_TL},        /* L1 */
 			[0x06] = {MAP_STATIC, EV_KEY, BTN_TR},        /* L2 */
 			[0x07] = {MAP_STATIC, EV_KEY, BTN_SELECT},    /* View, Middle Left */
@@ -389,10 +389,10 @@ static const struct device_input_mapping xboxone_x2_map = {
 	.button = {
 		.max = 0x0a,
 		.input_ev = (struct map_entry[]) {
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_SOUTH},     /* A */
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_EAST},      /* B */
-			[0x03] = {MAP_STATIC, EV_KEY, BTN_WEST},      /* X */
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_NORTH},     /* Y */
+			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},         /* A */
+			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},         /* B */
+			[0x03] = {MAP_STATIC, EV_KEY, BTN_X},         /* X */
+			[0x04] = {MAP_STATIC, EV_KEY, BTN_Y},         /* Y */
 			[0x05] = {MAP_STATIC, EV_KEY, BTN_TL},        /* L1 */
 			[0x06] = {MAP_STATIC, EV_KEY, BTN_TR},        /* L2 */
 			[0x07] = {MAP_STATIC, EV_KEY, BTN_SELECT},    /* View, Middle Left */
@@ -433,10 +433,10 @@ static const struct device_input_mapping xboxone_x2_map = {
 
 /*
  * INPUT MAPPING HOOK
- * 
+ *
  * Invoked at input registering before mapping an usage
  * (called once for every hid-usage).
- * 
+ *
  * We use the above stuctures (xboxone_..._map) to
  * input_ev an input-event-code to every hid-usage.
  */
@@ -488,7 +488,7 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	case HID_UP_SIMULATION: mup = device_map->simulation;      break;
 	case HID_UP_CONSUMER:   mup = device_map->consumer;        break;
 	default:
-		return RET_MAP_IGNORE;	
+		return RET_MAP_IGNORE;
 	}
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "usage page: BUTTON, usage: 0x%02X\n", uid);
@@ -542,7 +542,7 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
 
 /*
  * REPORT FIXUP HOOK
- * 
+ *
  * This is only used for development purposes
  * (printing out the whole report descriptor)
  */
@@ -573,11 +573,11 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	/*
 	 * Add BTN_DPAD_* to the key-bitmap, since they where not originally
 	 * mentioned in the report-description.
-	 * 
+	 *
 	 * This is necessary to set them later in xpadneo_event
 	 * by input_report_key(). Otherwise, no event would be generated
 	 * (since it would look like the key doesn't even exist)
-	 * 
+	 *
 	 * TODO:
 	 * - Those buttons are still shown as (null) in jstest
 	 * - We should also send out ABS_HAT0X/Y events as mentioned on the
@@ -596,24 +596,24 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	/*
 	 * In addition to adding new keys to the key-bitmap, we may also
 	 * want to remove the old (original) axis from the absolues-bitmap.
-	 * 
+	 *
 	 * TODO:
 	 * Maybe we want both, our custom and the original mapping.
 	 * If we decide so, remember that 0x39 is a hat switch on the official
 	 * usage tables, but not at the input subsystem, so be sure to use the
 	 * right constant!
-	 * 
+	 *
 	 * Either let hid-core decide itself or input_ev it to ABS_HAT0X/Y by hand:
 	 * #define ABS_HAT0X		0x10
 	 * #define ABS_HAT0Y		0x11
-	 * 
+	 *
 	 * Q: I don't know why the usage number does not fit the official
 	 *    usage page numbers, however...
 	 * A: because there is an difference between hid->usage, which is
 	 *    the HID_USAGE_PAGE && HID_USAGE (!), and hid->code, which is
 	 *    the internal input-representation as defined in
 	 *    input-event-codes.h
-	 * 
+	 *
 	 * take a look at the following website for the original mapping:
 	 * https://elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
 	 */
@@ -628,11 +628,11 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
  * This hook is called whenever an input event occurs that
  * is listed on xpadneo_driver.usage_table (which is NULL in our case,
  * therefore it is invoked on every input event).
- * 
+ *
  * We use this hook to attach some more events to our D-pad,
  * as the result our D-pad is reported to Input as both,
  * four buttons AND a hat-switch.
- * 
+ *
  * Before we can send additional input events, we have to enable
  * the corresponding keys in xpadneo_input_configured.
  */
@@ -657,7 +657,7 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 		/* NOTE:
 		 * You can also press UP and RIGHT, RIGHT and DOWN, ... together!
 		 * The value then is between:
-		 * 
+		 *
 		 * value        U R D L
 		 * --------------------
 		 * 0000   0     0 0 0 0
@@ -669,7 +669,7 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 		 * 0110   6     0 0 1 1
 		 * 0111   7     0 0 0 1
 		 * 1000   8     1 0 0 1
-		 * 
+		 *
 		 * U = ((value >= 1) && (value <= 2)) || (value == 8)
 		 * R = (value >= 2) && (value <= 4)
 		 * D = (value >= 4) && (value <= 6)
@@ -784,7 +784,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 /*
  * Device ID Structure
- * 
+ *
  * Define all supported devices here
  */
 
@@ -795,7 +795,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 	 * update: it changed back again - what the heck?!
 	 * update2: 0x02fd seems to be the newer firmware, 0x02e0 is the old one
 	 *          unfortunately you cannot tell from product id which mapping is used
-	 *          since it looks like the newer firmware supports both mappings 
+	 *          since it looks like the newer firmware supports both mappings
 	 */
 
 	/* XBOX ONE S */
@@ -846,7 +846,7 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 
 /*
  * MODULE INIT AND EXIT
- * 
+ *
  * NOTE:
  * we may replace init and remove by module_hid_driver(xpadneo_driver)
  * in future versions, as long as there is nothing special in these two functions but
@@ -896,10 +896,10 @@ u8 map_hid_to_input_0 (struct hid_usage *usage, struct input_ev *map_to) {
 	switch (hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_SOUTH};   return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_EAST};    return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_WEST};    return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_NORTH};   return MAP_STATIC;
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
+		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
 		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
 		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
 		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
@@ -947,10 +947,10 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 	switch(hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_SOUTH};   return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_EAST};    return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_WEST};    return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_NORTH};   return MAP_STATIC;
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
+		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
 		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
 		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
 		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
@@ -988,10 +988,10 @@ u8 map_hid_to_input_2 (struct hid_usage *usage, struct input_ev *map_to) {
 	switch (hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_SOUTH};  return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_EAST};   return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_WEST};   return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_NORTH};  return MAP_STATIC;
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
+		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
 		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
 		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
 		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
