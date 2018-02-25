@@ -892,8 +892,8 @@ u8 map_hid_to_input_rs261 (struct hid_usage *usage, struct input_ev *map_to) {
 
 	// Mapping for Windows behaviour
 
-	// this is maybe the report descriptor (length 261 bytes):
-	// extracted by USBlyzer in Windows!
+	// this is the report descriptor (length 261 bytes) as
+	// extracted by USBlyzer in Windows:
 
 	// 05 01 09 05 A1 01 A1 00 09 30 09 31 15 00 27 FF FF 00 00 95 02 75 10 81
 	// 02 C0 A1 00 09 33 09 34 15 00 27 FF FF 00 00 95 02 75 10 81 02 C0 05 01
@@ -907,28 +907,37 @@ u8 map_hid_to_input_rs261 (struct hid_usage *usage, struct input_ev *map_to) {
 	// 05 01 09 80 A1 00 09 85 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07
 	// 95 01 81 03 C0 05 06 09 20 15 00 26 FF 00 75 08 95 01 81 02 C0
 
+	// The problem is, that this descriptor is corrupted!
+	// How is it recognized in linux (if it is the same)
+
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
 
 	switch (hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
-		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
-		case 0x0E: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL};  return MAP_STATIC;
-		case 0x0F: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR};  return MAP_STATIC;
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
+		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
+		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
+		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
+		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
+		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
+		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
+		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
 		}
-	case HID_UP_CONSUMER:
+	case HID_UP_GENDESK:
 		switch (hid_usage) {
-		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};   return MAP_STATIC;
-		case 0x224: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
+		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
+		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
+		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_Z};    return MAP_STATIC;
+		case 0x33: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
+		case 0x34: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
+		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RZ};   return MAP_STATIC;
+		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
+		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
 		}
-	}
 
 	return MAP_IGNORE;
 }
@@ -1022,7 +1031,7 @@ u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
 		}
 	case HID_UP_GENDESK:
-        switch (hid_usage) {
+		switch (hid_usage) {
 		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
 		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
 		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
