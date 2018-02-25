@@ -874,21 +874,38 @@ module_exit(xpadneo_exitModule);
 
 
 
-#if 0
 
 //////////////////////
 /// REWORK SECTION ///
 //////////////////////
-
 // we waste A LOT OF memory the way it is done at the moment just for speed reasons,
-// but mapping is done only once at the beginning, therefore speed is not such a big deal.
+// but mapping is done only once at the beginning, therefore speed is not such a big deal
+// but memory is - therefore we will replace the old way of mapping by the
+// following as soon as we confirmed the windows mapping (and the report).
 
 struct input_ev {
 	u8 map_to_event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
 	u16 map_to_input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
 };
 
-u8 map_hid_to_input_0 (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_rs261 (struct hid_usage *usage, struct input_ev *map_to) {
+
+	// Mapping for Windows behaviour
+
+	// this is maybe the report descriptor (length 261 bytes):
+	// extracted by USBlyzer in Windows!
+
+	// 05 01 09 05 A1 01 A1 00 09 30 09 31 15 00 27 FF FF 00 00 95 02 75 10 81
+	// 02 C0 A1 00 09 33 09 34 15 00 27 FF FF 00 00 95 02 75 10 81 02 C0 05 01
+	// 09 32 15 00 26 FF 03 95 01 75 0A 81 02 15 00 25 00 75 06 95 01 81 03 05
+	// 01 09 35 15 00 26 FF 03 95 01 75 0A 81 02 15 00 25 00 75 06 95 01 81 03
+	// 05 09 19 01 29 0A 95 0A 75 01 81 02 15 00 25 00 75 06 95 01 81 03 05 01
+	// 09 39 15 01 25 08 35 00 46 3B 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+	// 15 00 25 00 35 00 45 00 65 00 81 03 A1 02 05 09 97 15 00 25 01 75 04 95
+	// 01 91 02 15 00 25 00 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66
+	// 01 10 55 0E 26 FF 00 95 01 91 02 09 A7 91 02 65 00 55 00 09 7C 91 02 C0
+	// 05 01 09 80 A1 00 09 85 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07
+	// 95 01 81 03 C0 05 06 09 20 15 00 26 FF 00 75 08 95 01 81 02 C0
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
@@ -917,6 +934,8 @@ u8 map_hid_to_input_0 (struct hid_usage *usage, struct input_ev *map_to) {
 }
 
 u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
+
+	// Mapping for native Linux behaviour
 
 	// report-descriptor:
 	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
@@ -980,7 +999,10 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 };
 
-u8 map_hid_to_input_2 (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
+
+	// What kind of behaviour is this? We only saw it once yet.
+	// Is it maybe related to and old firmware or Android?
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
@@ -1021,5 +1043,3 @@ u8 map_hid_to_input_2 (struct hid_usage *usage, struct input_ev *map_to) {
 
 	return MAP_IGNORE;
 };
-
-#endif
