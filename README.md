@@ -32,7 +32,7 @@ The Taskfile downloads your current kernel, copies the driver into the extracted
 Until now the Taskfile is tested under the following Distributions
 * ARCH
 * Antergos
-* Ubunutu
+* Gentoo
 
 ## Installation
 
