@@ -302,7 +302,7 @@ static const struct device_input_mapping xboxone_s_map = {
 		.max = 0x0f,
 		.input_ev = (struct map_entry[]) {
 			/* [HID_USAGE] = {MAPPING_TYPE, MAP_TO_EVENT_TYPE, MAP_TO_INPUT_CODE} */
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_A,
+			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},
 			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},
 			[0x04] = {MAP_STATIC, EV_KEY, BTN_X},
 			[0x05] = {MAP_STATIC, EV_KEY, BTN_Y},
@@ -938,6 +938,7 @@ u8 map_hid_to_input_rs261 (struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
 		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
 		}
+	}
 
 	return MAP_IGNORE;
 }
@@ -1006,7 +1007,7 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 	}
 
 	return MAP_IGNORE;
-};
+}
 
 u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 
@@ -1051,4 +1052,4 @@ u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 	}
 
 	return MAP_IGNORE;
-};
+}

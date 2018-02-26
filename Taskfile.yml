@@ -37,7 +37,11 @@ local_main:
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", PATCHES_DIR: "src/patches"}
     - task: configure_src_from_local
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
-    - task: make_modulesymvers
+    - task: make_scripts
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+    - task: try_copy_modulesymvers_linux_headers
+      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+    - task: make_modulesymvers_if_not_there
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
     - task: build_hid
       vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
@@ -78,7 +82,7 @@ raspi3_main:
     - task: patch_src
     - task: copy_defconfig
     - task: make_defconfig
-    - task: make_modulesymvers
+    - task: make_modulesymvers_if_not_there
     - task: build_xpad
     - task: build_bluetooth
     - task: backup_modules_raspi
@@ -137,6 +141,7 @@ backup_modules:
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
     - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
     - cp --force src/udev_rules/99-xpadneo.rules {{.BCK_DIR}}/
+    - cp --force src/install.sh {{.BCK_DIR}}/
 
 
 backup_modules_raspi:
@@ -146,9 +151,17 @@ backup_modules_raspi:
     - cp --force src/udev_rules/99-xpadneo-raspi.rules {{.BCK_DIR}}/
 
 
-make_modulesymvers:
+    
+make_scripts:
   cmds:
     - make LOCALVERSION={{.K_VER_LOCAL_EXTRA}} --directory={{.ROOT_DIR}} -j6 scripts
+    
+try_copy_modulesymvers_linux_headers:
+  cmds:
+    - cp --force /lib/modules/{{.K_VER_LONG}}/build/Module.symvers {{.ROOT_DIR}}/
+    
+make_modulesymvers_if_not_there:
+  cmds:
     - make --directory={{.ROOT_DIR}} -j6 modules
   status:
     - test -f {{.ROOT_DIR}}/Module.symvers
