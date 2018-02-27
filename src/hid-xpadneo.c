@@ -888,7 +888,7 @@ struct input_ev {
 	u16 map_to_input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
 };
 
-u8 map_hid_to_input_rs261 (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
 
 	// Mapping for Windows behaviour
 
