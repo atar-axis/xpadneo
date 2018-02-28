@@ -954,7 +954,16 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
 	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
 	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-	// size: 335
+	// hdev:
+	// - dev_rdesc: (see above)
+	// - dev_rsize (original report size): 335
+	// - bus: 0x0005
+	// - report group: 0
+	// - vendor: 0x0000045E
+	// - version: 0x00000903
+	// - product: 0x000002FD
+	// - country: 33
+	// - driverdata: 0
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
@@ -1011,7 +1020,16 @@ u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
 	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
 	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-	// size: 335
+	// hdev:
+	// - dev_rdesc: (see above)
+	// - dev_rsize (original report size): 335
+	// - bus: 0x0005
+	// - report group: 1
+	// - vendor: 0x0000045E
+	// - version: 0x00000903
+	// - product: 0x000002FD
+	// - country: 33
+	// - driverdata: 0
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
