@@ -248,188 +248,170 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 }
 
 
-/*
- * General Input Mapping Structure Definition
- *
- * NOTE:
- * this is still not the most efficient way since
- * 1) a lot of elements store "0" (e.g. if the first entry is 0x30 like in generic_desktop)
- * 2) we have to store max "by hand", which is error-prone
- *
- * possible solution (problem 1):
- * can we use macros to "translate" each index depending on the time we declared it?
- * like FORWARD(GENDESK, 0x31) gives 0,
- *      FORWARD(GENDESK, 0x35) gives 1, ...
- * and backwards:
- *      BACKWARD_USAGE_PAGE(0) gives GENDESK
- *      BACKWARD_USAGE(0)      gives 0x31
- */
 
 #define MAP_IGNORE  0 /* MAP_IGNORE must be 0, because the static struct is zeroed by default */
 #define MAP_AUTO    1 /* do not really input_ev it, let hid-core decide */
 #define MAP_STATIC  2 /* input_ev to the values given */
 
-/* The position of an map_entry withing the map_usagepage.input_ev equals the hid usage id. */
-struct map_entry {
-	u8 map_type;			/* input_ev the hid usage statically (by hand), automatic (let hid-core decide) or ignore it (MAP_STATIC, MAP_AUTO, MAP_IGNORE) */
-	u8 map_to_event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
-	u16 map_to_input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
+struct input_ev {
+   u8 event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
+   u16 input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
 };
 
-/* There is one map_usagepage for every hid usage page, like generic-desktop, button, and so on */
-struct map_usagepage {
-	int max;							/* what's the maximum index in input_ev? */
-	const struct map_entry *input_ev;	/* an array of the above declared map_entry */
-};
+u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
 
-/* one mapping for every device, like Xbox One S and Xbox One X */
-struct device_input_mapping {
-	const struct map_usagepage generic_desktop;
-	const struct map_usagepage button;
-	const struct map_usagepage simulation;
-	const struct map_usagepage consumer;
-	const struct map_usagepage generic_device_control;
-};
+	// Mapping for Windows behaviour
 
+	// report-descriptor:
+	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+	// a1 00 09 33 09 34 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 01 09 32 15 00 26 ff 03 95 01 75
+	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 01 09 35 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0a 15 00 25 01 75 01 95 0a 81 02 15 00 25 00
+	// 75 06 95 01 81 03 05 01 09 80 85 02 a1 00 09 85 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07
+	// 95 01 81 03 c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95
+	// 01 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91
+	// 02 09 a7 15 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0
+	// 85 04 05 06 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
+	// size: 307
 
-/*
- * Instantiated Mapping Structures
- */
+	unsigned int hid_usage = usage->hid & HID_USAGE;
+	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
 
-static const struct device_input_mapping xboxone_s_map = {
-
-	.button = {
-		.max = 0x0f,
-		.input_ev = (struct map_entry[]) {
-			/* [HID_USAGE] = {MAPPING_TYPE, MAP_TO_EVENT_TYPE, MAP_TO_INPUT_CODE} */
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_X},
-			[0x05] = {MAP_STATIC, EV_KEY, BTN_Y},
-			[0x07] = {MAP_STATIC, EV_KEY, BTN_TL},
-			[0x08] = {MAP_STATIC, EV_KEY, BTN_TR},
-			[0x0C] = {MAP_STATIC, EV_KEY, BTN_START},
-			[0x0E] = {MAP_STATIC, EV_KEY, BTN_THUMBL},
-			[0x0F] = {MAP_STATIC, EV_KEY, BTN_THUMBR}
-			/* All other Bits in the report are just padding! */
+	switch (hid_usage_page) {
+	case HID_UP_BUTTON:
+		switch (hid_usage) {
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
+		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
+		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
+		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
+		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
+		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
+		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
+		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
 		}
-	},
-
-	.consumer = {
-		.max = 0x224,
-		.input_ev = (struct map_entry[]) {
-			[0x223] = {MAP_STATIC, EV_KEY, BTN_MODE},
-			[0x224] = {MAP_STATIC, EV_KEY, BTN_SELECT},
-		}
-	},
-
-	.generic_desktop = {
-		.max = 0x39,
-		.input_ev = (struct map_entry[]) {
-			[0x30] = {MAP_STATIC, EV_ABS, ABS_X},     /* left stick X */
-			[0x31] = {MAP_STATIC, EV_ABS, ABS_Y},     /* left stick Y */
-			[0x32] = {MAP_STATIC, EV_ABS, ABS_RX},    /* right stick X */
-			[0x35] = {MAP_STATIC, EV_ABS, ABS_RY},    /* right stick Y */
-			[0x39] = {MAP_AUTO, 0, 0},                /* Dpad */
-
-			/* NOTE:
-			 * MAP_AUTO means that we let hid-core autodetect
-			 * the correct mapping (for Dpad, which is ABS_HAT0X/Y).
-			 * But we will add also another usage (BTN_DPAD_*)
-			 * in the event/input_configured hooks.
-			 */
-		}
-	},
-
-	.simulation = {
-		.max = 0xC5,
-		.input_ev = (struct map_entry[]) {
-			[0xC4] = {MAP_STATIC, EV_ABS, ABS_RZ},    /* right shoulder trigger */
-			[0xC5] = {MAP_STATIC, EV_ABS, ABS_Z},     /* left shoulder trigger */
+	case HID_UP_GENDESK:
+		switch (hid_usage) {
+		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
+		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
+		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_Z};    return MAP_STATIC;
+		case 0x33: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
+		case 0x34: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
+		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RZ};   return MAP_STATIC;
+		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
+		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
 		}
 	}
-};
 
-static const struct device_input_mapping xboxone_x_map = {
+	return MAP_IGNORE;
+}
 
-	.button = {
-		.max = 0x0a,
-		.input_ev = (struct map_entry[]) {
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},         /* A */
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},         /* B */
-			[0x03] = {MAP_STATIC, EV_KEY, BTN_X},         /* X */
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_Y},         /* Y */
-			[0x05] = {MAP_STATIC, EV_KEY, BTN_TL},        /* L1 */
-			[0x06] = {MAP_STATIC, EV_KEY, BTN_TR},        /* L2 */
-			[0x07] = {MAP_STATIC, EV_KEY, BTN_SELECT},    /* View, Middle Left */
-			[0x08] = {MAP_STATIC, EV_KEY, BTN_START},     /* Menu, Middle Right */
-			[0x09] = {MAP_STATIC, EV_KEY, BTN_THUMBL},    /* L3, Stick */
-			[0x0A] = {MAP_STATIC, EV_KEY, BTN_THUMBR},    /* R3, Stick */
-			/* All other Bits in the report are just padding! */
+u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
+
+	// Mapping for native Linux behaviour
+
+	// report-descriptor:
+	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+	// a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
+	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+	// 75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
+	// 0c 09 01 85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03
+	// c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09
+	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
+	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
+	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
+	// size: 335
+
+	unsigned int hid_usage = usage->hid & HID_USAGE;
+	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
+
+	switch(hid_usage_page) {
+	case HID_UP_BUTTON:
+		switch (hid_usage) {
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
+		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
+		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
+		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
+		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
+		case 0x0E: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL};  return MAP_STATIC;
+		case 0x0F: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR};  return MAP_STATIC;
 		}
-	},
-
-	.generic_desktop = {
-		.max = 0x85,
-		.input_ev = (struct map_entry[]) {
-			[0x30] = {MAP_STATIC, EV_ABS, ABS_X},     /* left stick X */
-			[0x31] = {MAP_STATIC, EV_ABS, ABS_Y},     /* left stick Y */
-			[0x32] = {MAP_STATIC, EV_ABS, ABS_Z},     /* left shoulder trigger */
-			[0x33] = {MAP_STATIC, EV_ABS, ABS_RX},    /* right stick Y */
-			[0x34] = {MAP_STATIC, EV_ABS, ABS_RY},    /* right stick X */
-			[0x35] = {MAP_STATIC, EV_ABS, ABS_RZ},    /* right shoulder trigger */
-			[0x39] = {MAP_AUTO, 0, 0},                /* Dpad */
-			[0x85] = {MAP_STATIC, EV_KEY, BTN_MODE}   /* Xbox button */
+	case HID_UP_CONSUMER:
+		switch (hid_usage) {
+		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};   return MAP_STATIC;
+		case 0x224: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
 		}
-	}
-};
-
-static const struct device_input_mapping xboxone_x2_map = {
-
-	.button = {
-		.max = 0x0a,
-		.input_ev = (struct map_entry[]) {
-			[0x01] = {MAP_STATIC, EV_KEY, BTN_A},         /* A */
-			[0x02] = {MAP_STATIC, EV_KEY, BTN_B},         /* B */
-			[0x03] = {MAP_STATIC, EV_KEY, BTN_X},         /* X */
-			[0x04] = {MAP_STATIC, EV_KEY, BTN_Y},         /* Y */
-			[0x05] = {MAP_STATIC, EV_KEY, BTN_TL},        /* L1 */
-			[0x06] = {MAP_STATIC, EV_KEY, BTN_TR},        /* L2 */
-			[0x07] = {MAP_STATIC, EV_KEY, BTN_SELECT},    /* View, Middle Left */
-			[0x08] = {MAP_STATIC, EV_KEY, BTN_START},     /* Menu, Middle Right */
-			[0x09] = {MAP_STATIC, EV_KEY, BTN_THUMBL},    /* L3, Stick */
-			[0x0A] = {MAP_STATIC, EV_KEY, BTN_THUMBR},    /* R3, Stick */
-			/* All other Bits in the report are just padding! */
+	case HID_UP_GENDESK:
+		switch (hid_usage) {
+		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};   return MAP_STATIC;
+		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};   return MAP_STATIC;
+		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};  return MAP_STATIC;
+		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};  return MAP_STATIC;
+		case 0x39: *map_to = (struct input_ev){0, 0};            return MAP_AUTO;
 		}
-	},
-
-	.generic_desktop = {
-		.max = 0x85,
-		.input_ev = (struct map_entry[]) {
-			[0x30] = {MAP_STATIC, EV_ABS, ABS_X},     /* left stick X */
-			[0x31] = {MAP_STATIC, EV_ABS, ABS_Y},     /* left stick Y */
-			[0x32] = {MAP_STATIC, EV_ABS, ABS_RX},    /* right stick Y */
-			[0x35] = {MAP_STATIC, EV_ABS, ABS_RY},    /* right stick X */
-			[0x39] = {MAP_AUTO, 0, 0},                /* Dpad */
-			[0x85] = {MAP_STATIC, EV_KEY, BTN_MODE}   /* Xbox button */
-		}
-	},
-
-	.simulation = {
-		.max = 0xC5,
-		.input_ev = (struct map_entry[]) {
-			[0xC4] = {MAP_STATIC, EV_ABS, ABS_RZ},
-			[0xC5] = {MAP_STATIC, EV_ABS, ABS_Z},
-		}
-	},
-
-	.consumer = {
-		.max = 0x223,
-		.input_ev = (struct map_entry[]) {
-			[0x223] = {MAP_STATIC, EV_KEY, BTN_MODE}
+	case HID_UP_SIMULATION:
+		switch (hid_usage) {
+		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ};  return MAP_STATIC;
+		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};   return MAP_STATIC;
 		}
 	}
-};
+
+	return MAP_IGNORE;
+}
+
+u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
+
+	// What kind of behaviour is this? We only saw it once yet.
+	// Is it maybe related to and old firmware or Android?
+
+	// report-descriptor: ???
+	// size: ???
+
+	unsigned int hid_usage = usage->hid & HID_USAGE;
+	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
+
+	switch (hid_usage_page) {
+	case HID_UP_BUTTON:
+		switch (hid_usage) {
+		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
+		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
+		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
+		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
+		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
+		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
+		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
+		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
+		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
+		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
+		}
+	case HID_UP_GENDESK:
+		switch (hid_usage) {
+		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
+		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
+		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
+		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
+		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
+		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
+		}
+	case HID_UP_SIMULATION:
+		switch (hid_usage) {
+		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ}; return MAP_STATIC;
+		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};  return MAP_STATIC;
+		}
+	case HID_UP_CONSUMER:
+		switch (hid_usage) {
+		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};
+		}
+	}
+
+	return MAP_IGNORE;
+}
 
 /*
  * INPUT MAPPING HOOK
@@ -450,13 +432,11 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	#define RET_MAP_AUTO    0 /* let hid-core autodetect the mapping */
 	#define RET_MAP_STATIC  1 /* mapping done by hand, no further processing */
 
-	const struct device_input_mapping* device_map;
+	// Mapping Structure
+	struct input_ev map_to;
 
-	unsigned int uid = usage->hid & HID_USAGE;
-	unsigned int upid = usage->hid & HID_USAGE_PAGE;
-
-	struct map_entry m;
-	struct map_usagepage mup;
+	// Mapping function pointer
+	u8 (*perform_mapping)(struct hid_usage*, struct input_ev*);
 
 
 	/* TODO:
@@ -475,52 +455,41 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	 * we should use?
 	 */
 	switch (hdev->product) {
-	case 0x02E0: device_map = &xboxone_x_map; break;
-	case 0x02FD: device_map = &xboxone_s_map; break;
+	case 0x02E0: perform_mapping = map_hid_to_input_rs335; break;
+	case 0x02FD: perform_mapping = map_hid_to_input_rs335; break;
 	default:
 		return RET_MAP_AUTO;
 	}
 
-	/* select the correct usage page input_ev withing the device input_ev */
-	switch (upid) {
-	case HID_UP_BUTTON:     mup = device_map->button;          break;
-	case HID_UP_GENDESK:    mup = device_map->generic_desktop; break;
-	case HID_UP_SIMULATION: mup = device_map->simulation;      break;
-	case HID_UP_CONSUMER:   mup = device_map->consumer;        break;
-	default:
-		return RET_MAP_IGNORE;
-	}
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "usage page: BUTTON, usage: 0x%02X\n", uid);
+	switch(perform_mapping(usage, &map_to)){
+	case MAP_AUTO:
+		hid_dbg_lvl(DBG_LVL_FEW, hdev, \
+		"UP: 0x%04X, USG: 0x%04X -> automatically\n", \
+		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
 
-	/* If the usage is bigger than the biggest index */
-	if (uid > mup.max){
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "-> not mapped! uid out of range for this device (probably padding bits)\n");
-		return RET_MAP_IGNORE;
-	}
-
-	/* it is safe here */
-	m = mup.input_ev[uid];
-
-	/* If we didn't declared a mapping, the value is '0'
-		* that is because it is a static struct, which is automatically zeroed.
-		*/
-	if (m.map_type == MAP_IGNORE){
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "-> not mapped! (forgotten or someone set it explicitely to MAP_IGNORE)\n");
-		return RET_MAP_IGNORE;
-	}
-
-	/* If we marked the mapping entry explicitly as 'MAP_AUTO',
-		* we want to let hid-core autodetect
-		*/
-	if (m.map_type == MAP_AUTO) {
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "-> automatically mapped!\n");
 		return RET_MAP_AUTO;
+
+	case MAP_IGNORE:
+		hid_dbg_lvl(DBG_LVL_FEW, hdev, \
+		"UP: 0x%04X, USG: 0x%04X -> ignored\n", \
+		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
+
+		return RET_MAP_IGNORE;
+
+	case MAP_STATIC:
+		hid_dbg_lvl(DBG_LVL_FEW, hdev, \
+		"UP: 0x%04X, USG: 0x%04X -> EV: 0x%03X, INP: 0x%03X\n", \
+		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE, \
+		map_to.event_type, map_to.input_code);
+
+		hid_map_usage_clear(hi, usage, bit, max, map_to.event_type, map_to.input_code);
+		return RET_MAP_STATIC;
+
 	}
 
-	hid_map_usage_clear(hi, usage, bit, max, m.map_to_event_type, m.map_to_input_code);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "-> mapped to input-code 0x%03X (%i)\n", m.map_to_input_code, m.map_to_input_code);
-	return RET_MAP_STATIC;
+	// something went wrong, ignore this field
+	return RET_MAP_IGNORE;
 }
 
 
@@ -870,175 +839,3 @@ static void __exit xpadneo_exitModule(void)
 /* telling the driver system which functions to call at initialization and removal of the module */
 module_init(xpadneo_initModule);
 module_exit(xpadneo_exitModule);
-
-
-
-
-
-//////////////////////
-/// REWORK SECTION ///
-//////////////////////
-// we waste A LOT OF memory the way it is done at the moment just for speed reasons,
-// but mapping is done only once at the beginning, therefore speed is not such a big deal
-// but memory is - therefore we will replace the old way of mapping by the
-// following as soon as we confirmed the windows mapping (and the report).
-
-struct input_ev {
-	u8 map_to_event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
-	u16 map_to_input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
-};
-
-u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
-
-	// Mapping for Windows behaviour
-
-	// report-descriptor:
-	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
-	// a1 00 09 33 09 34 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 01 09 32 15 00 26 ff 03 95 01 75
-	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 01 09 35 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
-	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
-	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0a 15 00 25 01 75 01 95 0a 81 02 15 00 25 00
-	// 75 06 95 01 81 03 05 01 09 80 85 02 a1 00 09 85 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07
-	// 95 01 81 03 c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95
-	// 01 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91
-	// 02 09 a7 15 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0
-	// 85 04 05 06 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-	// size: 307
-
-	unsigned int hid_usage = usage->hid & HID_USAGE;
-	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
-
-	switch (hid_usage_page) {
-	case HID_UP_BUTTON:
-		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
-		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
-		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
-		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
-		}
-	case HID_UP_GENDESK:
-		switch (hid_usage) {
-		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
-		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
-		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_Z};    return MAP_STATIC;
-		case 0x33: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
-		case 0x34: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
-		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RZ};   return MAP_STATIC;
-		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
-		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
-		}
-	}
-
-	return MAP_IGNORE;
-}
-
-u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
-
-	// Mapping for native Linux behaviour
-
-	// report-descriptor:
-	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
-	// a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
-	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
-	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
-	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
-	// 75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
-	// 0c 09 01 85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03
-	// c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09
-	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
-	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
-	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-	// size: 335
-
-	unsigned int hid_usage = usage->hid & HID_USAGE;
-	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
-
-	switch(hid_usage_page) {
-	case HID_UP_BUTTON:
-		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
-		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
-		case 0x0E: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL};  return MAP_STATIC;
-		case 0x0F: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR};  return MAP_STATIC;
-		}
-	case HID_UP_CONSUMER:
-		switch (hid_usage) {
-		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};   return MAP_STATIC;
-		case 0x224: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
-		}
-	case HID_UP_GENDESK:
-		switch (hid_usage) {
-		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};   return MAP_STATIC;
-		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};   return MAP_STATIC;
-		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};  return MAP_STATIC;
-		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};  return MAP_STATIC;
-		case 0x39: *map_to = (struct input_ev){0, 0};            return MAP_AUTO;
-		}
-	case HID_UP_SIMULATION:
-		switch (hid_usage) {
-		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ};  return MAP_STATIC;
-		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};   return MAP_STATIC;
-		}
-	}
-
-	return MAP_IGNORE;
-}
-
-u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
-
-	// What kind of behaviour is this? We only saw it once yet.
-	// Is it maybe related to and old firmware or Android?
-
-	// report-descriptor: ???
-	// size: ???
-
-	unsigned int hid_usage = usage->hid & HID_USAGE;
-	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
-
-	switch (hid_usage_page) {
-	case HID_UP_BUTTON:
-		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
-		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
-		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
-		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
-		}
-	case HID_UP_GENDESK:
-		switch (hid_usage) {
-		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
-		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
-		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
-		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
-		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
-		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
-		}
-	case HID_UP_SIMULATION:
-		switch (hid_usage) {
-		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ}; return MAP_STATIC;
-		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};  return MAP_STATIC;
-		}
-	case HID_UP_CONSUMER:
-		switch (hid_usage) {
-		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};
-		}
-	}
-
-	return MAP_IGNORE;
-}
