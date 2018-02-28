@@ -997,11 +997,21 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 
 u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 
-	// What kind of behaviour is this? We only saw it once yet.
-	// Is it maybe related to and old firmware or Android?
-
-	// report-descriptor: ???
-	// size: ???
+	// This is an mapping is currently get at Ubuntu 17.01
+	
+	// report-descriptor:
+	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+	// a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
+	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+	// 75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
+	// 0c 09 01 85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03
+	// c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09
+	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
+	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
+	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
+	// size: 335
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
@@ -1027,7 +1037,6 @@ u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
 		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
 		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
-		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
 		}
 	case HID_UP_SIMULATION:
 		switch (hid_usage) {
