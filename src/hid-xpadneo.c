@@ -491,7 +491,7 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 		return RET_MAP_IGNORE;
 	}
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "usage page: BUTTON, usage: 0x%02X\n", uid);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "usage page: 0x%04X, usage: 0x%02X\n", upid, uid);
 
 	/* If the usage is bigger than the biggest index */
 	if (uid > mup.max){
