@@ -16,6 +16,8 @@ The buildsystem consists not only of the driver itself, it also fixes a bug I fo
 You have to build the driver yourself if there is no suitable version available in out/.
 To make life a bit easier, we offer you a Taskfile at the moment (you will need go-task https://github.com/go-task/task to execute that).
 
+Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make` - please make sure those are installed.
+
 - build driver(s) for your local system
   ```
   task

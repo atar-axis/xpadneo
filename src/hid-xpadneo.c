@@ -248,10 +248,11 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 }
 
 
-
-#define MAP_IGNORE  0 /* MAP_IGNORE must be 0, because the static struct is zeroed by default */
-#define MAP_AUTO    1 /* do not really input_ev it, let hid-core decide */
-#define MAP_STATIC  2 /* input_ev to the values given */
+enum mapping_behaviour {
+	MAP_IGNORE, /* completely ignore this field */
+	MAP_AUTO,   /* do not really map it, let hid-core decide */
+	MAP_STATIC  /* map to the values given */
+};
 
 struct input_ev {
    u8 event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
@@ -260,7 +261,7 @@ struct input_ev {
 
 u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
 
-	// Mapping for Windows behaviour
+	// Mapping for Windows (?) behaviour
 
 	// report-descriptor:
 	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
@@ -367,11 +368,21 @@ u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
 
 u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 
-	// What kind of behaviour is this? We only saw it once yet.
-	// Is it maybe related to and old firmware or Android?
-
-	// report-descriptor: ???
-	// size: ???
+	// This is an mapping is currently get at Ubuntu 17.01
+	
+	// report-descriptor:
+	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+	// a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
+	// 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+	// 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+	// 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+	// 75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
+	// 0c 09 01 85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03
+	// c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09
+	// 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
+	// 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
+	// 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
+	// size: 335
 
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
@@ -428,14 +439,13 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 			unsigned long **bit, int *max)
 {
 	/* return values */
-	#define RET_MAP_IGNORE -1 /* completely ignore this input */
-	#define RET_MAP_AUTO    0 /* let hid-core autodetect the mapping */
-	#define RET_MAP_STATIC  1 /* mapping done by hand, no further processing */
+	enum ret_vals {
+		RET_MAP_IGNORE=-1, /* completely ignore this input */
+		RET_MAP_AUTO,     /* let hid-core autodetect the mapping */
+		RET_MAP_STATIC    /* mapping done by hand, no further processing */
+	};
 
-	// Mapping Structure
 	struct input_ev map_to;
-
-	// Mapping function pointer
 	u8 (*perform_mapping)(struct hid_usage*, struct input_ev*);
 
 
@@ -610,8 +620,10 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 	struct hid_usage *usage, __s32 value)
 {
 	/* return codes */
-	#define EV_CONT_PROCESSING 0 /* let the hid-core autodetect the event */
-	#define EV_STOP_PROCESSING 1 /* stop further processing */
+	enum ret_vals {
+		EV_CONT_PROCESSING, /* let the hid-core autodetect the event */
+		EV_STOP_PROCESSING  /* stop further processing */
+	};
 
 	/* TODO: use hid_get_drvdata instead */
 	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
@@ -839,3 +851,4 @@ static void __exit xpadneo_exitModule(void)
 /* telling the driver system which functions to call at initialization and removal of the module */
 module_init(xpadneo_initModule);
 module_exit(xpadneo_exitModule);
+
