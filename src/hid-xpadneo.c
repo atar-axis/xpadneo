@@ -235,9 +235,9 @@ struct input_ev {
    u16 input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
 };
 
-u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_windows (struct hid_usage *usage, struct input_ev *map_to) {
 
-	// Mapping for Windows (?) behaviour
+	// Mapping for Windows behavior
 
 	// report-descriptor:
 	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
@@ -285,9 +285,9 @@ u8 map_hid_to_input_rs307 (struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 }
 
-u8 map_hid_to_input_rs335 (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 
-	// Mapping for native Linux behaviour
+	// Mapping for native Linux behavior
 
 	// report-descriptor:
 	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
@@ -417,8 +417,8 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	/* return values */
 	enum {
 		RET_MAP_IGNORE=-1, /* completely ignore this input */
-		RET_MAP_AUTO,     /* let hid-core autodetect the mapping */
-		RET_MAP_STATIC    /* mapping done by hand, no further processing */
+		RET_MAP_AUTO,      /* let hid-core autodetect the mapping */
+		RET_MAP_STATIC     /* mapping done by hand, no further processing */
 	};
 
 	struct input_ev map_to;
@@ -441,8 +441,8 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	 * we should use?
 	 */
 	switch (hdev->product) {
-	case 0x02E0: perform_mapping = map_hid_to_input_rs335; break;
-	case 0x02FD: perform_mapping = map_hid_to_input_rs335; break;
+	case 0x02E0: perform_mapping = map_hid_to_input_linux; break;
+	case 0x02FD: perform_mapping = map_hid_to_input_linux; break;
 	default:
 		return RET_MAP_AUTO;
 	}
