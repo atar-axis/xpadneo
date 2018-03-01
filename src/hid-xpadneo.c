@@ -183,9 +183,6 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 
 static int xpadneo_initDevice (struct hid_device *hdev)
 {
-	struct hid_report *report;
-	struct list_head *output_report_list
-		= &hdev->report_enum[HID_OUTPUT_REPORT].report_list;
 	int error;
 
 	/* create handle to the input device which is assigned to the hid device
@@ -195,32 +192,10 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
 	struct input_dev *dev = hidinput->input;
 
-	unsigned int i;
 	struct ff_report ff_package;
 
 
-	if (list_empty(output_report_list)) {
-		hid_err(hdev, "no output report found\n");
-		return -ENODEV;
-	}
-
-	if(list_is_singular(output_report_list)) {
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "only one output report\n");
-	}
-
-	report = list_entry(output_report_list->next, struct hid_report, list);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "output-report (id %i) contains %i fields:\n", report->id, report->maxfield);
-
-	for(i = 0; i < report->maxfield; i++){
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "\tfield[%u]: usage: %#04x, size: %i, count:%i\n", \
-			i, \
-			report->field[i]->usage->hid & HID_USAGE, \
-			report->field[i]->report_size, \
-			report->field[i]->report_count
-		);
-	}
-
-	/* SEND OUT A 'HELLO' RUMBLE-PACKAGE */
+	/* 'HELLO' FROM THE OTHER SIDE */
 	ff_package.ff = ff_clear;
 	ff_package.report_id = 0x03;
 	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_RIGHT;
@@ -237,7 +212,8 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 	ff_package.ff.duration = 50;
 	hid_hw_output_report(hdev, (u8*)&ff_package, sizeof(ff_package));
 
-	/* INIT FORCE FEEDBACK (FF) */
+
+	/* INIT INPUT SYSTEM FOR FORCE FEEDBACK (FF) */
 	input_set_capability(dev, EV_FF, FF_RUMBLE);
 	error = input_ff_create_memless(dev, NULL, xpadneo_ff_play);
 	if (error) {
@@ -439,7 +415,7 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 			unsigned long **bit, int *max)
 {
 	/* return values */
-	enum ret_vals {
+	enum {
 		RET_MAP_IGNORE=-1, /* completely ignore this input */
 		RET_MAP_AUTO,     /* let hid-core autodetect the mapping */
 		RET_MAP_STATIC    /* mapping done by hand, no further processing */
@@ -620,7 +596,7 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 	struct hid_usage *usage, __s32 value)
 {
 	/* return codes */
-	enum ret_vals {
+	enum {
 		EV_CONT_PROCESSING, /* let the hid-core autodetect the event */
 		EV_STOP_PROCESSING  /* stop further processing */
 	};
