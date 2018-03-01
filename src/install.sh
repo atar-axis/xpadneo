@@ -15,7 +15,7 @@ then
   sudo cp -f ./hid-xpadneo.ko "$extramodules"
 else
   echo "* replace xpadneo"
-  sudo mv "$hid_xpadneo" "$hid_xpadneo"_bak
+  sudo [ ! -f "$hid_xpadneo"_bak ] && sudo mv "$hid_xpadneo" "$hid_xpadneo"_bak
   sudo cp -f ./hid-xpadneo.ko $(dirname "$hid_xpadneo")
 fi
 
@@ -27,7 +27,7 @@ then
   sudo cp -f ./hid.ko "$extramodules"
 else
   echo "* replace hid"
-  sudo mv "$hid" "$hid"_bak
+  sudo [ ! -f "$hid"_bak ] && sudo mv "$hid" "$hid"_bak
   sudo cp -f ./hid.ko $(dirname "$hid")
 fi
 
@@ -39,7 +39,7 @@ then
   sudo cp -f ./bluetooth.ko "$extramodules"
 else
   echo "* replace bluetooth"
-  sudo mv "$bluetooth" "$bluetooth"_bak
+  sudo [ ! -f "$bluetooth"_bak ] && sudo mv "$bluetooth" "$bluetooth"_bak
   sudo cp -f ./bluetooth.ko $(dirname "$bluetooth")
 fi
 
