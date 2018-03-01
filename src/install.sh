@@ -7,6 +7,8 @@ bluetooth=$(modinfo -n bluetooth 2> /dev/null)
 extramodules="/lib/modules/"$(uname -r)"/extramodules/"
 
 
+sudo [ ! -d "$extramodules"_bak ] && sudo mkdir --parents $extramodules
+
 # install xpadneo
 
 if [ "$hid_xpadneo" == "" ]
