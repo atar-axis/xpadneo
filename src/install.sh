@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Check if current user is root
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 1>&2
    exit 1
@@ -15,7 +16,6 @@ extramodules="/lib/modules/"$(uname -r)"/extramodules/"
 sudo [ ! -d "$extramodules"_bak ] && sudo mkdir --parents $extramodules
 
 # install xpadneo
-
 if [ "$hid_xpadneo" == "" ]
 then
   echo "** install xpadneo"
@@ -27,7 +27,6 @@ else
 fi
 
 # install hid
-
 if [ "$hid" == "" ]
 then
   echo "** install hid"
@@ -38,8 +37,7 @@ else
   sudo cp -f ./hid.ko $(dirname "$hid")
 fi
 
-# install bluetooth
-
+# install bluetoot
 if [ "$bluetooth" == "" ]
 then
   echo "** install bluetooth"
@@ -50,6 +48,15 @@ else
   sudo cp -f ./bluetooth.ko $(dirname "$bluetooth")
 fi
 
+# Register new modules if not yet
+sudo depmod
+
+# Load modules if not yet
+sudo modprobe hid-xpadneo
+sudo modprobe hid
+sudo modprobe bluetooth
+
+# Check if modules are installed correctly
 if [[ $(crc32 $hid) != $(crc32 ./hid.ko) \
    || $(crc32 $bluetooth) != $(crc32 ./bluetooth.ko) \
    || $(crc32 $hid_xpadneo) != $(crc32 ./hid-xpadneo.ko) ]]
@@ -60,10 +67,12 @@ else
   echo "* installed/replaced successfully"
 fi;
 
-
-sudo depmod
-
-
-sudo modprobe hid-xpadneo
-sudo modprobe hid
-sudo modprobe bluetooth
+# Update initram on Ubuntu
+if [[ "$(uname -v | grep -o Ubuntu)" != "" ]]
+then
+  sudo /bin/bash -c "echo 'hid' >> /etc/initramfs-tools/modules"
+  sudo /bin/bash -c "echo 'usbhid' >> /etc/initramfs-tools/modules"
+  sudo /bin/bash -c "echo 'hid_generic' >> /etc/initramfs-tools/modules"
+  sudo /bin/bash -c "echo 'ohci_pci' >> /etc/initramfs-tools/modules"
+  sudo update-initramfs -u
+fi;
