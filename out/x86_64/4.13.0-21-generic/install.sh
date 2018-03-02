@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Check if current user is root
+set -x
+
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 1>&2
    exit 1
@@ -16,6 +17,7 @@ extramodules="/lib/modules/"$(uname -r)"/extramodules/"
 sudo [ ! -d "$extramodules"_bak ] && sudo mkdir --parents $extramodules
 
 # install xpadneo
+
 if [ "$hid_xpadneo" == "" ]
 then
   echo "** install xpadneo"
@@ -27,6 +29,7 @@ else
 fi
 
 # install hid
+
 if [ "$hid" == "" ]
 then
   echo "** install hid"
@@ -38,6 +41,7 @@ else
 fi
 
 # install bluetooth
+
 if [ "$bluetooth" == "" ]
 then
   echo "** install bluetooth"
@@ -48,34 +52,20 @@ else
   sudo cp -f ./bluetooth.ko $(dirname "$bluetooth")
 fi
 
-# Register new modules if not yet
+
 sudo depmod
 
-# Load modules if not yet
 sudo modprobe hid-xpadneo
 sudo modprobe hid
 sudo modprobe bluetooth
 
-# Check if modules are installed correctly
+
 if [[ $(crc32 $hid) != $(crc32 ./hid.ko) \
    || $(crc32 $bluetooth) != $(crc32 ./bluetooth.ko) \
    || $(crc32 $hid_xpadneo) != $(crc32 ./hid-xpadneo.ko) ]]
 then
-  echo something went wrong, checksums are not correct
+  echo something went wrong, files checksums are not correct
   exit 1
 else 
   echo "* installed/replaced successfully"
-fi;
-
-# Update initramfs on Ubuntu
-if [[ "$(uname -v | grep -o Ubuntu)" != "" ]]
-then
-  # fix for non-working mouse after update-initramfs
-  # TODO: use patch instead of append it blind
-  sudo /bin/bash -c "echo 'hid' >> /etc/initramfs-tools/modules"
-  sudo /bin/bash -c "echo 'usbhid' >> /etc/initramfs-tools/modules"
-  sudo /bin/bash -c "echo 'hid_generic' >> /etc/initramfs-tools/modules"
-  sudo /bin/bash -c "echo 'ohci_pci' >> /etc/initramfs-tools/modules"
-  # update initramfs (reload hid.ko and bluetooth.ko to ram at startup)
-  sudo update-initramfs -u -k all
 fi;
