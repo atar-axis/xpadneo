@@ -580,12 +580,12 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 /*
  * EVENT HOOK
  *
- * This hook is called whenever an input event occurs that
+ * This hook is called whenever an event occurs that
  * is listed on xpadneo_driver.usage_table (which is NULL in our case,
- * therefore it is invoked on every input event).
+ * therefore it is invoked on every event).
  *
  * We use this hook to attach some more events to our D-pad,
- * as the result our D-pad is reported to Input as both,
+ * as a result our D-pad is reported to Input as both,
  * four buttons AND a hat-switch.
  *
  * Before we can send additional input events, we have to enable
@@ -612,8 +612,7 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 	if ((usage->hid & HID_USAGE) == 0x39) {
 
 		/* NOTE:
-		 * You can also press UP and RIGHT, RIGHT and DOWN, ... together!
-		 * The value then is between:
+		 * You can press UP and RIGHT, RIGHT and DOWN, ... together!
 		 *
 		 * value        U R D L
 		 * --------------------
@@ -656,6 +655,8 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 
 		return EV_CONT_PROCESSING;
 	}
+
+
 
 	return EV_CONT_PROCESSING;
 }

@@ -57,9 +57,9 @@ sudo modprobe hid
 sudo modprobe bluetooth
 
 # Check if modules are installed correctly
-if [[ $(crc32 $hid) != $(crc32 ./hid.ko) \
-   || $(crc32 $bluetooth) != $(crc32 ./bluetooth.ko) \
-   || $(crc32 $hid_xpadneo) != $(crc32 ./hid-xpadneo.ko) ]]
+if [[ $(cksum < $hid) != $(cksum < ./hid.ko) \
+   || $(cksum < $bluetooth) != $(cksum < ./bluetooth.ko) \
+   || $(cksum < $hid_xpadneo) != $(cksum < ./hid-xpadneo.ko) ]]
 then
   echo something went wrong, checksums are not correct
   exit 1
