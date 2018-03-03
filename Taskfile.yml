@@ -94,6 +94,19 @@ clean:
     - rm --force --recursive build/*
 
     
+install:
+  desc: install the previously builded modules (runs the install.sh script)
+  silent: true
+  cmds:
+    - |
+      if [ -f ./out/$(uname -m)/$(uname -r)/install.sh ]
+      then
+        cd ./out/$(uname -m)/$(uname -r)
+        ./install.sh
+      else
+        echo "Please run 'task local' before"
+      fi
+  
     
 # SHARED SUBROUTINES
 
