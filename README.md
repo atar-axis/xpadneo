@@ -50,18 +50,12 @@ To install the driver after sucessfull building, simply copy the hid-xpadneo mod
 ### Install the new ones
 
 ```
-cd out/<YOUR_ARCH>/<YOUR_KERNEL>
-sudo cp ./hid-xpadneo.ko /lib/modules/<YOUR_KERNEL>/extramodules/hid-xpadneo.ko
-sudo cp ./hid.ko /lib/modules/<YOUR_KERNEL>/kernel/drivers/hid/hid.ko
-sudo cp ./bluetooth.ko /lib/modules/<YOUR_KERNEL>/kernel/net/bluetooth/bluetooth.ko
+sudo task install
 ```
-
-Register the new drivers by running `sudo depmod` afterwards.
-
 
 #### Problems
 
-- If bluetooth isn't a module, you can alternatively run `sudo /bin/bash -c "echo 1 > /sys/module/bluetooth/parameters/disable_ertm"` before connecting the controller to the computer.
+- If bluetooth isn't a module but builtin, you can alternatively run `sudo /bin/bash -c "echo 1 > /sys/module/bluetooth/parameters/disable_ertm"` before connecting the controller to the computer.
 
 - If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
