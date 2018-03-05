@@ -28,7 +28,7 @@ Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make`
   ```
   task raspi3
   ```
-  
+
 The Taskfile downloads your current kernel, copies the driver into the extracted folder and patches hid-core and l2cap. Then it compiles the kernel modules and copies the resulting driver to your local ./out directory.
 
 Until now the Taskfile is tested under the following Distributions
@@ -58,6 +58,36 @@ sudo task install
 - If bluetooth isn't a module but builtin, you can alternatively run `sudo /bin/bash -c "echo 1 > /sys/module/bluetooth/parameters/disable_ertm"` before connecting the controller to the computer.
 
 - If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
+
+
+## Configuration
+
+The driver can be reconfigured at runtime by accessing the following sysfs
+files in `/sys/module/hid_xpadneo/parameters`:
+
+- `dpad_to_buttons`: Set to Y to map dpad directional input to button events,
+  defaults to N
+
+
+## Debugging
+
+If you are asked to send debug info or want to fix bugs, enable debugging
+first in the driver:
+
+`echo 3 > /sys/module/hid_xpadneo/parameters/debug_level`
+
+where `3` is the most verbose debug level. Disable debugging by setting the
+value back to `0`.
+
+You may want to set the debug level at load time of the driver. You can do
+this by applying the setting to modprobe:
+
+```
+$ cat /etc/modprobe.d/xpadneo.conf
+options hid_xpadneo debug_level=3
+```
+
+Now, the driver will be initialized with debug level 3 during modprobe.
 
 
 ## Known Bugs

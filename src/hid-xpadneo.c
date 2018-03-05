@@ -31,14 +31,14 @@ MODULE_VERSION("0.1.3");
 
 /* MODULE PARAMETERS, located at /sys/module/.../parameters */
 #ifdef DEBUG
-static u8 debug_level = 3;
+static u8 debug_level = 0;
 module_param(debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (maximum).");
 #endif
 
-static bool dpad_as_buttons = 0;
-module_param(dpad_as_buttons, bool, 0644);
-MODULE_PARM_DESC(dpad_as_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
+static bool dpad_to_buttons = 0;
+module_param(dpad_to_buttons, bool, 0644);
+MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
 
 /* DEBUG PRINTK
@@ -523,7 +523,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * - We should also send out ABS_HAT0X/Y events as mentioned on the
 	 *   official HID usage tables (p.34).
 	 */
-	if(dpad_as_buttons){
+	if(dpad_to_buttons){
 		__set_bit(BTN_DPAD_UP, input->keybit);
 		__set_bit(BTN_DPAD_RIGHT, input->keybit);
 		__set_bit(BTN_DPAD_DOWN, input->keybit);
@@ -649,9 +649,9 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 		 */
 
 		/* NOTE:
-		 * It is perfectly fine to send those event even if dpad_as_buttons is false
+		 * It is perfectly fine to send those event even if dpad_to_buttons is false
 		 * because the keymap decides if the event is really sent or not.
-		 * It is also easier to send them anyway, because dpad_as_buttons may
+		 * It is also easier to send them anyway, because dpad_to_buttons may
 		 * change also if the controller is connected.
 		 * This way the behaviour does not change until the controller is reconnected
 		 */
