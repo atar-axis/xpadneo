@@ -94,7 +94,11 @@ Now, the driver will be initialized with debug level 3 during modprobe.
 
 The Gamepad has different button mappings, thats the reason why sometimes buttons like "select" and "start" do not work. I think this is fixed now, but if you ever see any wrong mapping *please let me know*!
 In order to make the debugging easier, please run:
-```sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'```
-```sudo dmesg -C```
+```
+sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
+sudo dmesg -C
+```
 Please reconnect your gamepad, press every button once and send me your xpadneo-realted `dmesg` output
-```dmesg | grep xpadneo > ~/xpadneo_log```
+```
+dmesg | grep xpadneo > ~/xpadneo_log
+```
