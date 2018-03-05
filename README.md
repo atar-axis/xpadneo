@@ -87,7 +87,7 @@ You may want to set the debug level at load time of the driver. You can do
 this by applying the setting to modprobe:
 
 ```
-sudo /bin/bash -c 'options hid_xpadneo debug_level=3 > /etc/modprobe.d/xpadneo.conf'
+sudo /bin/bash -c 'echo "options hid_xpadneo debug_level=3" > /etc/modprobe.d/xpadneo.conf'
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
