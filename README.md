@@ -60,6 +60,27 @@ sudo task install
 - If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
 
+## Debugging
+
+If you are asked to send debug info or want to fix bugs, enable debugging
+first in the driver:
+
+`echo 3 > /sys/module/hid_xpadneo/parameters/debug_level`
+
+where `3` is the most verbose debug level. Disable debugging by setting the
+value back to `0`.
+
+You may want to set the debug level at load time of the driver. You can do
+this by applying the setting to modprobe:
+
+```
+$ cat /etc/modprobe.d/xpadneo.conf
+options hid_xpadneo debug_level=3
+```
+
+Now, the driver will be initialized with debug level 3 during modprobe.
+
+
 ## Known Bugs
 
 The Gamepad has different button mappings, thats the reason why sometimes buttons like "select" and "start" do not work. It is somehow related to different firmware versions and other circumstances I do not fully understand at the moment. I already know how the other mappings look like (which button is which HID-usage), but I don't know yet how to differentiate them.

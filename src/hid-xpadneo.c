@@ -33,7 +33,7 @@ MODULE_VERSION("0.1.3");
  * Located at /sys/module//parameters
  */
 #ifdef DEBUG
-static u8 debug_level = 3;
+static u8 debug_level = 0;
 module_param(debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (maximum).");
 #endif
