@@ -71,10 +71,14 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 ## Debugging
 
+### Debug Output
 If you are asked to send debug info or want to fix bugs, enable debugging
-first in the driver:
+first in the driver and send the xpadneo related part
 
-`echo 3 > /sys/module/hid_xpadneo/parameters/debug_level`
+```
+echo 3 > /sys/module/hid_xpadneo/parameters/debug_level
+dmesg | grep xpadneo > ~/xpadneo_log
+```
 
 where `3` is the most verbose debug level. Disable debugging by setting the
 value back to `0`.
@@ -89,16 +93,14 @@ options hid_xpadneo debug_level=3
 
 Now, the driver will be initialized with debug level 3 during modprobe.
 
+### Mapping
+The Gamepad has different button mappings, thats the reason why sometimes
+buttons like "select" and "start" do not work. I think this is fixed now,
+but if you ever see any wrong mapping *please let me know*!
 
-## Support
+Please activate debug messages, reconnect your gamepad (turn it off and on
+again), press every button (A, B, X, Y, L1, R1, Start, Select, X-Box, ThumbL,
+ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry,
+Z, Rz) and upload your xpadneo-related `dmesg` output.
 
-The Gamepad has different button mappings, thats the reason why sometimes buttons like "select" and "start" do not work. I think this is fixed now, but if you ever see any wrong mapping *please let me know*!
-In order to make the debugging easier, please run:
-```
-sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
-sudo dmesg -C
-```
-Reconnect your gamepad (turn it off and on again), press every button (A, B, X, Y, L1, R1, Start, Select, X-Box, ThumbL, ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry, Z, Rz) and send me your xpadneo-related `dmesg` output
-```
-dmesg | grep xpadneo > ~/xpadneo_log
-```
+
