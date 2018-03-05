@@ -28,7 +28,7 @@ Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make`
   ```
   task raspi3
   ```
-  
+
 The Taskfile downloads your current kernel, copies the driver into the extracted folder and patches hid-core and l2cap. Then it compiles the kernel modules and copies the resulting driver to your local ./out directory.
 
 Until now the Taskfile is tested under the following Distributions

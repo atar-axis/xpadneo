@@ -345,7 +345,7 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
 
 	// This is an mapping is currently get at Ubuntu 17.01
-	
+
 	// report-descriptor:
 	// 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
 	// a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
