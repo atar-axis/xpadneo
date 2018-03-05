@@ -60,6 +60,15 @@ sudo task install
 - If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
 
+## Configuration
+
+The driver can be reconfigured at runtime by accessing the following sysfs
+files in `/sys/module/hid_xpadneo/parameters`:
+
+- `dpad_to_buttons`: Set to Y to map dpad directional input to button events,
+  defaults to N
+
+
 ## Debugging
 
 If you are asked to send debug info or want to fix bugs, enable debugging
