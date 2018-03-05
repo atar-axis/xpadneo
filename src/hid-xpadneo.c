@@ -13,12 +13,11 @@
  */
 
 #include <linux/hid.h>
-#include <linux/input.h>	/* ff_memless(), ... */
-#include <linux/module.h>	/* MODULE_*, module_*, ... */
-#include <linux/slab.h>		/* kzalloc(), kfree(), ... */
-#include <linux/delay.h>	/* mdelay(), ... */
+#include <linux/input.h>		/* ff_memless(), ... */
+#include <linux/module.h>		/* MODULE_*, module_*, ... */
+#include <linux/slab.h>			/* kzalloc(), kfree(), ... */
+#include <linux/delay.h>		/* mdelay(), ... */
 #include "hid-ids.h"
-
 
 #define DEBUG
 
@@ -28,17 +27,18 @@ MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux Kernel driver for XBOX ONE S and X gamepads (bluetooth), including force-feedback");
 MODULE_VERSION("0.1.3");
 
-
 /* MODULE PARAMETER
  * Located at /sys/module//parameters
  */
 #ifdef DEBUG
 static u8 debug_level = 0;
+
 module_param(debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (maximum).");
 #endif
 
 static bool dpad_to_buttons = 0;
+
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
@@ -65,7 +65,6 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
 		no_printk(KERN_DEBUG pr_fmt(fmt_prefix))
 #endif
-
 
 /*
  * FF Output Report
@@ -106,7 +105,6 @@ struct ff_report {
  */
 static const struct ff_data ff_clear;
 
-
 /*
  * Device Data
  *
@@ -121,7 +119,6 @@ struct xpadneo_devdata {
 	struct input_dev *idev;
 };
 
-
 /*
  * FORCE FEEDBACK CALLBACK
  *
@@ -129,8 +126,9 @@ struct xpadneo_devdata {
  * The effect data is set in userspace and sent to the driver via ioctl.
  */
 
-static int xpadneo_ff_play (struct input_dev *dev, void *data,
-	struct ff_effect *effect)
+static int
+xpadneo_ff_play(struct input_dev *dev, void *data,
+				struct ff_effect *effect)
 {
 	/* Q: where is drvdata set to hid_device?
 	 * A: hid_hw_start (called in probe)
@@ -148,9 +146,8 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 	strong = effect->u.rumble.strong_magnitude;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"playing effect: strong: %#04x, weak: %#04x\n", strong, weak
-	);
-
+				"playing effect: strong: %#04x, weak: %#04x\n",
+				strong, weak);
 
 	ff_package.ff = ff_clear;
 	ff_package.report_id = 0x03;
@@ -174,14 +171,14 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 	return 0;
 }
 
-
 /*
  * Device (Controller) Initialization
  *
  * This function is called "by hand" inside the probe-function.
  */
 
-static int xpadneo_initDevice (struct hid_device *hdev)
+static int
+xpadneo_initDevice(struct hid_device *hdev)
 {
 	int error;
 
@@ -193,7 +190,6 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 	struct input_dev *dev = hidinput->input;
 
 	struct ff_report ff_package;
-
 
 	/* 'HELLO' FROM THE OTHER SIDE */
 	ff_package.ff = ff_clear;
@@ -223,19 +219,21 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 	return 0;
 }
 
-
 enum mapping_behaviour {
-	MAP_IGNORE, /* completely ignore this field */
-	MAP_AUTO,   /* do not really map it, let hid-core decide */
-	MAP_STATIC  /* map to the values given */
+	MAP_IGNORE,					/* completely ignore this field */
+	MAP_AUTO,					/* do not really map it, let hid-core decide */
+	MAP_STATIC					/* map to the values given */
 };
 
 struct input_ev {
-   u8 event_type;	/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
-   u16 input_code;	/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
+	u8 event_type;				/* to which input event should the hid usage be mapped? (EV_KEY, EV_ABS, ...) */
+	u16 input_code;				/* to which input code do you want to input_ev? (BTN_SOUTH, ABS_X, ...) */
 };
 
-u8 map_hid_to_input_windows (struct hid_usage *usage, struct input_ev *map_to) {
+u8
+map_hid_to_input_windows(struct hid_usage *usage,
+						 struct input_ev *map_to)
+{
 
 	// Mapping for Windows behavior
 
@@ -285,7 +283,10 @@ u8 map_hid_to_input_windows (struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 }
 
-u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
+u8
+map_hid_to_input_linux(struct hid_usage * usage,
+					   struct input_ev * map_to)
+{
 
 	// Mapping for native Linux behavior
 
@@ -342,7 +343,10 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 }
 
-u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
+u8
+map_hid_to_input_unknown(struct hid_usage * usage,
+						 struct input_ev * map_to)
+{
 
 	// This is an mapping is currently get at Ubuntu 17.01
 
@@ -410,20 +414,21 @@ u8 map_hid_to_input_unknown (struct hid_usage *usage, struct input_ev *map_to) {
  * input_ev an input-event-code to every hid-usage.
  */
 
-static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
-			struct hid_field *field, struct hid_usage *usage,
-			unsigned long **bit, int *max)
+static int
+xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
+				struct hid_field *field, struct hid_usage *usage,
+				unsigned long **bit, int *max)
 {
 	/* return values */
 	enum {
-		RET_MAP_IGNORE=-1, /* completely ignore this input */
-		RET_MAP_AUTO,      /* let hid-core autodetect the mapping */
-		RET_MAP_STATIC     /* mapping done by hand, no further processing */
+		RET_MAP_IGNORE = -1,	/* completely ignore this input */
+		RET_MAP_AUTO,			/* let hid-core autodetect the mapping */
+		RET_MAP_STATIC			/* mapping done by hand, no further processing */
 	};
 
 	struct input_ev map_to;
-	u8 (*perform_mapping)(struct hid_usage*, struct input_ev*);
 
+	u8(*perform_mapping) (struct hid_usage *, struct input_ev *);
 
 	/* TODO:
 	 * use hid_get_drvdata(hdev) and ->quirks like hid-sony
@@ -478,7 +483,6 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	return RET_MAP_IGNORE;
 }
 
-
 /*
  * HID RAW EVENT HOOK
  *
@@ -487,13 +491,14 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
  * take a look at hid-sony.c
  */
 
-int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *data, int size)
+int
+xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
+				  u8 * data, int size)
 {
 	dbg_hex_dump_lvl(DBG_LVL_ALL, "xpadneo: raw_event: ", data, size);
 
 	return 0;
 }
-
 
 /*
  * REPORT FIXUP HOOK
@@ -502,14 +507,14 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
  * (printing out the whole report descriptor)
  */
 
-static u8 *xpadneo_report_fixup (struct hid_device *hdev, u8 *rdesc,
-	unsigned int *rsize)
+static u8 *
+xpadneo_report_fixup(struct hid_device *hdev, u8 * rdesc,
+					 unsigned int *rsize)
 {
 	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descriptor: ", rdesc, *rsize);
 
 	return rdesc;
 }
-
 
 /*
  * INPUT CONFIGURED HOOK
@@ -521,7 +526,9 @@ static u8 *xpadneo_report_fixup (struct hid_device *hdev, u8 *rdesc,
  * Furthermore we can set the idev value in xpadneo_data
  */
 
-static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *hi)
+static int
+xpadneo_input_configured(struct hid_device *hdev,
+						 struct hid_input *hi)
 {
 	struct input_dev *input = hi->input;
 
@@ -538,14 +545,14 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * - We should also send out ABS_HAT0X/Y events as mentioned on the
 	 *   official HID usage tables (p.34).
 	 */
-	if(dpad_to_buttons){
+	if (dpad_to_buttons) {
 		__set_bit(BTN_DPAD_UP, input->keybit);
 		__set_bit(BTN_DPAD_RIGHT, input->keybit);
 		__set_bit(BTN_DPAD_DOWN, input->keybit);
 		__set_bit(BTN_DPAD_LEFT, input->keybit);
 
 		__clear_bit(ABS_HAT0X, input->absbit);
-		__clear_bit(ABS_HAT0Y, input->absbit); /* TODO: necessary? */
+		__clear_bit(ABS_HAT0Y, input->absbit);	/* TODO: necessary? */
 	}
 
 	/*
@@ -559,8 +566,8 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * right constant!
 	 *
 	 * Either let hid-core decide itself or input_ev it to ABS_HAT0X/Y by hand:
-	 * #define ABS_HAT0X		0x10
-	 * #define ABS_HAT0Y		0x11
+	 * #define ABS_HAT0X        0x10
+	 * #define ABS_HAT0Y        0x11
 	 *
 	 * Q: I don't know why the usage number does not fit the official
 	 *    usage page numbers, however...
@@ -575,7 +582,6 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 
 	return 0;
 }
-
 
 /*
  * EVENT HOOK
@@ -592,13 +598,14 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
  * the corresponding keys in xpadneo_input_configured.
  */
 
-int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
-	struct hid_usage *usage, __s32 value)
+int
+xpadneo_event(struct hid_device *hdev, struct hid_field *field,
+			  struct hid_usage *usage, __s32 value)
 {
 	/* return codes */
 	enum {
-		EV_CONT_PROCESSING, /* let the hid-core autodetect the event */
-		EV_STOP_PROCESSING  /* stop further processing */
+		EV_CONT_PROCESSING,		/* let the hid-core autodetect the event */
+		EV_STOP_PROCESSING		/* stop further processing */
 	};
 
 	/* TODO: use hid_get_drvdata instead */
@@ -656,30 +663,27 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 		return EV_CONT_PROCESSING;
 	}
 
-
-
 	return EV_CONT_PROCESSING;
 }
-
 
 /*
  * DEVICE PROBE AND REMOVE HOOK
  */
 
-static int xpadneo_probe_device (struct hid_device *hdev,
-	const struct hid_device_id *id)
+static int
+xpadneo_probe_device(struct hid_device *hdev,
+					 const struct hid_device_id *id)
 {
 	int ret;
 	struct xpadneo_devdata *xdata;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hello %s\n", hdev->name);
 
-
 	/* create a "nearly globally" accessible data structure
 	 * (accessible through hid_get_drvdata)
 	 * the structure is freed automatically as soon as hdev->dev is removed
 	 */
-	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
+	xdata = devm_kzalloc(&hdev->dev, sizeof (*xdata), GFP_KERNEL);
 	if (xdata == NULL) {
 		hid_err(hdev, "can't allocate xdata\n");
 		return -ENOMEM;
@@ -696,7 +700,7 @@ static int xpadneo_probe_device (struct hid_device *hdev,
 
 	/* debugging */
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "- dev_rdesc: (see above)\n"); // this is the original hid device descriptor
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "- dev_rdesc: (see above)\n");	// this is the original hid device descriptor
 	// rdesc: this is the hid device descriptor after fixup!
 	// debug report: sudo cat /sys/kernel/debug/hid/0005:045E:02FD.000B/rdesc
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "- dev_rsize (original report size): %u\n", hdev->dev_rsize);
@@ -728,8 +732,8 @@ err:
 	return ret;
 }
 
-
-static void xpadneo_remove_device(struct hid_device *hdev)
+static void
+xpadneo_remove_device(struct hid_device *hdev)
 {
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "trying to stop underlying hid hw...\n");
@@ -738,7 +742,6 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "goodbye %s\n", hdev->name);
 }
-
 
 /*
  * Device ID Structure
@@ -757,11 +760,11 @@ static const struct hid_device_id xpadneo_devices[] = {
 	 */
 
 	/* XBOX ONE S */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
 	/* XBOX ONE X (project scorpio) */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
-	/* SENTINEL VALUE, indicates the end*/
-	{ }
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
+	/* SENTINEL VALUE, indicates the end */
+	{}
 };
 
 static struct hid_driver xpadneo_driver = {
@@ -800,8 +803,6 @@ static struct hid_driver xpadneo_driver = {
 
 MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 
-
-
 /*
  * MODULE INIT AND EXIT
  *
@@ -813,13 +814,15 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
  * do _not_ use both! (module_hid_driver and hid_register/unregister_driver)
  */
 
-static int __init xpadneo_initModule(void)
+static int __init
+xpadneo_initModule(void)
 {
 	printk("%s: hello there!\n", xpadneo_driver.name);
 	return hid_register_driver(&xpadneo_driver);
 }
 
-static void __exit xpadneo_exitModule(void)
+static void __exit
+xpadneo_exitModule(void)
 {
 	hid_unregister_driver(&xpadneo_driver);
 	printk("%s: goodbye!\n", xpadneo_driver.name);
@@ -828,4 +831,3 @@ static void __exit xpadneo_exitModule(void)
 /* telling the driver system which functions to call at initialization and removal of the module */
 module_init(xpadneo_initModule);
 module_exit(xpadneo_exitModule);
-
