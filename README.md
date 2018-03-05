@@ -76,7 +76,7 @@ If you are asked to send debug info or want to fix bugs, enable debugging
 first in the driver and send the xpadneo related part
 
 ```
-echo 3 > /sys/module/hid_xpadneo/parameters/debug_level
+sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
 dmesg | grep xpadneo > ~/xpadneo_log
 ```
 
@@ -87,8 +87,7 @@ You may want to set the debug level at load time of the driver. You can do
 this by applying the setting to modprobe:
 
 ```
-$ cat /etc/modprobe.d/xpadneo.conf
-options hid_xpadneo debug_level=3
+sudo /bin/bash -c 'options hid_xpadneo debug_level=3 > /etc/modprobe.d/xpadneo.conf'
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
