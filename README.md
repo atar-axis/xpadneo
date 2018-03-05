@@ -98,7 +98,7 @@ In order to make the debugging easier, please run:
 sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
 sudo dmesg -C
 ```
-Please reconnect your gamepad, press every button once and send me your xpadneo-realted `dmesg` output
+Reconnect your gamepad (turn it off and on again), press every button (A, B, X, Y, L1, R1, Start, Select, X-Box, ThumbL, ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry, Z, Rz) and send me your xpadneo-related `dmesg` output
 ```
 dmesg | grep xpadneo > ~/xpadneo_log
 ```
