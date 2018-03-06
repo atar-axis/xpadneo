@@ -71,10 +71,14 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 ## Debugging
 
+### Debug Output
 If you are asked to send debug info or want to fix bugs, enable debugging
-first in the driver:
+first in the driver and send the xpadneo related part
 
-`echo 3 > /sys/module/hid_xpadneo/parameters/debug_level`
+```
+sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
+dmesg | grep xpadneo > ~/xpadneo_log
+```
 
 where `3` is the most verbose debug level. Disable debugging by setting the
 value back to `0`.
@@ -83,40 +87,19 @@ You may want to set the debug level at load time of the driver. You can do
 this by applying the setting to modprobe:
 
 ```
-$ cat /etc/modprobe.d/xpadneo.conf
-options hid_xpadneo debug_level=3
+sudo /bin/bash -c 'echo "options hid_xpadneo debug_level=3" > /etc/modprobe.d/xpadneo.conf'
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
 
+### Mapping
+The Gamepad has different button mappings, thats the reason why sometimes
+buttons like "select" and "start" do not work. I think this is fixed now,
+but if you ever see any wrong mapping *please let me know*!
 
-## Known Bugs
+Please activate debug messages, reconnect your gamepad (turn it off and on
+again), press every button (A, B, X, Y, L1, R1, Start, Select, X-Box, ThumbL,
+ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry,
+Z, Rz) and upload your xpadneo-related `dmesg` output.
 
-The Gamepad has different button mappings, thats the reason why sometimes buttons like "select" and "start" do not work. It is somehow related to different firmware versions and other circumstances I do not fully understand at the moment. I already know how the other mappings look like (which button is which HID-usage), but I don't know yet how to differentiate them.
-Please! If you recognize a wrong mapping, please run `dmesg` and tell me what you see (dollinger.florian@gmx.de).
 
-What I need looks the following:
-```
-report-descriptor:
-05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
-a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
-0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
-75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
-15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
-75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
-0c 09 01 85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03
-c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09
-70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
-00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
-09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-hdev:
-- dev_rdesc: (see above)
-- dev_rsize (original report size): 335
-- bus: 0x0005
-- report group: 0
-- vendor: 0x0000045E
-- version: 0x00000903
-- product: 0x000002FD
-- country: 33
-- driverdata: 0
-```
