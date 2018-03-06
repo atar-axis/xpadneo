@@ -59,7 +59,9 @@ sudo task install
 
 #### Problems
 
-- If bluetooth isn't a module but builtin, you can alternatively run `sudo /bin/bash -c "echo 1 > /sys/module/bluetooth/parameters/disable_ertm"` before connecting the controller to the computer.
+- If bluetooth isn't a module but builtin, you can alternatively run
+  `echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
+  before connecting the controller to the computer.
 
 - If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
@@ -77,10 +79,10 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 ### Debug Output
 If you are asked to send debug info or want to fix bugs, enable debugging
-first in the driver and send the xpadneo related part
+first in the driver and upon request send the xpadneo related part:
 
 ```
-sudo /bin/bash -c 'echo 3 > /sys/module/hid_xpadneo/parameters/debug_level'
+echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level
 dmesg | grep xpadneo > ~/xpadneo_log
 ```
 
@@ -91,7 +93,7 @@ You may want to set the debug level at load time of the driver. You can do
 this by applying the setting to modprobe:
 
 ```
-sudo /bin/bash -c 'echo "options hid_xpadneo debug_level=3" > /etc/modprobe.d/xpadneo.conf'
+echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/xpadneo.conf
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
