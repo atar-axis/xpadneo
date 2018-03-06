@@ -335,7 +335,6 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 }
 
-
 /* INPUT MAPPING HOOK
  *
  * Invoked at input registering before mapping an usage
@@ -343,8 +342,8 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
  */
 
 static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
-			struct hid_field *field, struct hid_usage *usage,
-			unsigned long **bit, int *max)
+	struct hid_field *field, struct hid_usage *usage,
+	unsigned long **bit, int *max)
 {
 	/* return values */
 	enum {
@@ -355,7 +354,7 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 
 	struct input_ev map_to;
 	u8 (*perform_mapping)(struct hid_usage*, struct input_ev*);
-
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 
 
@@ -374,11 +373,10 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	 * maybe the length of the report-descriptor is a better indicator which mapping
 	 * we should use?
 	 */
-	switch (hdev->product) {
-	case 0x02E0: perform_mapping = map_hid_to_input_linux; break;
-	case 0x02FD: perform_mapping = map_hid_to_input_linux; break;
-	default:
-		return RET_MAP_AUTO;
+	switch (xdata->report_descriptor) {
+	case LINUX:   perform_mapping = map_hid_to_input_linux; break;
+	case WINDOWS: perform_mapping = map_hid_to_input_windows; break;
+	default:      return RET_MAP_AUTO;
 	}
 
 
@@ -412,6 +410,22 @@ static int xpadneo_mapping (struct hid_device *hdev, struct hid_input *hi,
 	return RET_MAP_IGNORE;
 }
 
+/* REPORT FIXUP HOOK
+ *
+ * This is only used for development purposes
+ * (printing out the whole report descriptor)
+ */
+
+static u8 *xpadneo_report_fixup (struct hid_device *hdev, u8 *rdesc,
+	unsigned int *rsize)
+{
+
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT (DESCRIPTOR) FIXUP HOOK, called before report descriptor parsing\n");
+	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descriptor: ", rdesc, *rsize);
+
+	return rdesc;
+}
+
 
 /* HID RAW EVENT HOOK
  *
@@ -432,21 +446,23 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", 1+(report->size)/8);
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size: %d\n", reportsize);
 
-	/* the first input report with an id of 0x01 decides which report-type the
-	 * controller is sending (windows or linux?).
+	/*
+	 * the first input report with an id of 0x01 reveals which
+	 * report-type the controller is sending (windows or linux).
 	 */
 	if (report_behaviour_known == false && report->id == 01) {
 
 		if (reportsize == windows_report1_length) {
 			xdata->report_behaviour = WINDOWS;
 			report_behaviour_known = true;
+
 			hid_dbg_lvl(DBG_LVL_ALL, hdev, "argl, descriptor and behaviour do not fit!");
 
-			/* we cannot fix the report here, because we are missing one byte,
-			 * but we could parse the event ourself here as this is done in
-			 * hid-sony, but at least for now we do it a bit later in the
-			 * event_hook. both solutions are dirty, what we really would need
-			 * is a way to call the mapping hook again - by hand.
+			/* TODO:
+			 * The best solution would be to replace the report descriptor in case that
+			 * the wrong reports are sent. Unfortunately I don't know yet how one can
+			 * replace the descriptor _after_ the report_fixup hook by hand. I fix it
+			 * the other way (translate the report/event) until I found a better solution.
 			 */
 
 		} else if (reportsize == linux_report1_length) {
@@ -464,36 +480,15 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
 	/* write back xdata */
 	hid_set_drvdata(hdev, xdata);
 
+	/* continue processing */
 	return 0;
 }
 
-void xpadneo_report(struct hid_device *hdev, struct hid_report *report){
-
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK, called right after parsing a report\n");
-
-	/* the report is already parsed here and we cannot change it anymore
-	 * we therefore need another place to manipulate the report
-	 * raw_event() is one possibility, but it isn't a good one maybe
-	 * we will see...
-	 */
-}
-
-
-/* REPORT FIXUP HOOK
- *
- * This is only used for development purposes
- * (printing out the whole report descriptor)
- */
-
-static u8 *xpadneo_report_fixup (struct hid_device *hdev, u8 *rdesc,
-	unsigned int *rsize)
+void xpadneo_report (struct hid_device *hdev, struct hid_report *report)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT (DESCRIPTOR) FIXUP HOOK, called before report descriptor parsing\n");
-
-	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descriptor: ", rdesc, *rsize);
-
-	return rdesc;
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK, called right after parsing a report\n");
 }
+
 
 
 /* INPUT CONFIGURED HOOK
@@ -589,31 +584,42 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
 	struct input_dev *idev = hidinput->input;
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x, input-code: %02x, value: %02x\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE), usage->code, value );
 
+	/* TODO:
+	 * This is the workaround for the wrong report (Windows report but Linux descriptor)
+	 * We would prefer to fixup the descriptor, but we cannot fix it anymore at the time
+	 * we recognize the wrong behaviour.
+	 */
+	if (xdata->report_behaviour == WINDOWS && xdata->report_descriptor == LINUX) {
 
-	/* Fix the wrong Windows events */
-	if (xdata->report_behaviour == WINDOWS
-     && xdata->report_descriptor == LINUX) {
+		/* 
+		 * we fix all buttons by hand. You may think that we
+		 * could do that by using the windows_map too, but it is more
+		 * like an coincidence that this would work in this special case:
+		 * It would only, because HID_UP_BUTTONS has no special names
+		 * for the HID_USAGE's, therefore the first button stays 0x01
+		 * on both reports (windows and linux) - so it is a 1:1 mapping.
+		 * But this is not true in general (i.e. not for other USAGE_PAGES)
+		 */
 
-		struct input_ev map_to;
-		
-		if(map_hid_to_input_windows(usage, &map_to) == MAP_STATIC) {
-
-			switch (map_to.event_type) {
-			case EV_KEY:
-				input_report_key(idev, map_to.input_code, value);
-				hid_dbg_lvl(DBG_LVL_ALL, hdev, "fixed: hid usage %03x to input-code %03x\n", usage->hid & HID_USAGE, map_to.input_code);
-				break;
-			case EV_ABS:
-				input_report_abs(idev, map_to.input_code, value);
-				break;
+		if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
+			switch (usage->hid & HID_USAGE) {
+			case 0x01: input_report_key(idev, BTN_A, value); break;
+			case 0x02: input_report_key(idev, BTN_B, value); break;
+			case 0x03: input_report_key(idev, BTN_X, value); break;
+			case 0x04: input_report_key(idev, BTN_Y, value); break;
+			case 0x05: input_report_key(idev, BTN_TL, value); break;
+			case 0x06: input_report_key(idev, BTN_TR, value); break;
+			case 0x07: input_report_key(idev, BTN_SELECT, value); break;
+			case 0x08: input_report_key(idev, BTN_START, value); break;
+			case 0x09: input_report_key(idev, BTN_THUMBL, value); break;
+			case 0x0A: input_report_key(idev, BTN_THUMBR, value); break;
 			}
 
+			hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x fixed\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE) );
 			return EV_STOP_PROCESSING;
 		}
 	}
-
 
 	/* Yep, this is the D-pad event */
 	if ((usage->hid & HID_USAGE) == 0x39) {
@@ -659,16 +665,15 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 		input_report_key(idev, BTN_DPAD_RIGHT, ((value >= 2) && (value <= 4)));
 		input_report_key(idev, BTN_DPAD_DOWN, ((value >= 4) && (value <= 6)));
 		input_report_key(idev, BTN_DPAD_LEFT, ((value >= 6) && (value <= 8)));
-
-		return EV_CONT_PROCESSING;
 	}
+
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x, input-code: %02x, value: %02x\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE), usage->code, value );
 
 	return EV_CONT_PROCESSING;
 }
 
 
-/* DEVICE PROBE AND REMOVE HOOK
- */
+/* DEVICE PROBE AND REMOVE HOOK */
 
 static int xpadneo_probe_device (struct hid_device *hdev, const struct hid_device_id *id)
 {
@@ -745,7 +750,6 @@ err:
 
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
-
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "trying to stop underlying hid hw...\n");
 	hid_hw_stop(hdev);
 	/* TODO: do we need hid_hw_close too? */
