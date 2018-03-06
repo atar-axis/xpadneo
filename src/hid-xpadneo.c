@@ -13,11 +13,12 @@
  */
 
 #include <linux/hid.h>
-#include <linux/input.h>	/* ff_memless(), ... */
-#include <linux/module.h>	/* MODULE_*, module_*, ... */
-#include <linux/slab.h>		/* kzalloc(), kfree(), ... */
-#include <linux/delay.h>	/* mdelay(), ... */
-#include "hid-ids.h"
+#include <linux/power_supply.h>
+#include <linux/input.h>		/* ff_memless(), ... */
+#include <linux/module.h>		/* MODULE_*, module_*, ... */
+#include <linux/slab.h>			/* kzalloc(), kfree(), ... */
+#include <linux/delay.h>		/* mdelay(), ... */
+#include "hid-ids.h"			/* VENDOR_ID... */
 
 
 #define DEBUG
@@ -33,7 +34,7 @@ MODULE_VERSION("0.1.3");
 #ifdef DEBUG
 static u8 debug_level = 0;
 module_param(debug_level, byte, 0644);
-MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (maximum).");
+MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
 static bool dpad_to_buttons = 0;
@@ -114,10 +115,20 @@ enum report_type {
 };
 
 struct xpadneo_devdata {
+
+	/* devices */
 	struct hid_device *hdev;
 	struct input_dev *idev;
+
+	/* report types */
 	enum report_type report_descriptor;
 	enum report_type report_behaviour;
+
+	/* battery information */
+	struct power_supply *batt;
+	struct power_supply_desc battery_desc;
+	u8 cable_state;
+	u8 capacity_level;
 };
 
 
@@ -214,6 +225,105 @@ static int xpadneo_initDevice (struct hid_device *hdev)
 	}
 
 	return 0;
+}
+
+
+/* callback function which return the available properties to userspace */
+static int battery_get_property (struct power_supply *ps,
+	enum power_supply_property property, union power_supply_propval *val)
+{
+	struct xpadneo_devdata *xdata = power_supply_get_drvdata(ps);
+	//unsigned long flags;
+	int ret = 0;
+	u8 capacity_level, cable_state;
+
+	// TODO: spin_lock_irqsave(&xdata->lock, flags);
+	capacity_level = xdata->capacity_level;
+	cable_state = xdata->cable_state;
+	// TODO: spin_unlock_irqrestore(&xdata->lock, flags);
+
+	switch (property) {
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
+		break;
+	case POWER_SUPPLY_PROP_SCOPE:
+		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		val->intval = capacity_level;
+		break;
+/*	case POWER_SUPPLY_PROP_STATUS:
+		if (battery_charging)
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else
+			if (capacity_level == 100 && cable_state)
+				val->intval = POWER_SUPPLY_STATUS_FULL;
+			else
+				val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;*/
+	default:
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}
+
+static int xpadneo_initBatt (struct hid_device *hdev)
+{
+	int ret;
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	static enum power_supply_property battery_props[] = {
+		POWER_SUPPLY_PROP_PRESENT,        /* is a power supply available? always true */
+		POWER_SUPPLY_PROP_CAPACITY_LEVEL, /* critical, low, normal, high, full */
+		POWER_SUPPLY_PROP_SCOPE,          /* powers a specific device */
+		//POWER_SUPPLY_PROP_STATUS,         /* charging, not_charging */
+	};
+
+	struct power_supply_config ps_config = {
+		.drv_data = xdata	/* pass the xpadneo_data to the get_property function */
+	};
+
+
+	xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+
+	/* set up power supply */
+
+	xdata->battery_desc.name = kasprintf(GFP_KERNEL, "unique_dummy_name_battery");
+	if (!xdata->battery_desc.name)
+		return -ENOMEM;
+	xdata->battery_desc.type = POWER_SUPPLY_TYPE_BATTERY;
+
+	/* which properties of the battery are accessible? */
+	xdata->battery_desc.properties = battery_props;
+	xdata->battery_desc.num_properties = ARRAY_SIZE(battery_props);
+
+	/* we have to offer a function which returns the current
+	 * property values we defined above. please make sure that
+	 * the get_property functions covers all properties above.
+	 */
+	xdata->battery_desc.get_property = battery_get_property;
+	
+	/* advanced power management emulation */
+	xdata->battery_desc.use_for_apm = 0;
+
+
+
+	/* register power supply for our gamepad device */
+	xdata->batt = power_supply_register(&hdev->dev, &xdata->battery_desc, &ps_config);
+	if (IS_ERR(xdata->batt)) {
+		ret = PTR_ERR(xdata->batt);
+		hid_err(hdev, "Unable to register battery device\n");
+		goto err_free;
+	}
+	power_supply_powers(xdata->batt, &hdev->dev);
+
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "power supply registered\n");
+
+err_free:
+	kfree(xdata->battery_desc.name);
+	xdata->battery_desc.name = NULL;
+	return ret;
 }
 
 
@@ -436,7 +546,6 @@ static u8 *xpadneo_report_fixup (struct hid_device *hdev, u8 *rdesc,
 
 int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *data, int reportsize)
 {
-	static bool report_behaviour_known = false;
 	const int windows_report1_length = 16;
 	const int linux_report1_length = 17;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -450,11 +559,10 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
 	 * the first input report with an id of 0x01 reveals which
 	 * report-type the controller is sending (windows or linux).
 	 */
-	if (report_behaviour_known == false && report->id == 01) {
+	if (xdata->report_behaviour == UNKNOWN && report->id == 01) {
 
 		if (reportsize == windows_report1_length) {
 			xdata->report_behaviour = WINDOWS;
-			report_behaviour_known = true;
 
 			hid_dbg_lvl(DBG_LVL_ALL, hdev, "argl, descriptor and behaviour do not fit!");
 
@@ -467,7 +575,6 @@ int xpadneo_raw_event (struct hid_device *hdev, struct hid_report *report, u8 *d
 
 		} else if (reportsize == linux_report1_length) {
 			xdata->report_behaviour = LINUX;
-			report_behaviour_known = true;
 			
 			/* nothing to do here */
 
@@ -590,6 +697,9 @@ int xpadneo_event (struct hid_device *hdev, struct hid_field *field,
 	 * We would prefer to fixup the descriptor, but we cannot fix it anymore at the time
 	 * we recognize the wrong behaviour.
 	 */
+
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %d, beh: %d\n", xdata->report_descriptor, xdata->report_behaviour);
+
 	if (xdata->report_behaviour == WINDOWS && xdata->report_descriptor == LINUX) {
 
 		/* 
@@ -694,14 +804,14 @@ static int xpadneo_probe_device (struct hid_device *hdev, const struct hid_devic
 	}
 
 	xdata->hdev = hdev;
+	/* unknown until first report with id 01 (see raw_event) */
+	xdata->report_behaviour = UNKNOWN;
 
 	switch (hdev->dev_rsize){
 	case 307: xdata->report_descriptor = WINDOWS; break;
 	case 335: xdata->report_descriptor = LINUX;   break;
+	default:  xdata->report_descriptor = UNKNOWN; break;
 	}
-
-	// unknown until first report with id 01 (see raw_event)
-	xdata->report_behaviour = UNKNOWN;
 
 	hid_set_drvdata(hdev, xdata);
 
@@ -737,8 +847,10 @@ static int xpadneo_probe_device (struct hid_device *hdev, const struct hid_devic
 		goto err;
 	}
 
-	/* call the device initialization routine, including a "hello"-rumblepackage */
+	/* call the device initialization routines */
 	xpadneo_initDevice(hdev);
+	xpadneo_initBatt(hdev);
+
 
 	/* everything is fine */
 	return 0;
@@ -750,9 +862,24 @@ err:
 
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	hid_hw_close(hdev);
+
+
+
+	/* TODO:
+	if (!sc->battery_desc.name)
+		return;
+	*/
+	power_supply_unregister(xdata->batt);
+	//kfree(sc->battery_desc.name);
+	//sc->battery_desc.name = NULL;
+
+
+
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "trying to stop underlying hid hw...\n");
 	hid_hw_stop(hdev);
-	/* TODO: do we need hid_hw_close too? */
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "goodbye %s\n", hdev->name);
 }
