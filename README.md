@@ -1,3 +1,7 @@
+Many many thanks to *Kai Krakow* who sponsored me a Xbox One Controller (including Wireless Adapter) and a pack of guarana cacao ;D
+
+---
+
 *This is a ALPHA version! It works, but there is still A LOT to do.*
 
 ---
