@@ -253,7 +253,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	input_report_key(idev, BTN_START, 0);
 	input_report_key(idev, BTN_MODE, 0);
 	input_report_key(idev, ABS_HAT0X, 0);
-	input_report_key(idev, ABS_HAT0X, 1);
+	input_report_key(idev, ABS_HAT0Y, 0);
 	input_sync(idev);
 
 	/* TODO: - do not hardcode codes and values but
