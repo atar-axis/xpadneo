@@ -30,27 +30,27 @@ local_main:
     - task: download
       vars: {DL_DIR: "dl", LINK: "https://www.kernel.org/pub/linux/kernel/v4.x/linux-{{.K_VER_DL}}.tar.gz"}
     - task: unpack
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", FILE: "dl/linux-{{.K_VER_DL}}.tar.gz", DEST_DIR: "build"}
+      vars: {ROOT_DIR: "build", FILE: "dl/linux-{{.K_VER_DL}}.tar.gz", DEST_DIR: "build"}
     - task: copy_driver
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: patch_src
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", PATCHES_DIR: "src/patches"}
+      vars: {ROOT_DIR: "build", PATCHES_DIR: "src/patches"}
     - task: configure_src_from_local
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: make_scripts
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: try_copy_modulesymvers_linux_headers
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: make_modulesymvers_if_not_there
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: build_hid
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: build_xpad
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: build_bluetooth
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}"}
+      vars: {ROOT_DIR: "build"}
     - task: backup_modules
-      vars: {ROOT_DIR: "build/linux-{{.K_VER_DL}}", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
+      vars: {ROOT_DIR: "build", BCK_DIR: "out/x86_64/{{.K_VER_LONG}}"}
         
 
 # BUILD FOR RASPBERRY PI 3
@@ -122,10 +122,9 @@ unpack:
     - task: folder_exists
       vars: {FOLDER: "build"}
   cmds:
-    - tar --totals --extract --ungzip --file={{.FILE}} --directory={{.DEST_DIR}}/
+    - tar --totals --extract --ungzip --file={{.FILE}} --directory={{.DEST_DIR}}/ --strip-components=1
   status:
-    # todo: dirty test...
-    - test -d {{.ROOT_DIR}}
+    - test -f {{.DEST_DIR}}/Makefile
 
 
 download:

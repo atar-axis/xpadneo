@@ -1,15 +1,8 @@
 {
 	"folders": [
 		{
-			"path": "src"
+			"path": "build"
 		}
 	],
-	"settings": {
-		"files.associations": {
-			"hid.h": "c",
-			"input.h": "c"
-		},
-		"git.enabled": false,
-		"editor.rulers": [80]
-	},
+	"settings": {}
 }
