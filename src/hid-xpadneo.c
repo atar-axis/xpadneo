@@ -32,19 +32,19 @@ MODULE_VERSION("0.1.3");
 
 /* Module Parameters, located at /sys/module/.../parameters */
 #ifdef DEBUG
-static u8 debug_level = 0;
+static u8 debug_level;
 module_param(debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
-static bool dpad_to_buttons = 0;
+static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
 
 /*
  * Debug Printk
- * 
+ *
  * Prints a debug message to kernel (dmesg)
  * only if both is true, this is a DEBUG version and the
  * debug_level-parameter is equal or higher than the level
@@ -58,9 +58,13 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
-		if(debug_level >= lvl) hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), pr_fmt(fmt_str), ##__VA_ARGS__)
+	do { \
+		if (debug_level >= lvl) hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), pr_fmt(fmt_str), ##__VA_ARGS__); \
+	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
-		if(debug_level >= lvl) print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), DUMP_PREFIX_NONE, 32, 1, data, size, false);
+	do { \
+		if (debug_level >= lvl) print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), DUMP_PREFIX_NONE, 32, 1, data, size, false); \
+	} while (0)
 #else
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 		no_printk(KERN_DEBUG pr_fmt(fmt_str), ##__VA_ARGS__)
@@ -76,13 +80,13 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
  * about this structure please take a look in the hid-report description.
  * Please notice that the structs are __packed, therefore there is no "padding"
  * between the elements (they behave more like an array).
- * 
- * TODO: 
+ *
+ * TODO:
  * Use sth. which is aware of the endianess, i.e. __le16 and __le16_to_cpu()
  */
 
-#define FF_ENABLE_RMBL_LEFT     0b10
-#define FF_ENABLE_RMBL_RIGHT    0b01
+#define FF_ENABLE_RMBL_LEFT  0x02
+#define FF_ENABLE_RMBL_RIGHT 0x01
 
 struct ff_data {
 	u8 enable_actuators;
@@ -144,7 +148,7 @@ struct xpadneo_devdata {
  * The effect data is set in userspace and sent to the driver via ioctl.
  */
 
-static int xpadneo_ff_play (struct input_dev *dev, void *data,
+static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	struct ff_effect *effect)
 {
 	/* Q: where is drvdata set to hid_device?
@@ -175,14 +179,14 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 
 	/* It is up to the Input-Subsystem to start and stop the effect as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
-	 * Take a look here: 
-	 * https           : //stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
+	 * Take a look here:
+	 * https://stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
 	 * We therefore simply play the effect as long as possible, which is
 	 * 2, 55s * 255 = 650, 25s ~ = 10min
 	 */
 	ff_package.ff.duration   = 0xFF;
 	ff_package.ff.loop_count = 0xFF;
-	hid_hw_output_report(hdev, (u8*)&ff_package, sizeof(ff_package));
+	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
 
 	return 0;
 }
@@ -212,7 +216,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_RIGHT;
 	ff_package.ff.magnitude_right  = 0x99;
 	ff_package.ff.duration         = 50;
-	hid_hw_output_report(hdev, (u8*)&ff_package, sizeof(ff_package));
+	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
 
 	mdelay(500);
 
@@ -221,20 +225,19 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_LEFT;
 	ff_package.ff.magnitude_left   = 0x99;
 	ff_package.ff.duration         = 50;
-	hid_hw_output_report(hdev, (u8*)&ff_package, sizeof(ff_package));
+	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
 
 
 	/* Init Input System for Force Feedback (FF) */
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
 	error = input_ff_create_memless(idev, NULL, xpadneo_ff_play);
-	if (error) {
+	if (error)
 		return error;
-	}
 
 
 	/*
 	 * Set default values, otherwise tools which depend on the joystick
-	 * subsystem, report arbitrary values until the first real event 
+	 * subsystem, report arbitrary values until the first real event
 	 */
 	input_report_abs(idev, ABS_X, 32768);
 	input_report_abs(idev, ABS_Y, 32768);
@@ -266,7 +269,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 
 
 /* Callback function which return the available properties to userspace */
-static int battery_get_property (struct power_supply *ps,
+static int battery_get_property(struct power_supply *ps,
 	enum power_supply_property property, union power_supply_propval *val)
 {
 	struct xpadneo_devdata *xdata = power_supply_get_drvdata(ps);
@@ -279,13 +282,13 @@ static int battery_get_property (struct power_supply *ps,
 	spin_unlock_irqrestore(&xdata->lock, flags);
 
 	switch (property) {
-	case POWER_SUPPLY_PROP_PRESENT: 
+	case POWER_SUPPLY_PROP_PRESENT:
 		val->intval = 1;
 		break;
-	case POWER_SUPPLY_PROP_SCOPE: 
+	case POWER_SUPPLY_PROP_SCOPE:
 		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
 		break;
-	case POWER_SUPPLY_PROP_CAPACITY_LEVEL: 
+	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
 		val->intval = capacity_level;
 		break;
 	case POWER_SUPPLY_PROP_STATUS:
@@ -296,9 +299,8 @@ static int battery_get_property (struct power_supply *ps,
 		}
 		break;
 
-	default: 
+	default:
 		return -EINVAL;
-		break;
 	}
 
 	return 0;
@@ -346,7 +348,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	 * the get_property functions covers all properties above.
 	 */
 	xdata->battery_desc.get_property = battery_get_property;
-	
+
 	/* Advanced power management emulation */
 	xdata->battery_desc.use_for_apm = 0;
 
@@ -362,7 +364,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "power supply registered\n");
 
-err_free: 
+err_free:
 	kfree(xdata->battery_desc.name);
 	xdata->battery_desc.name = NULL;
 	return ret;
@@ -377,15 +379,16 @@ enum mapping_behaviour {
 
 struct input_ev {
 	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
- 	u8 event_type;
+	u8 event_type;
 	/* Map to which input code (BTN_A, ABS_X, ...)? */
-	u16 input_code;	
+	u16 input_code;
 };
 
-u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
+{
 
 	/*
-	 * Windows report-descriptor (307 byte): 
+	 * Windows report-descriptor (307 byte):
 	 *
 	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
 	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 33 09 34 15 00
@@ -409,7 +412,7 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
 
 	switch (hid_usage_page) {
-	case HID_UP_BUTTON: 
+	case HID_UP_BUTTON:
 		switch (hid_usage) {
 		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
 		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
@@ -422,7 +425,7 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
 		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
 		}
-	case HID_UP_GENDESK: 
+	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
 		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
@@ -438,10 +441,11 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
 	return MAP_IGNORE;
 }
 
-u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
+u8 map_hid_to_input_linux(struct hid_usage *usage, struct input_ev *map_to)
+{
 
 	/*
-	 * Linux report-descriptor (335 byte): 
+	 * Linux report-descriptor (335 byte):
 	 *
 	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
 	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 32 09 35 15 00
@@ -465,8 +469,8 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 	unsigned int hid_usage = usage->hid & HID_USAGE;
 	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
 
-	switch(hid_usage_page) {
-	case HID_UP_BUTTON: 
+	switch (hid_usage_page) {
+	case HID_UP_BUTTON:
 		switch (hid_usage) {
 		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
 		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
@@ -478,12 +482,12 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x0E: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL};  return MAP_STATIC;
 		case 0x0F: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR};  return MAP_STATIC;
 		}
-	case HID_UP_CONSUMER: 
+	case HID_UP_CONSUMER:
 		switch (hid_usage) {
 		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};   return MAP_STATIC;
 		case 0x224: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
 		}
-	case HID_UP_GENDESK: 
+	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};   return MAP_STATIC;
 		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};   return MAP_STATIC;
@@ -491,7 +495,7 @@ u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};  return MAP_STATIC;
 		case 0x39: *map_to = (struct input_ev){0, 0};            return MAP_AUTO;
 		}
-	case HID_UP_SIMULATION: 
+	case HID_UP_SIMULATION:
 		switch (hid_usage) {
 		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ};  return MAP_STATIC;
 		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};   return MAP_STATIC;
@@ -521,33 +525,33 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 	};
 
 	struct input_ev map_to;
-	u8 (*perform_mapping)(struct hid_usage*, struct input_ev*);
+	u8 (*perform_mapping)(struct hid_usage *usage, struct input_ev *map_to);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 
 	switch (xdata->report_descriptor) {
-	case LINUX  : perform_mapping = map_hid_to_input_linux; break;
+	case LINUX:   perform_mapping = map_hid_to_input_linux; break;
 	case WINDOWS: perform_mapping = map_hid_to_input_windows; break;
-	     default: return RET_MAP_AUTO;
+	default:      return RET_MAP_AUTO;
 	}
 
 
-	switch(perform_mapping(usage, &map_to)){
-	case MAP_AUTO: 
+	switch (perform_mapping(usage, &map_to)) {
+	case MAP_AUTO:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"UP: 0x%04X, USG: 0x%04X -> automatically\n",
 		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
 
 		return RET_MAP_AUTO;
 
-	case MAP_IGNORE: 
+	case MAP_IGNORE:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"UP: 0x%04X, USG: 0x%04X -> ignored\n",
 		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
 
 		return RET_MAP_IGNORE;
 
-	case MAP_STATIC: 
+	case MAP_STATIC:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"UP: 0x%04X, USG: 0x%04X -> EV: 0x%03X, INP: 0x%03X\n",
 		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE,
@@ -584,8 +588,8 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	/*
-	 * Behaviour on AA Mignon Batteries: 
-	 * 
+	 * Behaviour on AA Mignon Batteries:
+	 *
 	 * 0x80 - Cable plugged in, Battery status unknown
 	 * 0x84 - Critical Battery Level, Rumble deactivated
 	 * 0x85 - Low to Medium Batt. Level
@@ -597,23 +601,23 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data[1]: %X, cable-state: %d\n", data[1], xdata->cable_state);
 
 	switch (data[1]) {
-	case 0x80: 
+	case 0x80:
 		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
 		break;
-	case 0x84: 
+	case 0x84:
 		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
 		break;
-	case 0x85: 
+	case 0x85:
 		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
 		break;
-	case 0x86: 
+	case 0x86:
 		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
 		break;
-	case 0x87: 
+	case 0x87:
 		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
 		break;
 	}
-	
+
 	power_supply_changed(xdata->batt);
 }
 
@@ -634,14 +638,14 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 		default: xdata->report_behaviour = UNKNOWN; break;
 		}
 	}
-		
+
 	/* TODO:
-	* The best solution would be to replace the report descriptor
-	* in case that the wrong reports are sent. Unfortunately I
-	* don't know yet how one can replace the descriptor _after_
-	* the report_fixup hook by hand. I fix it the other way
-	* (translate the report/event) until I found a better solution.
-	*/
+	 * The best solution would be to replace the report descriptor
+	 * in case that the wrong reports are sent. Unfortunately I
+	 * don't know yet how one can replace the descriptor _after_
+	 * the report_fixup hook by hand. I fix it the other way
+	 * (translate the report/event) until I found a better solution.
+	 */
 }
 
 /*
@@ -679,8 +683,8 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
  *
  * We have to fix up the key-bitmap, because there is
  * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
- * 
- * TODO: 
+ *
+ * TODO:
  * Furthermore we can set the idev value in xpadneo_data
  */
 
@@ -701,12 +705,12 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 * by input_report_key(). Otherwise, no event would be generated
 	 * (since it would look like the key doesn't even exist)
 	 *
-	 * TODO: 
+	 * TODO:
 	 * - Those buttons are still shown as (null) in jstest
 	 * - We should also send out ABS_HAT0X/Y events as mentioned on the
 	 *   official HID usage tables (p.34).
 	 */
-	if(dpad_to_buttons){
+	if (dpad_to_buttons) {
 		__set_bit(BTN_DPAD_UP, input->keybit);
 		__set_bit(BTN_DPAD_RIGHT, input->keybit);
 		__set_bit(BTN_DPAD_DOWN, input->keybit);
@@ -719,13 +723,13 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	/* In addition to adding new keys to the key-bitmap, we may also
 	 * want to remove the old (original) axis from the absolues-bitmap.
 	 *
-	 * TODO: 
+	 * TODO:
 	 * Maybe we want both, our custom and the original mapping.
 	 * If we decide so, remember that 0x39 is a hat switch on the official
 	 * usage tables, but not at the input subsystem, so be sure to use the
 	 * right constant!
 	 *
-	 * Either let hid-core decide itself or input_ev it to ABS_HAT0X/Y by hand: 
+	 * Either let hid-core decide itself or input_ev it to ABS_HAT0X/Y by hand:
 	 * #define ABS_HAT0X	0x10
 	 * #define ABS_HAT0Y	0x11
 	 *
@@ -736,8 +740,8 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 *    the internal input-representation as defined in
 	 *    input-event-codes.h
 	 *
-	 * take a look at the following website for the original mapping: 
-	 * https                                                        : //elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
+	 * take a look at the following website for the original mapping:
+	 * https://elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
 	 */
 
 	return 0;
@@ -787,10 +791,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	if (xdata->report_behaviour == WINDOWS
 					&& xdata->report_descriptor == LINUX) {
 
-		/* 
+		/*
 		 * we fix all buttons by hand. You may think that we
 		 * could do that by using the windows_map too, but it is more
-		 * like an coincidence that this would work in this special case: 
+		 * like an coincidence that this would work in this special case:
 		 * It would only, because HID_UP_BUTTONS has no special names
 		 * for the HID_USAGE's, therefore the first button stays 0x01
 		 * on both reports (windows and linux) - so it is a 1: 1 mapping.
@@ -813,7 +817,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			case 0x0A: input_report_key(idev, BTN_THUMBR, value); break;
 			}
 
-			hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x fixed\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE) );
+			hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x fixed\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE));
 			return EV_STOP_PROCESSING;
 		}
 	}
@@ -823,7 +827,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 		/* TODO: outsource that part*/
 
-		/* 
+		/*
 		 * You can press UP and RIGHT, RIGHT and DOWN, ... together!
 		 *
 		 * # value  U R D L
@@ -840,12 +844,12 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		 */
 
 		input_report_key(idev, BTN_DPAD_UP,
-			(((value >= 1) && (value <= 2)) || (value == 8)));  
+			(((value >= 1) && (value <= 2)) || (value == 8)));
 		input_report_key(idev, BTN_DPAD_RIGHT, ((value >= 2) && (value <= 4)));
 		input_report_key(idev, BTN_DPAD_DOWN, ((value >= 4) && (value <= 6)));
 		input_report_key(idev, BTN_DPAD_LEFT, ((value >= 6) && (value <= 8)));
 
-		/* 
+		/*
 		 * It is perfectly fine to send those events even if
 		 * dpad_to_buttons is false because the keymap decides if the
 		 * event is really sent or not. It is also easier to send them
@@ -855,7 +859,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		 */
 	}
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x, input-code: %02x, value: %02x\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE), usage->code, value );
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x, input-code: %02x, value: %02x\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE), usage->code, value);
 
 	return EV_CONT_PROCESSING;
 }
@@ -878,17 +882,15 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	 * soon as hdev->dev is removed, since we use the devm_ derivate.
 	 */
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
-	if (xdata == NULL) {
-		hid_err(hdev, "can't allocate xdata\n");
+	if (xdata == NULL)
 		return -ENOMEM;
-	}
 
 	xdata->hdev = hdev;
 
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
 
-	switch (hdev->dev_rsize){
+	switch (hdev->dev_rsize) {
 	case 307: xdata->report_descriptor = WINDOWS; break;
 	case 335: xdata->report_descriptor = LINUX;   break;
 	default:  xdata->report_descriptor = UNKNOWN; break;
@@ -906,8 +908,8 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	/* Debug Output*/
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* dev_rdesc (unfixed): (see above)\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* dev_rsize (unfixed): %u\n", hdev->dev_rsize);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw dev_rdesc: (see above)\n");
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw dev_rsize: %u\n", hdev->dev_rsize);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* bus: 0x%04X\n", hdev->bus);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* report group: %u\n", hdev->group);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* vendor: 0x%08X\n", hdev->vendor);
@@ -918,7 +920,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	/* We start our hardware without FF, we will add it afterwards by hand
 	 * HID_CONNECT_DEFAULT = (HID_CONNECT_HIDINPUT | HID_CONNECT_HIDRAW
-	 * 				| HID_CONNECT_HIDDEV | HID_CONNECT_FF)
+	 *                        | HID_CONNECT_HIDDEV | HID_CONNECT_FF)
 	 * Our Input Device is created automatically since we defined
 	 * HID_CONNECT_HIDINPUT as one of the flags.
 	 */
@@ -936,7 +938,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	/* Everything is fine */
 	return 0;
 
-return_error: 
+return_error:
 	return ret;
 }
 
@@ -950,12 +952,12 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	/* Clean up */
 
 	/* TODO:
-	if (!sc->battery_desc.name)
-		return;
-	*/
+	 * if (!sc->battery_desc.name)
+	 *	return;
+	 */
 	power_supply_unregister(xdata->batt);
-	//kfree(sc->battery_desc.name);
-	//sc->battery_desc.name = NULL;
+	/* TODO: kfree(sc->battery_desc.name); */
+	/* TODO: sc->battery_desc.name = NULL; */
 
 	hid_hw_stop(hdev);
 
@@ -970,11 +972,11 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 static const struct hid_device_id xpadneo_devices[] = {
 
-	/* 
+	/*
 	 * The ProductID is somehow related to the Firmware Version,
 	 * but it somehow changed back from 0x02FD (newer fw) to 0x02E0 (older)
 	 * and vice versa on one controller here.
-	 * 
+	 *
 	 * Unfortunately you cannot tell from product id how the gamepad really
 	 * behaves on reports, since the newer firmware supports both mappings
 	 * (the one which is standard in linux and the old one, which is still
@@ -1026,27 +1028,27 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 
 
 
-/* 
+/*
  * Module Init and Exit
  *
  * We may replace init and remove by module_hid_driver(xpadneo_driver)
  * in future versions, as long as there is nothing special in these two
  * functions (but registering and unregistering the driver). Up to now it is
  * more useful for us to not "oversimplify" the whole driver-registering thing.
- * 
+ *
  * Caution: do not use both! (module_hid_driver and hid_(un)register_driver)
  */
 
 static int __init xpadneo_initModule(void)
 {
-	printk("%s: hello there!\n", xpadneo_driver.name);
+	pr_info("%s: hello there!\n", xpadneo_driver.name);
 	return hid_register_driver(&xpadneo_driver);
 }
 
 static void __exit xpadneo_exitModule(void)
 {
 	hid_unregister_driver(&xpadneo_driver);
-	printk("%s: goodbye!\n", xpadneo_driver.name);
+	pr_info("%s: goodbye!\n", xpadneo_driver.name);
 }
 
 /*
