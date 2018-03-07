@@ -277,7 +277,7 @@ copy_driver:
   generates:
     - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
   cmds:
-    - cp src/hid-xpadneo.c {{.ROOT_DIR}}/drivers/hid/
+    - cp -al src/hid-xpadneo.c {{.ROOT_DIR}}/drivers/hid/
 
 
 zip:

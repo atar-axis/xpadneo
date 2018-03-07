@@ -8,7 +8,7 @@
 /* TODO:
  * - jstest shows at startup the maximum/minimum value,
  *   not the value that corresponds to the "default" position, why?
- * - https:   //www.kernel.org/doc/html/v4.10/process/coding-style.html
+ * - https://www.kernel.org/doc/html/v4.10/process/coding-style.html
  * - a lot of more, search for TODO in the code (you can't overlook xD)
  */
 
@@ -265,7 +265,8 @@ static int battery_get_property (struct power_supply *ps,
 				val->intval = POWER_SUPPLY_STATUS_FULL;
 			else
 				val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;*/
+		break;
+*/
 	default: 
 		ret = -EINVAL;
 		break;
@@ -295,7 +296,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	};
 
 
-	xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+	xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
 
 	/* Set up power supply */
 
@@ -345,7 +346,7 @@ enum mapping_behaviour {
 
 struct input_ev {
 	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
- 	8 event_type;
+ 	u8 event_type;
 	/* Map to which input code (BTN_A, ABS_X, ...)? */
 	u16 input_code;	
 };
