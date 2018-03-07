@@ -1,8 +1,6 @@
-Many many thanks to *Kai Krakow* who sponsored me a Xbox One Controller (including Wireless Adapter) and a pack of guarana cacao ;D
+Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
 
----
-
-*This is a ALPHA version! It works, but there is still A LOT to do.*
+*This Driver is currently in development - basic functionality works, but there is still A LOT to do.*
 
 ---
 
@@ -42,16 +40,7 @@ Until now the Taskfile is tested under the following Distributions
 
 ## Installation
 
-To install the driver after sucessfull building, simply copy the hid-xpadneo module to extramodules and replace the other two modules in your system:
-
-### Remove the original versions
-
-  ```
-  sudo mv $(modinfo -n bluetooth) $(modinfo -n bluetooth)_bck
-  sudo mv $(modinfo -n hid) $(modinfo -n hid)_bck
-  ```
-
-### Install the new ones
+All you have to do is:
 
 ```
 sudo task install
