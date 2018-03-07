@@ -8,7 +8,7 @@
 /* TODO:
  * - jstest shows at startup the maximum/minimum value,
  *   not the value that corresponds to the "default" position, why?
- * - https://www.kernel.org/doc/html/v4.10/process/coding-style.html
+ * - https: //www.kernel.org/doc/html/v4.10/process/coding-style.html
  * - a lot of more, search for TODO in the code (you can't overlook xD)
  */
 
@@ -118,6 +118,8 @@ enum report_type {
 };
 
 struct xpadneo_devdata {
+	/* mutual exclusion */
+	spinlock_t lock;
 
 	/* devices */
 	struct hid_device *hdev;
@@ -173,10 +175,10 @@ static int xpadneo_ff_play (struct input_dev *dev, void *data,
 
 	/* It is up to the Input-Subsystem to start and stop the effect as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
-	 * Take a look here:
-	 * https://stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
+	 * Take a look here: 
+	 * https           : //stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
 	 * We therefore simply play the effect as long as possible, which is
-	 * 2,55s * 255 = 650,25s ~= 10min
+	 * 2, 55s * 255 = 650, 25s ~ = 10min
 	 */
 	ff_package.ff.duration   = 0xFF;
 	ff_package.ff.loop_count = 0xFF;
@@ -238,14 +240,13 @@ static int battery_get_property (struct power_supply *ps,
 	enum power_supply_property property, union power_supply_propval *val)
 {
 	struct xpadneo_devdata *xdata = power_supply_get_drvdata(ps);
-	/* TODO: unsigned long flags; */
-	int ret = 0;
+	unsigned long flags;
 	u8 capacity_level, cable_state;
 
-	/* TODO: spin_lock_irqsave(&xdata->lock, flags); */
+	spin_lock_irqsave(&xdata->lock, flags);
 	capacity_level = xdata->capacity_level;
-	cable_state = xdata->cable_state;
-	/* TODO: spin_unlock_irqrestore(&xdata->lock, flags); */
+	cable_state    = xdata->cable_state;
+	spin_unlock_irqrestore(&xdata->lock, flags);
 
 	switch (property) {
 	case POWER_SUPPLY_PROP_PRESENT: 
@@ -257,21 +258,20 @@ static int battery_get_property (struct power_supply *ps,
 	case POWER_SUPPLY_PROP_CAPACITY_LEVEL: 
 		val->intval = capacity_level;
 		break;
-/*	case POWER_SUPPLY_PROP_STATUS:
-		if (battery_charging)
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else
-			if (capacity_level == 100 && cable_state)
-				val->intval = POWER_SUPPLY_STATUS_FULL;
-			else
-				val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+	case POWER_SUPPLY_PROP_STATUS:
+		switch (cable_state) {
+		/* We use "FULL" as an indicator that the GP is plugged in */
+		case 1: val->intval = POWER_SUPPLY_STATUS_FULL; break;
+		case 0: val->intval = POWER_SUPPLY_STATUS_DISCHARGING; break;
+		}
 		break;
-*/
+
 	default: 
-		ret = -EINVAL;
+		return -EINVAL;
 		break;
 	}
-	return ret;
+
+	return 0;
 }
 
 static int xpadneo_initBatt(struct hid_device *hdev)
@@ -286,8 +286,8 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		POWER_SUPPLY_PROP_CAPACITY_LEVEL,
 		/* powers a specific device */
 		POWER_SUPPLY_PROP_SCOPE,
-		/* charging, not_charging */
-		/* TODO: POWER_SUPPLY_PROP_STATUS, */
+		/* charging (full, plugged), not_charging */
+		POWER_SUPPLY_PROP_STATUS
 	};
 
 	struct power_supply_config ps_config = {
@@ -300,7 +300,8 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 	/* Set up power supply */
 
-	xdata->battery_desc.name = kasprintf(GFP_KERNEL, "unique_dummy_name_battery");
+	xdata->battery_desc.name = kasprintf(GFP_KERNEL,
+					     "xpadneo_batt_%pMR", hdev->phys);
 	if (!xdata->battery_desc.name)
 		return -ENOMEM;
 	xdata->battery_desc.type = POWER_SUPPLY_TYPE_BATTERY;
@@ -309,16 +310,15 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	xdata->battery_desc.properties = battery_props;
 	xdata->battery_desc.num_properties = ARRAY_SIZE(battery_props);
 
-	/* We have to offer a function which returns the current
-	 * property values we defined above. please make sure that
+	/*
+	 * We have to offer a function which returns the current
+	 * property values we defined above. Make sure that
 	 * the get_property functions covers all properties above.
 	 */
 	xdata->battery_desc.get_property = battery_get_property;
 	
 	/* Advanced power management emulation */
 	xdata->battery_desc.use_for_apm = 0;
-
-
 
 	/* Register power supply for our gamepad device */
 	xdata->batt = power_supply_register(&hdev->dev, &xdata->battery_desc, &ps_config);
@@ -328,6 +328,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		goto err_free;
 	}
 	power_supply_powers(xdata->batt, &hdev->dev);
+
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "power supply registered\n");
 
@@ -354,7 +355,7 @@ struct input_ev {
 u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
 
 	/*
-	 * Windows report-descriptor (307 byte):
+	 * Windows report-descriptor (307 byte): 
 	 *
 	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
 	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 33 09 34 15 00
@@ -410,7 +411,7 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to) {
 u8 map_hid_to_input_linux (struct hid_usage *usage, struct input_ev *map_to) {
 
 	/*
-	 * Linux report-descriptor (335 byte):
+	 * Linux report-descriptor (335 byte): 
 	 *
 	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
 	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 32 09 35 15 00
@@ -484,7 +485,7 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 {
 	/* Return values */
 	enum {
-		RET_MAP_IGNORE = -1, /* completely ignore this input */
+		RET_MAP_IGNORE = -1,   /* completely ignore this input */
 		RET_MAP_AUTO,        /* let hid-core autodetect the mapping */
 		RET_MAP_STATIC       /* mapped by hand, no further processing */
 	};
@@ -495,9 +496,9 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 
 
 	switch (xdata->report_descriptor) {
-	case LINUX:   perform_mapping = map_hid_to_input_linux; break;
+	case LINUX  : perform_mapping = map_hid_to_input_linux; break;
 	case WINDOWS: perform_mapping = map_hid_to_input_windows; break;
-	default:      return RET_MAP_AUTO;
+	     default: return RET_MAP_AUTO;
 	}
 
 
@@ -547,6 +548,72 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 }
 
 
+static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
+				    int reportsize)
+{
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	/*
+	 * Behaviour on AA Mignon Batteries: 
+	 * 
+	 * 0x80 - Cable plugged in, Battery status unknown
+	 * 0x84 - Critical Battery Level, Rumble deactivated
+	 * 0x85 - Low to Medium Batt. Level
+	 * 0x86 - Normal to High Batt. Level
+	 * 0x87 - High to Full Batt. Level
+	 */
+
+	xdata->cable_state = data[1] == 0x80 ? 1 : 0;
+	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data[1]: %X, cable-state: %d\n", data[1], xdata->cable_state);
+
+	switch (data[1]) {
+	case 0x80: 
+		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
+		break;
+	case 0x84: 
+		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+		break;
+	case 0x85: 
+		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+		break;
+	case 0x86: 
+		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+		break;
+	case 0x87: 
+		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
+		break;
+	}
+	
+	power_supply_changed(xdata->batt);
+}
+
+static void check_report_behaviour(struct hid_device *hdev, u8 *data,
+				   int reportsize)
+{
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	/*
+	 * The length of the first input report with an ID of 0x01
+	 * reveals which report-type the controller is actually
+	 * sending (windows: 16, or linux: 17).
+	 */
+	if (xdata->report_behaviour == UNKNOWN) {
+		switch (reportsize) {
+		case 16: xdata->report_behaviour = WINDOWS; break;
+		case 17: xdata->report_behaviour = LINUX;   break;
+		default: xdata->report_behaviour = UNKNOWN; break;
+		}
+	}
+		
+	/* TODO:
+	* The best solution would be to replace the report descriptor
+	* in case that the wrong reports are sent. Unfortunately I
+	* don't know yet how one can replace the descriptor _after_
+	* the report_fixup hook by hand. I fix it the other way
+	* (translate the report/event) until I found a better solution.
+	*/
+}
+
 /*
  * HID Raw Event Hook
  */
@@ -554,41 +621,22 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		      u8 *data, int reportsize)
 {
-	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK, called before parsing a report\n");
+
 	dbg_hex_dump_lvl(DBG_LVL_ALL, "xpadneo: raw_event: ", data, reportsize);
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (w.o. id): %d\n", reportsize-1);
 
-	/*
-	 * The length of the first input report with an ID of 0x01
-	 * reveals which report-type the controller is actually
-	 * sending (windows: 16, or linux: 17).
-	 */
-	if (xdata->report_behaviour == UNKNOWN && report->id == 01) {
 
-		switch (reportsize) {
-		case 16: xdata->report_behaviour = WINDOWS; break;
-		case 17: xdata->report_behaviour = LINUX;   break;
-		default: xdata->report_behaviour = UNKNOWN; break;
-		}
-			
-		/* TODO:
-		 * The best solution would be to replace the report descriptor
-		 * in case that the wrong reports are sent. Unfortunately I
-		 * don't know yet how one can replace the descriptor _after_
-		 * the report_fixup hook by hand. I fix it the other way
-		 * (translate the report/event) until I found a better solution.
-		 */
+	switch (report->id) {
+	case 01: check_report_behaviour(hdev, data, reportsize); break;
+	case 04: parse_raw_event_battery(hdev, data, reportsize); return 1;  /* stop processing */
 	}
-
-	/* Write back xdata */
-	hid_set_drvdata(hdev, xdata);
 
 	/* Continue processing */
 	return 0;
 }
+
 
 void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 {
@@ -659,7 +707,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 *    input-event-codes.h
 	 *
 	 * take a look at the following website for the original mapping: 
-	 * https://elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
+	 * https                                                        : //elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
 	 */
 
 	return 0;
