@@ -59,11 +59,13 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
-		if (debug_level >= lvl) hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), pr_fmt(fmt_str), ##__VA_ARGS__); \
+		if (debug_level >= lvl) \
+			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), pr_fmt(fmt_str), ##__VA_ARGS__); \
 	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
 	do { \
-		if (debug_level >= lvl) print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), DUMP_PREFIX_NONE, 32, 1, data, size, false); \
+		if (debug_level >= lvl) \
+			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), DUMP_PREFIX_NONE, 32, 1, data, size, false); \
 	} while (0)
 #else
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
@@ -135,7 +137,7 @@ struct xpadneo_devdata {
 
 	/* battery information */
 	struct power_supply *batt;
-	struct power_supply_desc battery_desc;
+	struct power_supply_desc batt_desc;
 	u8 cable_state;
 	u8 capacity_level;
 };
@@ -177,7 +179,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	ff_package.ff.magnitude_right  = (u8)((weak & 0xFF00) >> 8);
 	ff_package.ff.magnitude_left   = (u8)((strong & 0xFF00) >> 8);
 
-	/* It is up to the Input-Subsystem to start and stop the effect as needed.
+	/* It is up to the Input-Subsystem to start and stop effects as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
 	 * Take a look here:
 	 * https://stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
@@ -204,7 +206,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	 * TODO: replace by get_drvdata
 	 */
 	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
-	struct input_dev *idev      = hidinput->input;
+	struct input_dev *idev     = hidinput->input;
 
 	struct ff_report ff_package;
 
@@ -294,8 +296,12 @@ static int battery_get_property(struct power_supply *ps,
 	case POWER_SUPPLY_PROP_STATUS:
 		switch (cable_state) {
 		/* We use "FULL" as an indicator that the GP is plugged in */
-		case 1: val->intval = POWER_SUPPLY_STATUS_FULL; break;
-		case 0: val->intval = POWER_SUPPLY_STATUS_DISCHARGING; break;
+		case 1:
+			val->intval = POWER_SUPPLY_STATUS_FULL;
+			break;
+		case 0:
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+			break;
 		}
 		break;
 
@@ -332,28 +338,29 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 	/* Set up power supply */
 
-	xdata->battery_desc.name = kasprintf(GFP_KERNEL,
+	xdata->batt_desc.name = kasprintf(GFP_KERNEL,
 					     "xpadneo_batt_%pMR", hdev->phys);
-	if (!xdata->battery_desc.name)
+	if (!xdata->batt_desc.name)
 		return -ENOMEM;
-	xdata->battery_desc.type = POWER_SUPPLY_TYPE_BATTERY;
+	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
 
 	/* Which properties of the battery are accessible? */
-	xdata->battery_desc.properties = battery_props;
-	xdata->battery_desc.num_properties = ARRAY_SIZE(battery_props);
+	xdata->batt_desc.properties = battery_props;
+	xdata->batt_desc.num_properties = ARRAY_SIZE(battery_props);
 
 	/*
 	 * We have to offer a function which returns the current
 	 * property values we defined above. Make sure that
 	 * the get_property functions covers all properties above.
 	 */
-	xdata->battery_desc.get_property = battery_get_property;
+	xdata->batt_desc.get_property = battery_get_property;
 
 	/* Advanced power management emulation */
-	xdata->battery_desc.use_for_apm = 0;
+	xdata->batt_desc.use_for_apm = 0;
 
 	/* Register power supply for our gamepad device */
-	xdata->batt = power_supply_register(&hdev->dev, &xdata->battery_desc, &ps_config);
+	xdata->batt = power_supply_register(&hdev->dev,
+						&xdata->batt_desc, &ps_config);
 	if (IS_ERR(xdata->batt)) {
 		ret = PTR_ERR(xdata->batt);
 		hid_err(hdev, "Unable to register battery device\n");
@@ -365,8 +372,8 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "power supply registered\n");
 
 err_free:
-	kfree(xdata->battery_desc.name);
-	xdata->battery_desc.name = NULL;
+	kfree(xdata->batt_desc.name);
+	xdata->batt_desc.name = NULL;
 	return ret;
 }
 
@@ -414,27 +421,63 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
 	switch (hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};      return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};      return MAP_STATIC;
-		case 0x03: *map_to = (struct input_ev){EV_KEY, BTN_X};      return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_Y};      return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_TL};     return MAP_STATIC;
-		case 0x06: *map_to = (struct input_ev){EV_KEY, BTN_TR};     return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_START};  return MAP_STATIC;
-		case 0x09: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL}; return MAP_STATIC;
-		case 0x0A: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR}; return MAP_STATIC;
+		case 0x01:
+			*map_to = (struct input_ev){EV_KEY, BTN_A};
+			return MAP_STATIC;
+		case 0x02:
+			*map_to = (struct input_ev){EV_KEY, BTN_B};
+			return MAP_STATIC;
+		case 0x03:
+			*map_to = (struct input_ev){EV_KEY, BTN_X};
+			return MAP_STATIC;
+		case 0x04:
+			*map_to = (struct input_ev){EV_KEY, BTN_Y};
+			return MAP_STATIC;
+		case 0x05:
+			*map_to = (struct input_ev){EV_KEY, BTN_TL};
+			return MAP_STATIC;
+		case 0x06:
+			*map_to = (struct input_ev){EV_KEY, BTN_TR};
+			return MAP_STATIC;
+		case 0x07:
+			*map_to = (struct input_ev){EV_KEY, BTN_SELECT};
+			return MAP_STATIC;
+		case 0x08:
+			*map_to = (struct input_ev){EV_KEY, BTN_START};
+			return MAP_STATIC;
+		case 0x09:
+			*map_to = (struct input_ev){EV_KEY, BTN_THUMBL};
+			return MAP_STATIC;
+		case 0x0A:
+			*map_to = (struct input_ev){EV_KEY, BTN_THUMBR};
+			return MAP_STATIC;
 		}
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
-		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};    return MAP_STATIC;
-		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};    return MAP_STATIC;
-		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_Z};    return MAP_STATIC;
-		case 0x33: *map_to = (struct input_ev){EV_ABS, ABS_RX};   return MAP_STATIC;
-		case 0x34: *map_to = (struct input_ev){EV_ABS, ABS_RY};   return MAP_STATIC;
-		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RZ};   return MAP_STATIC;
-		case 0x39: *map_to = (struct input_ev){0, 0};             return MAP_AUTO;
-		case 0x85: *map_to = (struct input_ev){EV_KEY, BTN_MODE}; return MAP_STATIC;
+		case 0x30:
+			*map_to = (struct input_ev){EV_ABS, ABS_X};
+			return MAP_STATIC;
+		case 0x31:
+			*map_to = (struct input_ev){EV_ABS, ABS_Y};
+			return MAP_STATIC;
+		case 0x32:
+			*map_to = (struct input_ev){EV_ABS, ABS_Z};
+			return MAP_STATIC;
+		case 0x33:
+			*map_to = (struct input_ev){EV_ABS, ABS_RX};
+			return MAP_STATIC;
+		case 0x34:
+			*map_to = (struct input_ev){EV_ABS, ABS_RY};
+			return MAP_STATIC;
+		case 0x35:
+			*map_to = (struct input_ev){EV_ABS, ABS_RZ};
+			return MAP_STATIC;
+		case 0x39:
+			*map_to = (struct input_ev){0, 0};
+			return MAP_AUTO;
+		case 0x85:
+			*map_to = (struct input_ev){EV_KEY, BTN_MODE};
+			return MAP_STATIC;
 		}
 	}
 
@@ -472,33 +515,69 @@ u8 map_hid_to_input_linux(struct hid_usage *usage, struct input_ev *map_to)
 	switch (hid_usage_page) {
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
-		case 0x01: *map_to = (struct input_ev){EV_KEY, BTN_A};       return MAP_STATIC;
-		case 0x02: *map_to = (struct input_ev){EV_KEY, BTN_B};       return MAP_STATIC;
-		case 0x04: *map_to = (struct input_ev){EV_KEY, BTN_X};       return MAP_STATIC;
-		case 0x05: *map_to = (struct input_ev){EV_KEY, BTN_Y};       return MAP_STATIC;
-		case 0x07: *map_to = (struct input_ev){EV_KEY, BTN_TL};      return MAP_STATIC;
-		case 0x08: *map_to = (struct input_ev){EV_KEY, BTN_TR};      return MAP_STATIC;
-		case 0x0C: *map_to = (struct input_ev){EV_KEY, BTN_START};   return MAP_STATIC;
-		case 0x0E: *map_to = (struct input_ev){EV_KEY, BTN_THUMBL};  return MAP_STATIC;
-		case 0x0F: *map_to = (struct input_ev){EV_KEY, BTN_THUMBR};  return MAP_STATIC;
+		case 0x01:
+			*map_to = (struct input_ev){EV_KEY, BTN_A};
+			return MAP_STATIC;
+		case 0x02:
+			*map_to = (struct input_ev){EV_KEY, BTN_B};
+			return MAP_STATIC;
+		case 0x04:
+			*map_to = (struct input_ev){EV_KEY, BTN_X};
+			return MAP_STATIC;
+		case 0x05:
+			*map_to = (struct input_ev){EV_KEY, BTN_Y};
+			return MAP_STATIC;
+		case 0x07:
+			*map_to = (struct input_ev){EV_KEY, BTN_TL};
+			return MAP_STATIC;
+		case 0x08:
+			*map_to = (struct input_ev){EV_KEY, BTN_TR};
+			return MAP_STATIC;
+		case 0x0C:
+			*map_to = (struct input_ev){EV_KEY, BTN_START};
+			return MAP_STATIC;
+		case 0x0E:
+			*map_to = (struct input_ev){EV_KEY, BTN_THUMBL};
+			return MAP_STATIC;
+		case 0x0F:
+			*map_to = (struct input_ev){EV_KEY, BTN_THUMBR};
+			return MAP_STATIC;
 		}
 	case HID_UP_CONSUMER:
 		switch (hid_usage) {
-		case 0x223: *map_to = (struct input_ev){EV_KEY, BTN_MODE};   return MAP_STATIC;
-		case 0x224: *map_to = (struct input_ev){EV_KEY, BTN_SELECT}; return MAP_STATIC;
+		case 0x223:
+			*map_to = (struct input_ev){EV_KEY, BTN_MODE};
+			return MAP_STATIC;
+		case 0x224:
+			*map_to = (struct input_ev){EV_KEY, BTN_SELECT};
+			return MAP_STATIC;
 		}
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
-		case 0x30: *map_to = (struct input_ev){EV_ABS, ABS_X};   return MAP_STATIC;
-		case 0x31: *map_to = (struct input_ev){EV_ABS, ABS_Y};   return MAP_STATIC;
-		case 0x32: *map_to = (struct input_ev){EV_ABS, ABS_RX};  return MAP_STATIC;
-		case 0x35: *map_to = (struct input_ev){EV_ABS, ABS_RY};  return MAP_STATIC;
-		case 0x39: *map_to = (struct input_ev){0, 0};            return MAP_AUTO;
+		case 0x30:
+			*map_to = (struct input_ev){EV_ABS, ABS_X};
+			return MAP_STATIC;
+		case 0x31:
+			*map_to = (struct input_ev){EV_ABS, ABS_Y};
+			return MAP_STATIC;
+		case 0x32:
+			*map_to = (struct input_ev){EV_ABS, ABS_RX};
+			return MAP_STATIC;
+		case 0x35:
+			*map_to = (struct input_ev){EV_ABS, ABS_RY};
+			return MAP_STATIC;
+		case 0x39:
+			*map_to = (struct input_ev){0, 0};
+			return MAP_AUTO;
 		}
 	case HID_UP_SIMULATION:
 		switch (hid_usage) {
-		case 0xC4: *map_to = (struct input_ev){EV_ABS, ABS_RZ};  return MAP_STATIC;
-		case 0xC5: *map_to = (struct input_ev){EV_ABS, ABS_Z};   return MAP_STATIC;
+		case 0xC4:
+			*map_to = (struct input_ev){EV_ABS, ABS_RZ};
+			return MAP_STATIC;
+		case 0xC5:
+			*map_to = (struct input_ev){EV_ABS, ABS_Z};
+			return MAP_STATIC;
 		}
 	}
 
@@ -530,9 +609,14 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 
 
 	switch (xdata->report_descriptor) {
-	case LINUX:   perform_mapping = map_hid_to_input_linux; break;
-	case WINDOWS: perform_mapping = map_hid_to_input_windows; break;
-	default:      return RET_MAP_AUTO;
+	case LINUX:
+		perform_mapping = map_hid_to_input_linux;
+		break;
+	case WINDOWS:
+		perform_mapping = map_hid_to_input_windows;
+		break;
+	default:
+		return RET_MAP_AUTO;
 	}
 
 
@@ -633,9 +717,15 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	 */
 	if (xdata->report_behaviour == UNKNOWN) {
 		switch (reportsize) {
-		case 16: xdata->report_behaviour = WINDOWS; break;
-		case 17: xdata->report_behaviour = LINUX;   break;
-		default: xdata->report_behaviour = UNKNOWN; break;
+		case 16:
+			xdata->report_behaviour = WINDOWS;
+			break;
+		case 17:
+			xdata->report_behaviour = LINUX;
+			break;
+		default:
+			xdata->report_behaviour = UNKNOWN;
+			break;
 		}
 	}
 
@@ -663,8 +753,12 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 
 
 	switch (report->id) {
-	case 01: check_report_behaviour(hdev, data, reportsize); break;
-	case 04: parse_raw_event_battery(hdev, data, reportsize); return 1;  /* stop processing */
+	case 01:
+		check_report_behaviour(hdev, data, reportsize);
+		break;
+	case 04:
+		parse_raw_event_battery(hdev, data, reportsize);
+		return 1;  /* stop processing */
 	}
 
 	/* Continue processing */
@@ -729,7 +823,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 * usage tables, but not at the input subsystem, so be sure to use the
 	 * right constant!
 	 *
-	 * Either let hid-core decide itself or input_ev it to ABS_HAT0X/Y by hand:
+	 * Either let hid-core decide itself or map it to ABS_HAT0X/Y by hand:
 	 * #define ABS_HAT0X	0x10
 	 * #define ABS_HAT0Y	0x11
 	 *
@@ -794,27 +888,47 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		/*
 		 * we fix all buttons by hand. You may think that we
 		 * could do that by using the windows_map too, but it is more
-		 * like an coincidence that this would work in this special case:
+		 * like an coincidence that this would work in this case:
 		 * It would only, because HID_UP_BUTTONS has no special names
 		 * for the HID_USAGE's, therefore the first button stays 0x01
-		 * on both reports (windows and linux) - so it is a 1: 1 mapping.
-		 * But this is not true in general (i.e. not for other USAGE_PAGES)
+		 * on both reports (windows and linux) - it is a 1: 1 mapping.
+		 * But this is not true in general (i.e. for other USAGE_PAGES)
 		 */
 
 		/* TODO: outsource that part*/
 
 		if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
 			switch (usage->hid & HID_USAGE) {
-			case 0x01: input_report_key(idev, BTN_A, value); break;
-			case 0x02: input_report_key(idev, BTN_B, value); break;
-			case 0x03: input_report_key(idev, BTN_X, value); break;
-			case 0x04: input_report_key(idev, BTN_Y, value); break;
-			case 0x05: input_report_key(idev, BTN_TL, value); break;
-			case 0x06: input_report_key(idev, BTN_TR, value); break;
-			case 0x07: input_report_key(idev, BTN_SELECT, value); break;
-			case 0x08: input_report_key(idev, BTN_START, value); break;
-			case 0x09: input_report_key(idev, BTN_THUMBL, value); break;
-			case 0x0A: input_report_key(idev, BTN_THUMBR, value); break;
+			case 0x01:
+				input_report_key(idev, BTN_A, value);
+				break;
+			case 0x02:
+				input_report_key(idev, BTN_B, value);
+				break;
+			case 0x03:
+				input_report_key(idev, BTN_X, value);
+				break;
+			case 0x04:
+				input_report_key(idev, BTN_Y, value);
+				break;
+			case 0x05:
+				input_report_key(idev, BTN_TL, value);
+				break;
+			case 0x06:
+				input_report_key(idev, BTN_TR, value);
+				break;
+			case 0x07:
+				input_report_key(idev, BTN_SELECT, value);
+				break;
+			case 0x08:
+				input_report_key(idev, BTN_START, value);
+				break;
+			case 0x09:
+				input_report_key(idev, BTN_THUMBL, value);
+				break;
+			case 0x0A:
+				input_report_key(idev, BTN_THUMBR, value);
+				break;
 			}
 
 			hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x fixed\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE));
@@ -830,24 +944,27 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		/*
 		 * You can press UP and RIGHT, RIGHT and DOWN, ... together!
 		 *
-		 * # value  U R D L
-		 * ----------------
-		 * 0 0000   0 0 0 0   U = ((value >= 1) && (value <= 2)) || (value == 8)
-		 * 1 0001   1 0 0 0   R = (value >= 2) && (value <= 4)
-		 * 2 0010   1 1 0 0   D = (value >= 4) && (value <= 6)
-		 * 3 0011   0 1 0 0   L = (value >= 6) && (value <= 8)
-		 * 4 0100   0 1 1 0
-		 * 5 0101   0 0 1 0
-		 * 6 0110   0 0 1 1
-		 * 7 0111   0 0 0 1
-		 * 8 1000   1 0 0 1
+		 * # val   U R D L
+		 * ---------------
+		 * 0 0000  0 0 0 0  U = ((val >= 1) && (val <= 2)) || (val == 8)
+		 * 1 0001  1 0 0 0  R = (val >= 2) && (val <= 4)
+		 * 2 0010  1 1 0 0  D = (val >= 4) && (val <= 6)
+		 * 3 0011  0 1 0 0  L = (val >= 6) && (val <= 8)
+		 * 4 0100  0 1 1 0
+		 * 5 0101  0 0 1 0
+		 * 6 0110  0 0 1 1
+		 * 7 0111  0 0 0 1
+		 * 8 1000  1 0 0 1
 		 */
 
 		input_report_key(idev, BTN_DPAD_UP,
 			(((value >= 1) && (value <= 2)) || (value == 8)));
-		input_report_key(idev, BTN_DPAD_RIGHT, ((value >= 2) && (value <= 4)));
-		input_report_key(idev, BTN_DPAD_DOWN, ((value >= 4) && (value <= 6)));
-		input_report_key(idev, BTN_DPAD_LEFT, ((value >= 6) && (value <= 8)));
+		input_report_key(idev, BTN_DPAD_RIGHT,
+			((value >= 2) && (value <= 4)));
+		input_report_key(idev, BTN_DPAD_DOWN,
+			((value >= 4) && (value <= 6)));
+		input_report_key(idev, BTN_DPAD_LEFT,
+			((value >= 6) && (value <= 8)));
 
 		/*
 		 * It is perfectly fine to send those events even if
@@ -891,9 +1008,15 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	xdata->report_behaviour = UNKNOWN;
 
 	switch (hdev->dev_rsize) {
-	case 307: xdata->report_descriptor = WINDOWS; break;
-	case 335: xdata->report_descriptor = LINUX;   break;
-	default:  xdata->report_descriptor = UNKNOWN; break;
+	case 307:
+		xdata->report_descriptor = WINDOWS;
+		break;
+	case 335:
+		xdata->report_descriptor = LINUX;
+		break;
+	default:
+		xdata->report_descriptor = UNKNOWN;
+		break;
 	}
 
 	hid_set_drvdata(hdev, xdata);
@@ -952,12 +1075,12 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	/* Clean up */
 
 	/* TODO:
-	 * if (!sc->battery_desc.name)
+	 * if (!sc->batt_desc.name)
 	 *	return;
 	 */
 	power_supply_unregister(xdata->batt);
-	/* TODO: kfree(sc->battery_desc.name); */
-	/* TODO: sc->battery_desc.name = NULL; */
+	/* TODO: kfree(sc->batt_desc.name); */
+	/* TODO: sc->batt_desc.name = NULL; */
 
 	hid_hw_stop(hdev);
 
