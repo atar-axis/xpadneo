@@ -26,7 +26,7 @@
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
-MODULE_DESCRIPTION("Linux Kernel driver for XBOX ONE S and X gamepads (bluetooth), including force-feedback");
+MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (bt), incl. FF");
 MODULE_VERSION("0.1.3");
 
 
@@ -60,12 +60,14 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
 		if (debug_level >= lvl) \
-			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), pr_fmt(fmt_str), ##__VA_ARGS__); \
+			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), \
+				pr_fmt(fmt_str), ##__VA_ARGS__); \
 	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
 	do { \
 		if (debug_level >= lvl) \
-			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), DUMP_PREFIX_NONE, 32, 1, data, size, false); \
+			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), \
+				DUMP_PREFIX_NONE, 32, 1, data, size, false); \
 	} while (0)
 #else
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
@@ -87,8 +89,8 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
  * Use sth. which is aware of the endianess, i.e. __le16 and __le16_to_cpu()
  */
 
-#define FF_ENABLE_RMBL_LEFT  0x02
-#define FF_ENABLE_RMBL_RIGHT 0x01
+#define FF_ENABLE_LEFT  0x02
+#define FF_ENABLE_RIGHT 0x01
 
 struct ff_data {
 	u8 enable_actuators;
@@ -175,14 +177,14 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	ff_package.ff                  = ff_clear;
 	ff_package.report_id           = 0x03;
-	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_RIGHT | FF_ENABLE_RMBL_LEFT;
+	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT | FF_ENABLE_LEFT;
 	ff_package.ff.magnitude_right  = (u8)((weak & 0xFF00) >> 8);
 	ff_package.ff.magnitude_left   = (u8)((strong & 0xFF00) >> 8);
 
 	/* It is up to the Input-Subsystem to start and stop effects as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
 	 * Take a look here:
-	 * https://stackoverflow.com/questions/48034091/ff-replay-substructure-in-ff-effect-empty/48043342#48043342
+	 * https://stackoverflow.com/questions/48034091/
 	 * We therefore simply play the effect as long as possible, which is
 	 * 2, 55s * 255 = 650, 25s ~ = 10min
 	 */
@@ -205,7 +207,8 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	/* Create handle to the input device which is assigned to the hid device
 	 * TODO: replace by get_drvdata
 	 */
-	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
+	struct hid_input *hidinput = list_entry(hdev->inputs.next,
+							struct hid_input, list);
 	struct input_dev *idev     = hidinput->input;
 
 	struct ff_report ff_package;
@@ -215,7 +218,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	/* 'HELLO' FROM THE OTHER SIDE */
 	ff_package.ff                  = ff_clear;
 	ff_package.report_id           = 0x03;
-	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_RIGHT;
+	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
 	ff_package.ff.magnitude_right  = 0x99;
 	ff_package.ff.duration         = 50;
 	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
@@ -224,7 +227,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 
 	ff_package.ff                  = ff_clear;
 	ff_package.report_id           = 0x03;
-	ff_package.ff.enable_actuators = FF_ENABLE_RMBL_LEFT;
+	ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
 	ff_package.ff.magnitude_left   = 0x99;
 	ff_package.ff.duration         = 50;
 	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
@@ -659,8 +662,8 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 				unsigned int *rsize)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT (DESCRIPTOR) FIXUP HOOK, called before report descriptor parsing\n");
-	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descriptor: ", rdesc, *rsize);
+	hid_dbg_lvl(DBG_LVL_SOME, hdev,	"REPORT (DESCRIPTOR) FIXUP HOOK\n");
+	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descr: ", rdesc, *rsize);
 
 	return rdesc;
 }
@@ -682,7 +685,8 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	 */
 
 	xdata->cable_state = data[1] == 0x80 ? 1 : 0;
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data[1]: %X, cable-state: %d\n", data[1], xdata->cable_state);
+	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data[1]: %X, cable-state: %d\n",
+						data[1], xdata->cable_state);
 
 	switch (data[1]) {
 	case 0x80:
@@ -745,11 +749,11 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		      u8 *data, int reportsize)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK, called before parsing a report\n");
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
 
 	dbg_hex_dump_lvl(DBG_LVL_ALL, "xpadneo: raw_event: ", data, reportsize);
 	hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (w.o. id): %d\n", reportsize-1);
+	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
 
 
 	switch (report->id) {
@@ -768,7 +772,7 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 
 void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK, called right after parsing a report\n");
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK\n");
 }
 
 
@@ -783,11 +787,11 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
  */
 
 static int xpadneo_input_configured(struct hid_device *hdev,
-							struct hid_input *hi)
+				    struct hid_input *hi)
 {
 	struct input_dev *input = hi->input;
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK, invoked just before the device is registered\n");
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
 
 	/* TODO: outsource that */
@@ -834,8 +838,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 *    the internal input-representation as defined in
 	 *    input-event-codes.h
 	 *
-	 * take a look at the following website for the original mapping:
-	 * https://elixir.free-electrons.com/linux/v4.4/source/drivers/hid/hid-input.c#L604
+	 * take a look at drivers/hid/hid-input.c (#L604)
 	 */
 
 	return 0;
@@ -868,7 +871,8 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	/* TODO: use hid_get_drvdata instead */
-	struct hid_input *hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
+	struct hid_input *hidinput = list_entry(hdev->inputs.next,
+							struct hid_input, list);
 	struct input_dev *idev     = hidinput->input;
 
 
@@ -931,7 +935,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				break;
 			}
 
-			hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x fixed\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE));
+			hid_dbg_lvl(DBG_LVL_SOME, hdev,
+				"hid-upage: %02x, hid-usage: %02x fixed\n",
+				(usage->hid & HID_USAGE_PAGE),
+				(usage->hid & HID_USAGE));
 			return EV_STOP_PROCESSING;
 		}
 	}
@@ -976,7 +983,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		 */
 	}
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "hid-upage: %02x, hid-usage: %02x, input-code: %02x, value: %02x\n", (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE), usage->code, value);
+	hid_dbg_lvl(DBG_LVL_SOME, hdev,
+		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
+		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
+		usage->code, value);
 
 	return EV_CONT_PROCESSING;
 }
@@ -1031,8 +1041,8 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	/* Debug Output*/
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw dev_rdesc: (see above)\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw dev_rsize: %u\n", hdev->dev_rsize);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rdesc: (unfixed, see above)\n");
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rsize: %u\n", hdev->dev_rsize);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* bus: 0x%04X\n", hdev->bus);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* report group: %u\n", hdev->group);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* vendor: 0x%08X\n", hdev->vendor);
