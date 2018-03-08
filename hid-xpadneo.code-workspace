@@ -1,7 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "build"
+			"path": "build/local"
 		}
 	],
 	"settings": {}

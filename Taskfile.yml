@@ -8,31 +8,34 @@
 # BUILD FOR LOCAL MACHINE
 version: '2'
 
-vars: 
-    ROOT_DIR: "build"
-    PATCHES_DIR: "src/patches"
-    DL_DIR: "dl"
-    K_VER_LONG:
-      sh: uname -r
-    K_VER:
-      sh: uname -r | sed -E 's/([^-]*)(.*)/\1/'
-    K_VER_DL:
-      sh: uname -r | sed -E 's/([^-]*)(.*)/\1/' | sed -E 's/(.*)(\.0)/\1/'
-    K_VER_LOCAL_EXTRA:
-      sh: uname -r | sed -E 's/([^-]*)(.*)/\2/'
-
 tasks:
     default:
         cmds:
             - task: local
-
+    
     local:
         desc: builds the modules for the local system
+        cmds:
+            - task local_main
+        env:
+            K_VER_LONG:
+                sh: uname -r
+            K_VER:
+                sh: uname -r | sed -E 's/([^-]*)(.*)/\1/'
+            K_VER_DL:
+                sh: uname -r | sed -E 's/([^-]*)(.*)/\1/' | sed -E 's/(.*)(\.0)/\1/'
+            K_VER_LOCAL_EXTRA:
+                sh: uname -r | sed -E 's/([^-]*)(.*)/\2/'
+            BUILD_DIR: "build/local"
+            PATCHES_DIR: "src/patches"
+            DL_DIR: "dl"
+        
+    local_main:
         cmds:
             - task: download
               vars: {LINK: "https://www.kernel.org/pub/linux/kernel/v4.x/linux-{{.K_VER_DL}}.tar.gz"}
             - task: unpack
-              vars: {FILE: "dl/linux-{{.K_VER_DL}}.tar.gz", DEST_DIR: "build"}
+              vars: {FILE: "dl/linux-{{.K_VER_DL}}.tar.gz", DEST_DIR: "{{.BUILD_DIR}}"}
             - task: copy_driver
             - task: patch_src
             - task: configure_src_from_local
@@ -56,28 +59,28 @@ tasks:
             ARCH: 'arm'
             CROSS_COMPILE: 'arm-linux-gnueabihf-'
             KERNEL: 'kernel7'
-            ROOT_DIR: "build/linux-raspberrypi-kernel_1.20171029-1"
-            PATCHES_DIR: "src/patches/raspi3"
-            BCK_DIR: "out/arm"
-            CONF_ARCH: "arm"
-            CONF_PATH: "src/"
-            CONF_NAME: "bcm2709_defconfig"
-            DEFCONFIG: "bcm2709_defconfig"
-            LINK: "https://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20171029-1.tar.gz"
-        
+            BUILD_DIR: "build/raspi3"
+            PATCHES_DIR: "src/patches"
+            DL_DIR: "dl"
+            
     raspi3_main:
         cmds:
             - task: download
+              vars: {LINK: "https://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20171029-1.tar.gz"}
             - task: unpack
-              vars: {FILE: "dl/raspberrypi-kernel_1.20171029-1.tar.gz", DEST_DIR: "build"}
+              vars: {FILE: "dl/raspberrypi-kernel_1.20171029-1.tar.gz", DEST_DIR: "{{.BUILD_DIR}}"}
             - task: copy_driver
             - task: patch_src
+              vars: {PATCHES_DIR: "{{.PATCHES_DIR}}/raspi3"}
             - task: copy_defconfig
+              vars: {CONF_ARCH: "arm", CONF_PATH: "src/", CONF_NAME: "bcm2709_defconfig"}
             - task: make_defconfig
+              vars: {DEFCONFIG: "bcm2709_defconfig"}
             - task: make_modulesymvers_if_not_there
             - task: build_xpad
             - task: build_bluetooth
             - task: backup_modules_raspi
+              vars: {BCK_DIR: "out/arm"}
         
 
     clean:
@@ -111,7 +114,7 @@ tasks:
     unpack:
         deps:
             - task: folder_exists
-              vars: {FOLDER: "build"}
+              vars: {FOLDER: "{{.BUILD_DIR}}"}
         cmds:
             - tar --totals --extract --ungzip --file={{.FILE}} --directory={{.DEST_DIR}}/ --strip-components=1
         status:
@@ -138,86 +141,89 @@ tasks:
             - task: bckdir_exists
               vars: {BCK_DIR: "{{.BCK_DIR}}"}
         cmds:
-            - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
-            - cp --force {{.ROOT_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
-            - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
+            - cp --force {{.BUILD_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
+            - cp --force {{.BUILD_DIR}}/drivers/hid/hid.ko {{.BCK_DIR}}/
+            - cp --force {{.BUILD_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
             - cp --force src/udev_rules/99-xpadneo.rules {{.BCK_DIR}}/
             - cp --force src/install.sh {{.BCK_DIR}}/
 
     backup_modules_raspi:
+        deps:
+            - task: bckdir_exists
+              vars: {BCK_DIR: "{{.BCK_DIR}}"}
         cmds:
-            - cp --force {{.ROOT_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
-            - cp --force {{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
+            - cp --force {{.BUILD_DIR}}/net/bluetooth/bluetooth.ko {{.BCK_DIR}}/
+            - cp --force {{.BUILD_DIR}}/drivers/hid/hid-xpadneo.ko {{.BCK_DIR}}/
             - cp --force src/udev_rules/99-xpadneo-raspi.rules {{.BCK_DIR}}/
 
     make_scripts:
         cmds:
-            - make --directory={{.ROOT_DIR}} -j6 scripts
+            - make --directory={{.BUILD_DIR}} -j6 scripts
         
     try_copy_modulesymvers_linux_headers:
         cmds:
-            - cp --force /lib/modules/{{.K_VER_LONG}}/build/Module.symvers {{.ROOT_DIR}}/
+            - cp --force /lib/modules/{{.K_VER_LONG}}/build/Module.symvers {{.BUILD_DIR}}/
         
     make_modulesymvers_if_not_there:
         cmds:
-            - make --directory={{.ROOT_DIR}} -j6 modules
+            - make --directory={{.BUILD_DIR}} -j6 modules
         status:
-            - test -f {{.ROOT_DIR}}/Module.symvers
+            - test -f {{.BUILD_DIR}}/Module.symvers
 
     patch_src:
         cmds:
-            - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch
+            - git apply --directory={{.BUILD_DIR}} {{.PATCHES_DIR}}/*.patch
         status:
-            - git apply --directory={{.ROOT_DIR}} {{.PATCHES_DIR}}/*.patch -R --check
+            - git apply --directory={{.BUILD_DIR}} {{.PATCHES_DIR}}/*.patch -R --check
 
     copy_config_from_local:
         cmds:
             - |
               if [ -f /boot/config-{{.K_VER}}/.config ] ; then
-                  cp /boot/config-{{.K_VER}}/.config {{.ROOT_DIR}}/
+                  cp /boot/config-{{.K_VER}}/.config {{.BUILD_DIR}}/
               elif [ -f /usr/lib/modules/{{.K_VER_LONG}}/build/.config ] ; then
-                  cp /usr/lib/modules/{{.K_VER_LONG}}/build/.config {{.ROOT_DIR}}/
+                  cp /usr/lib/modules/{{.K_VER_LONG}}/build/.config {{.BUILD_DIR}}/
               elif [ -f /proc/config.gz ] ; then
-                  gzip --decompress < /proc/config.gz > {{.ROOT_DIR}}/.config
+                  gzip --decompress < /proc/config.gz > {{.BUILD_DIR}}/.config
               elif [ -f /boot/config-{{.K_VER_LONG}} ] ; then
-                  cp /boot/config-{{.K_VER_LONG}} {{.ROOT_DIR}}/.config
+                  cp /boot/config-{{.K_VER_LONG}} {{.BUILD_DIR}}/.config
               fi;
 
     configure_src_from_local:
         cmds:
             - task: copy_config_from_local
-              vars: {ROOT_DIR: "{{.ROOT_DIR}}"}
+              vars: {BUILD_DIR: "{{.BUILD_DIR}}"}
             - task: patch_config
-              vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_emptyLocalversion"}
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_emptyLocalversion"}
             - task: patch_config
-              vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
             - task: patch_config
-              vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
-            - make --directory={{.ROOT_DIR}} -j6 oldconfig
-            - make --directory={{.ROOT_DIR}} LOCALVERSION={{.K_VER_LOCAL_EXTRA}} -j6 prepare
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
+            - make --directory={{.BUILD_DIR}} -j6 oldconfig
+            - make --directory={{.BUILD_DIR}} LOCALVERSION={{.K_VER_LOCAL_EXTRA}} -j6 prepare
         vars:
             K_VER_LONG:
             sh: uname -r
         status:
-            - test -f {{.ROOT_DIR}}/.config
+            - test -f {{.BUILD_DIR}}/.config
 
     copy_defconfig:
         cmds:
-            - cp {{.CONF_PATH}}/{{.CONF_NAME}} {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/
+            - cp {{.CONF_PATH}}/{{.CONF_NAME}} {{.BUILD_DIR}}/arch/{{.CONF_ARCH}}/configs/
         status:
-            - test -f {{.ROOT_DIR}}/arch/{{.CONF_ARCH}}/configs/{{.CONF_NAME}}
+            - test -f {{.BUILD_DIR}}/arch/{{.CONF_ARCH}}/configs/{{.CONF_NAME}}
 
     make_defconfig:
         cmds:
-            - make --directory={{.ROOT_DIR}} {{.DEFCONFIG}}
+            - make --directory={{.BUILD_DIR}} {{.DEFCONFIG}}
             - task: patch_config
-              vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
             - task: patch_config
-              vars: {SCRIPTS_DIR: "{{.ROOT_DIR}}/scripts/", OUT_DIR: "{{.ROOT_DIR}}", BASE_FILE: "{{.ROOT_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
-            - make --directory={{.ROOT_DIR}} -j6 oldconfig
-            - make --directory={{.ROOT_DIR}} -j6 prepare
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setDebug"}
+            - make --directory={{.BUILD_DIR}} -j6 oldconfig
+            - make --directory={{.BUILD_DIR}} -j6 prepare
         status:
-            - test -f {{.ROOT_DIR}}/.config
+            - test -f {{.BUILD_DIR}}/.config
 
     patch_config:
         cmds:
@@ -225,40 +231,40 @@ tasks:
             
     build_xpad:
         sources:
-            - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
+            - ./{{.BUILD_DIR}}/drivers/hid/hid-xpadneo.c
         generates:
-            - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.ko
+            - ./{{.BUILD_DIR}}/drivers/hid/hid-xpadneo.ko
         cmds:
-            - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
+            - make --directory={{.BUILD_DIR}} -j6 M=drivers/hid
 
     build_bluetooth:
         sources:
-            - ./{{.ROOT_DIR}}/net/bluetooth/l2cap_core.c
+            - ./{{.BUILD_DIR}}/net/bluetooth/l2cap_core.c
         generates:
-            - ./{{.ROOT_DIR}}/net/bluetooth/bluetooth.ko
+            - ./{{.BUILD_DIR}}/net/bluetooth/bluetooth.ko
         cmds:
-            - make --directory={{.ROOT_DIR}} -j6 M=net/bluetooth
+            - make --directory={{.BUILD_DIR}} -j6 M=net/bluetooth
 
     build_hid:
         sources:
-            - ./{{.ROOT_DIR}}/drivers/hid/hid-core.c
+            - ./{{.BUILD_DIR}}/drivers/hid/hid-core.c
         generates:
-            - ./{{.ROOT_DIR}}/drivers/hid/hid.ko
+            - ./{{.BUILD_DIR}}/drivers/hid/hid.ko
         cmds:
-            - make --directory={{.ROOT_DIR}} -j6 M=drivers/hid
+            - make --directory={{.BUILD_DIR}} -j6 M=drivers/hid
 
     copy_driver:
         sources:
             - src/hid-xpadneo.c
         generates:
-            - ./{{.ROOT_DIR}}/drivers/hid/hid-xpadneo.c
+            - ./{{.BUILD_DIR}}/drivers/hid/hid-xpadneo.c
         cmds:
-            - cp -al src/hid-xpadneo.c {{.ROOT_DIR}}/drivers/hid/
+            - cp -al src/hid-xpadneo.c {{.BUILD_DIR}}/drivers/hid/
 
     zip:
         sources:
-            - ./{{.ROOT_DIR}}/{{.REL_FILE_PATH}}
+            - ./{{.BUILD_DIR}}/{{.REL_FILE_PATH}}
         generates:
-            - ./{{.ROOT_DIR}}/{{.REL_FILE_PATH}}.xz
+            - ./{{.BUILD_DIR}}/{{.REL_FILE_PATH}}.xz
         cmds:
-            - xz --keep {{.ROOT_DIR}}/{{.REL_FILE_PATH}}
+            - xz --keep {{.BUILD_DIR}}/{{.REL_FILE_PATH}}
