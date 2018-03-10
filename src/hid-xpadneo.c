@@ -5,13 +5,6 @@
  * Copyright (c) 2017 Florian Dollinger <dollinger.florian@gmx.de>
  */
 
-/* TODO:
- * - jstest shows at startup the maximum/minimum value,
- *   not the value that corresponds to the "default" position, why?
- * - https: //www.kernel.org/doc/html/v4.10/process/coding-style.html
- * - a lot of more, search for TODO in the code (you can't overlook xD)
- */
-
 #include <linux/hid.h>
 #include <linux/power_supply.h>
 #include <linux/input.h>	/* ff_memless(), ... */
@@ -55,6 +48,8 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
 #define DBG_LVL_FEW  1
 #define DBG_LVL_SOME 2
 #define DBG_LVL_ALL  3
+
+
 
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
@@ -140,8 +135,10 @@ struct xpadneo_devdata {
 	/* battery information */
 	struct power_supply *batt;
 	struct power_supply_desc batt_desc;
-	u8 cable_state;
-	u8 capacity_level;
+	u8 ps_online;
+	u8 ps_present;
+	u8 ps_capacity_lvl;
+	u8 ps_status;
 };
 
 
@@ -171,9 +168,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	strong = effect->u.rumble.strong_magnitude;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"playing effect: strong: %#04x, weak: %#04x\n", strong, weak
-	);
-
+		"playing effect: strong: %#04x, weak: %#04x\n", strong, weak);
 
 	ff_package.ff                  = ff_clear;
 	ff_package.report_id           = 0x03;
@@ -279,16 +274,27 @@ static int battery_get_property(struct power_supply *ps,
 {
 	struct xpadneo_devdata *xdata = power_supply_get_drvdata(ps);
 	unsigned long flags;
-	u8 capacity_level, cable_state;
+	u8 capacity_level, present, online, status;
 
 	spin_lock_irqsave(&xdata->lock, flags);
-	capacity_level = xdata->capacity_level;
-	cable_state    = xdata->cable_state;
+	capacity_level = xdata->ps_capacity_lvl;
+	present        = xdata->ps_present;
+	online         = xdata->ps_online;
+	status         = xdata->ps_status;
 	spin_unlock_irqrestore(&xdata->lock, flags);
 
 	switch (property) {
+	case POWER_SUPPLY_PROP_MANUFACTURER:
+		val->strval = "Microsoft";
+		break;
+	case POWER_SUPPLY_PROP_MODEL_NAME:
+		val->strval = "Xbox Wireless Controller";
+		break;
 	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = 1;
+		val->intval = present;
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = online;
 		break;
 	case POWER_SUPPLY_PROP_SCOPE:
 		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
@@ -297,17 +303,8 @@ static int battery_get_property(struct power_supply *ps,
 		val->intval = capacity_level;
 		break;
 	case POWER_SUPPLY_PROP_STATUS:
-		switch (cable_state) {
-		/* We use "FULL" as an indicator that the GP is plugged in */
-		case 1:
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-			break;
-		case 0:
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-			break;
-		}
+		val->intval = status;
 		break;
-
 	default:
 		return -EINVAL;
 	}
@@ -328,8 +325,14 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		/* powers a specific device */
 		POWER_SUPPLY_PROP_SCOPE,
 		/* charging (full, plugged), not_charging */
-		POWER_SUPPLY_PROP_STATUS
+		POWER_SUPPLY_PROP_STATUS,
+		/* cstring - manufacturer name */
+		POWER_SUPPLY_PROP_MANUFACTURER,
+		/* cstring - model name */
+		POWER_SUPPLY_PROP_MODEL_NAME,
+		POWER_SUPPLY_PROP_ONLINE
 	};
+
 
 	struct power_supply_config ps_config = {
 		/* pass the xpadneo_data to the get_property function */
@@ -337,7 +340,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	};
 
 
-	xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+	xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
 
 	/* Set up power supply */
 
@@ -358,11 +361,12 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	 */
 	xdata->batt_desc.get_property = battery_get_property;
 
+
 	/* Advanced power management emulation */
 	xdata->batt_desc.use_for_apm = 0;
 
 	/* Register power supply for our gamepad device */
-	xdata->batt = power_supply_register(&hdev->dev,
+	xdata->batt = devm_power_supply_register(&hdev->dev,
 						&xdata->batt_desc, &ps_config);
 	if (IS_ERR(xdata->batt)) {
 		ret = PTR_ERR(xdata->batt);
@@ -674,36 +678,47 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	/*
-	 * Behaviour on AA Mignon Batteries:
+
+	/*  msb          ID 04          lsb
+	 * +---+---+---+---+---+---+---+---+
+	 * | O | R | E | C | M | M | L | L |
+	 * +---+---+---+---+---+---+---+---+
 	 *
-	 * 0x80 - Cable plugged in, Battery status unknown
-	 * 0x84 - Critical Battery Level, Rumble deactivated
-	 * 0x85 - Low to Medium Batt. Level
-	 * 0x86 - Normal to High Batt. Level
-	 * 0x87 - High to Full Batt. Level
+	 * O: Online
+	 * R: Reserved / Unused
+	 * E: Error (?) / Unknown
+	 * C: Charging, I mean really charging something
+	 *              not (only) the power cord powering the controller
+	 * M M: Mode
+	 *      00: Powered by USB
+	 *      01: Powered by (disposable) batteries
+	 *      10: Powered by Play 'n Charge battery pack (only, no cable)
+	 * L L: Capacity Level
+	 *      00: (Super) Critical
+	 *      01: Low
+	 *      10: Medium
+	 *      11: Full
 	 */
 
-	xdata->cable_state = data[1] == 0x80 ? 1 : 0;
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data[1]: %X, cable-state: %d\n",
-						data[1], xdata->cable_state);
 
-	switch (data[1]) {
-	case 0x80:
-		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
-		break;
-	case 0x84:
-		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
-		break;
-	case 0x85:
-		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-		break;
-	case 0x86:
-		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-		break;
-	case 0x87:
-		xdata->capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
-		break;
+	/* We think "online" means if the device is online or shutting down */
+	xdata->ps_online = (data[1] & 0x80) >> 7;
+
+	/* Only present if not powered by USB */
+	xdata->ps_present = ((data[1] & 0x0C) != 0x00);
+
+	/* Capacity level, only valid as long as power supply present */
+	switch (data[1] & 0x03) {
+	case 0x00: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL; break;
+	case 0x01: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_LOW; break;
+	case 0x02: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL; break;
+	case 0x03: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_HIGH; break;
+	}
+
+	/* Is the Battery charged? */
+	switch ((data[1] & 0x10) >> 4) {
+	case 0: xdata->ps_status = POWER_SUPPLY_STATUS_DISCHARGING; break;
+	case 1: xdata->ps_status = POWER_SUPPLY_STATUS_CHARGING; break;
 	}
 
 	power_supply_changed(xdata->batt);
@@ -1088,7 +1103,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	 * if (!sc->batt_desc.name)
 	 *	return;
 	 */
-	power_supply_unregister(xdata->batt);
+	// no longer necessary since we use devm-variant: power_supply_unregister(xdata->batt);
 	/* TODO: kfree(sc->batt_desc.name); */
 	/* TODO: sc->batt_desc.name = NULL; */
 

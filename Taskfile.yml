@@ -163,6 +163,8 @@ tasks:
     try_copy_modulesymvers_linux_headers:
         cmds:
             - cp --force /lib/modules/{{.K_VER_LONG}}/build/Module.symvers {{.BUILD_DIR}}/
+        status:
+            - test -f {{.BUILD_DIR}}/Module.symvers
         
     make_modulesymvers_if_not_there:
         cmds:
