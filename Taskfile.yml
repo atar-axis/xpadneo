@@ -107,7 +107,7 @@ tasks:
 
     folder_exists:
         cmds:
-            - mkdir {{.FOLDER}}
+            - mkdir --parents {{.FOLDER}}
         status:
             - test -d {{.FOLDER}}
 
