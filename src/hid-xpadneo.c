@@ -137,7 +137,7 @@ struct xpadneo_devdata {
 	struct power_supply_desc batt_desc;
 	u8 ps_online;
 	u8 ps_present;
-	u8 ps_capacity_lvl;
+	u8 ps_capacity_level;
 	u8 ps_status;
 };
 
@@ -277,7 +277,7 @@ static int battery_get_property(struct power_supply *ps,
 	u8 capacity_level, present, online, status;
 
 	spin_lock_irqsave(&xdata->lock, flags);
-	capacity_level = xdata->ps_capacity_lvl;
+	capacity_level = xdata->ps_capacity_level;
 	present        = xdata->ps_present;
 	online         = xdata->ps_online;
 	status         = xdata->ps_status;
@@ -340,7 +340,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	};
 
 
-	xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
 
 	/* Set up power supply */
 
@@ -677,6 +677,8 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 				    int reportsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	unsigned long flags;
+	u8 capacity_level, present, online, status;
 
 
 	/*  msb          ID 04          lsb
@@ -702,24 +704,43 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 
 
 	/* We think "online" means if the device is online or shutting down */
-	xdata->ps_online = (data[1] & 0x80) >> 7;
+	online = (data[1] & 0x80) >> 7;
 
-	/* Only present if not powered by USB */
-	xdata->ps_present = ((data[1] & 0x0C) != 0x00);
+	/* The battery is only present if not powered by USB */
+	present = ((data[1] & 0x0C) != 0x00);
 
 	/* Capacity level, only valid as long as power supply present */
 	switch (data[1] & 0x03) {
-	case 0x00: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL; break;
-	case 0x01: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_LOW; break;
-	case 0x02: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL; break;
-	case 0x03: xdata->ps_capacity_lvl = POWER_SUPPLY_CAPACITY_LEVEL_HIGH; break;
+	case 0x00:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+		break;
+	case 0x01:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+		break;
+	case 0x02:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+		break;
+	case 0x03:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
+		break;
 	}
 
 	/* Is the Battery charged? */
 	switch ((data[1] & 0x10) >> 4) {
-	case 0: xdata->ps_status = POWER_SUPPLY_STATUS_DISCHARGING; break;
-	case 1: xdata->ps_status = POWER_SUPPLY_STATUS_CHARGING; break;
+	case 0:
+		status = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;
+	case 1:
+		status = POWER_SUPPLY_STATUS_CHARGING;
+		break;
 	}
+
+	spin_lock_irqsave(&xdata->lock, flags);
+	xdata->ps_status = status;
+	xdata->ps_capacity_level = capacity_level;
+	xdata->ps_online = online;
+	xdata->ps_present = present;
+	spin_unlock_irqrestore(&xdata->lock, flags);
 
 	power_supply_changed(xdata->batt);
 }
@@ -1093,22 +1114,11 @@ return_error:
 
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
-	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 	hid_hw_close(hdev);
 
-	/* Clean up */
-
-	/* TODO:
-	 * if (!sc->batt_desc.name)
-	 *	return;
-	 */
-	// no longer necessary since we use devm-variant: power_supply_unregister(xdata->batt);
-	/* TODO: kfree(sc->batt_desc.name); */
-	/* TODO: sc->batt_desc.name = NULL; */
+	/* Cleaning up here */
 
 	hid_hw_stop(hdev);
-
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "goodbye %s\n", hdev->name);
 }
