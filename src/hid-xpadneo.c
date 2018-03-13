@@ -163,31 +163,71 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 *    -> hid_connect -> hidinput_connect
 	 *    -> hidinput_allocate (sets drvdata to hid_device)
 	 */
-	struct hid_device *hdev = input_get_drvdata(dev);
+
 	struct ff_report ff_package;
 	u16 weak, strong, direction, max;
+	u8 mag_right, mag_left;
+	int proportion_left_trigger, proportion_right_trigger;
 
-	/* we have to _copy_ the effect values, otherwise we cannot print them
-	 * (kernel oops: unable to handle kernel paging request)
-	 */
-	weak     = effect->u.rumble.weak_magnitude;
-	strong   = effect->u.rumble.strong_magnitude;
+	struct hid_device *hdev = input_get_drvdata(dev);
+	// unused: sruct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	if (effect->type != FF_RUMBLE)
+		return 0;
+
+	/* copy data from effect structure at the very beginning */
+	weak      = effect->u.rumble.weak_magnitude;
+	strong    = effect->u.rumble.strong_magnitude;
 	direction = effect->direction;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
 		strong, weak, direction);
 
+
+	/* calculate the physical magnitudes */
+	mag_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
+	mag_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
+	max = mag_right > mag_left ? mag_right : mag_left; /* select maximum */
+
+	/* TODO: replace by a simple calculation */
+	switch (direction >> 12) {
+	case 0x4: proportion_left_trigger  = 1000; break;
+	case 0x5: proportion_left_trigger  = 875;  break;
+	case 0x6: proportion_left_trigger  = 750;  break;
+	case 0x7: proportion_left_trigger  = 625;  break;
+	case 0x8: proportion_left_trigger  = 500;  break;
+	case 0x9: proportion_left_trigger  = 375;  break;
+	case 0xA: proportion_left_trigger  = 250;  break;
+	case 0xB: proportion_left_trigger  = 125;  break;
+	case 0xC: proportion_left_trigger  = 0;    break;
+	default:  proportion_left_trigger  = 0;
+		  proportion_right_trigger = 0;
+	}
+
+	if(!(proportion_left_trigger == 0 && proportion_right_trigger == 0))
+		proportion_right_trigger = 1000 - proportion_left_trigger;
+
+
+	/* prepare ff package */
 	ff_package.ff = ff_clear;
 	ff_package.report_id = 0x03;
 	ff_package.ff.enable_actuators = FF_ENABLE_ALL;
-	ff_package.ff.magnitude_right = (u8)((weak & 0xFF00) >> 8);
-	ff_package.ff.magnitude_left  = (u8)((strong & 0xFF00) >> 8);
+	ff_package.ff.magnitude_right = mag_right;
+	ff_package.ff.magnitude_left  = mag_left;
+	ff_package.ff.magnitude_right_trigger
+		= (u8)(((max / 4) * proportion_right_trigger) / 1000);
+	ff_package.ff.magnitude_left_trigger
+		= (u8)(((max / 4) * proportion_left_trigger)  / 1000);
 
-	max = weak > strong ? weak : strong;
 
-	ff_package.ff.magnitude_right_trigger = (u8)((max & 0xFF00) >> 10);
-	ff_package.ff.magnitude_left_trigger  = (u8)((max & 0xFF00) >> 10);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev,
+		"max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		max,
+		proportion_left_trigger,
+		proportion_right_trigger,
+		ff_package.ff.magnitude_left_trigger,
+		ff_package.ff.magnitude_right_trigger);
 
 
 	/* It is up to the Input-Subsystem to start and stop effects as needed.
