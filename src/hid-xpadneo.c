@@ -172,11 +172,18 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	u16 weak, strong, direction, max;
 	u8 mag_right, mag_left;
 
-	const int proportions_milli[]
+	const int fractions_milli[]
 		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
 	const int proportions_idx_max = 8;
 	int index_left, index_right;
-	int proportion_left_trigger, proportion_right_trigger;
+	int fraction_TL, fraction_TR;
+
+	enum {
+		DIRECTION_DOWN  = 0x0000,
+		DIRECTION_LEFT  = 0x4000,
+		DIRECTION_UP    = 0x8000,
+		DIRECTION_RIGHT = 0xC000,
+	};
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
@@ -200,17 +207,17 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	/* get the proportions from a precalculated cosine table
 	 * calculation goes like:
 	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
-	 * proportions_milli(a) = (1000 + (cosine * 1000)) / 2
+	 * fractions_milli(a) = (1000 + (cosine * 1000)) / 2
 	 */
-	proportion_left_trigger  = 0;
-	proportion_right_trigger = 0;
+	fraction_TL = 0;
+	fraction_TR = 0;
 
-	if (0x4000 <= direction && direction <= 0xC000) {
-		index_left = (direction >> 12) - 0x04;
+	if (DIRECTION_LEFT <= direction && direction <= DIRECTION_RIGHT) {
+		index_left = (direction - DIRECTION_LEFT) >> 12;
 		index_right = proportions_idx_max - index_left;
 
-		proportion_left_trigger  = proportions_milli[index_left];
-		proportion_right_trigger = proportions_milli[index_right];
+		fraction_TL = fractions_milli[index_left];
+		fraction_TR = fractions_milli[index_right];
 	}
 
 	/* prepare ff package */
@@ -220,16 +227,14 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	ff_package.ff.magnitude_right = mag_right;
 	ff_package.ff.magnitude_left  = mag_left;
 	ff_package.ff.magnitude_right_trigger
-		= (u8)(((max >> trigger_rumble_damping) * proportion_right_trigger) / 1000);
+		= (u8)(((max >> trigger_rumble_damping) * fraction_TR) / 1000);
 	ff_package.ff.magnitude_left_trigger
-		= (u8)(((max >> trigger_rumble_damping) * proportion_left_trigger)  / 1000);
+		= (u8)(((max >> trigger_rumble_damping) * fraction_TL)  / 1000);
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
-		max,
-		proportion_left_trigger,
-		proportion_right_trigger,
+		max, fraction_TL, fraction_TR,
 		ff_package.ff.magnitude_left_trigger,
 		ff_package.ff.magnitude_right_trigger);
 
@@ -269,21 +274,27 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	/* TODO: outsource that */
 
 	/* 'HELLO' FROM THE OTHER SIDE */
-	ff_package.ff                  = ff_clear;
-	ff_package.report_id           = 0x03;
+	ff_package.ff = ff_clear;
+
+	ff_package.report_id = 0x03;
+	ff_package.ff.magnitude_right = 0x80;
+	ff_package.ff.magnitude_left  = 0x40;
+	ff_package.ff.magnitude_right_trigger = 0x20;
+	ff_package.ff.magnitude_left_trigger  = 0x20;
+	ff_package.ff.duration = 33;
+
 	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
-	ff_package.ff.magnitude_right  = 0x99;
-	ff_package.ff.duration         = 50;
 	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+	mdelay(330);
 
-	mdelay(500);
-
-	ff_package.ff                  = ff_clear;
-	ff_package.report_id           = 0x03;
 	ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
-	ff_package.ff.magnitude_left   = 0x99;
-	ff_package.ff.duration         = 50;
 	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+	mdelay(330);
+
+	ff_package.ff.enable_actuators
+		= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+	mdelay(330);
 
 
 	/* Init Input System for Force Feedback (FF) */
