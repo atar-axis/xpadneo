@@ -34,6 +34,10 @@ static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
+static u8 trigger_rumble_damping = 4;
+module_param(trigger_rumble_damping, byte, 0644);
+MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger rumble by 2^value: 0 (none) to 8+ (triggers off)");
+
 
 /*
  * Debug Printk
@@ -167,10 +171,14 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	struct ff_report ff_package;
 	u16 weak, strong, direction, max;
 	u8 mag_right, mag_left;
+
+	const int proportions_milli[]
+		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
+	const int proportions_idx_max = 8;
+	int index_left, index_right;
 	int proportion_left_trigger, proportion_right_trigger;
 
 	struct hid_device *hdev = input_get_drvdata(dev);
-	// unused: sruct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	if (effect->type != FF_RUMBLE)
 		return 0;
@@ -184,30 +192,26 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		"playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
 		strong, weak, direction);
 
-
 	/* calculate the physical magnitudes */
 	mag_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
 	mag_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
 	max = mag_right > mag_left ? mag_right : mag_left; /* select maximum */
 
-
-	/* cosine[] = {1000, 924, 707, 383, 0, -383, -707, -924, -1000} */
-	/* (1000 + cosine[index]) / 2; */
-	int proportions[] = {1000, 962, 854, 691, 500, 309, 146, 38, 0};
-
+	/* get the proportions from a precalculated cosine table
+	 * calculation goes like:
+	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
+	 * proportions_milli(a) = (1000 + (cosine * 1000)) / 2
+	 */
 	proportion_left_trigger  = 0;
 	proportion_right_trigger = 0;
 
 	if (0x4000 <= direction && direction <= 0xC000) {
+		index_left = (direction >> 12) - 0x04;
+		index_right = proportions_idx_max - index_left;
 
-		int index_left = (direction >> 12) - 0x04;
-		int index_right = 8 - index_left;
-
-		proportion_left_trigger  = proportions[index_left];
-		proportion_right_trigger = proportions[index_right];
-
+		proportion_left_trigger  = proportions_milli[index_left];
+		proportion_right_trigger = proportions_milli[index_right];
 	}
-
 
 	/* prepare ff package */
 	ff_package.ff = ff_clear;
@@ -216,9 +220,9 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	ff_package.ff.magnitude_right = mag_right;
 	ff_package.ff.magnitude_left  = mag_left;
 	ff_package.ff.magnitude_right_trigger
-		= (u8)(((max / 4) * proportion_right_trigger) / 1000);
+		= (u8)(((max >> trigger_rumble_damping) * proportion_right_trigger) / 1000);
 	ff_package.ff.magnitude_left_trigger
-		= (u8)(((max / 4) * proportion_left_trigger)  / 1000);
+		= (u8)(((max >> trigger_rumble_damping) * proportion_left_trigger)  / 1000);
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
