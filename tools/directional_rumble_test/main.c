@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 enum {
     FF_DIR_WEST       = 0x4000,
@@ -19,47 +20,53 @@ int main()
     printf("Directional Rumble Test\n");
 
     int fd;
-    struct ff_effect effect;
+    struct ff_effect effects[5];
     struct input_event play;
 
-    /* prepare effect */
-    effect.type = FF_RUMBLE;
-    effect.id = -1;
-    effect.direction = FF_DIR_EAST;
-    effect.u.rumble.strong_magnitude = 0xc000;
-    effect.u.rumble.weak_magnitude = 0;
-    effect.replay.length = 5000;
-    effect.replay.delay = 1000;
+    /* prepare effects */
+    for (int i = 0; i < 5; i++) {
+        effects[i].type = FF_RUMBLE;
+        effects[i].id = -1; // set by ioctl
+        effects[i].direction = FF_DIR_WEST + i * 0x2000;
+        effects[i].u.rumble.strong_magnitude = 0xc000;
+        effects[i].u.rumble.weak_magnitude = 0;
+        effects[i].replay.length = 1950;
+        effects[i].replay.delay = 0;
+    }
 
-
-    printf("Press ENTER to upload Rumble effect\n");
+    printf("Press ENTER to upload Rumble effects\n");
     getchar();
 
 
     /* uploading */
     fd = open("/dev/input/event15", O_RDWR);
-
-    if (ioctl(fd, EVIOCSFF, &effect) == -1) {
-        perror("Error\n");
-        return 1;
+    for (int i = 0; i < 5; i++) {
+        if (ioctl(fd, EVIOCSFF, &effects[i]) == -1) {
+            perror("Error\n");
+            return 1;
+        }
     }
-
-    printf("Press ENTER to play Rumble effect\n");
+       
+       
+    printf("Press ENTER to play rumble effects\n");
     getchar();
-    fflush(stdout);
+    
+    for (int i = 0; i < 5; i++) {
 
-    memset(&play,0,sizeof(play));
-    play.type = EV_FF;
-    play.code = effect.id;
-    play.value = 1;
+        memset(&play, 0, sizeof(play));
+        play.type = EV_FF;
+        play.code = effects[i].id;
+        play.value = 1;
 
-    if (write(fd, (const void*) &play, sizeof(play)) == -1) {
-        perror("Playing effect");
-        return 1;
+        if (write(fd, (const void*) &play, sizeof(play)) == -1) {
+            perror("Playing effect");
+            return 1;
+        } else {
+            printf("Playing effect %d\n", i);
+        }
+        
+        sleep(2);
     }
-
-    printf("Press ENTER to stop all effect and loop\n");
-    getchar();
 
     return 0;
 }
