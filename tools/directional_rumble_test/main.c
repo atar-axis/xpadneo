@@ -20,14 +20,14 @@ int main()
     printf("Directional Rumble Test\n");
 
     int fd;
-    struct ff_effect effects[5];
+    struct ff_effect effects[10];
     struct input_event play;
 
     /* prepare effects */
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         effects[i].type = FF_RUMBLE;
         effects[i].id = -1; // set by ioctl
-        effects[i].direction = FF_DIR_WEST + i * 0x2000;
+        effects[i].direction = FF_DIR_WEST + i * 0x1000;
         effects[i].u.rumble.strong_magnitude = 0xc000;
         effects[i].u.rumble.weak_magnitude = 0xc000;
         effects[i].replay.length = 1950;
@@ -40,7 +40,7 @@ int main()
 
     /* uploading */
     fd = open("/dev/input/event15", O_RDWR);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         if (ioctl(fd, EVIOCSFF, &effects[i]) == -1) {
             perror("Error while uploading\n");
             return 1;
@@ -51,8 +51,7 @@ int main()
     printf("Press ENTER to play rumble effects\n");
     getchar();
 
-    for (int i = 0; i < 5; i++) {
-
+    for (int i = 0; i < 10; i++) {
         memset(&play, 0, sizeof(play));
         play.type = EV_FF;
         play.code = effects[i].id;
@@ -65,8 +64,10 @@ int main()
             printf("Playing effect %d\n", i);
         }
 
-        sleep(2);
+        sleep(1);
     }
+
+    sleep(1);
 
     return 0;
 }
