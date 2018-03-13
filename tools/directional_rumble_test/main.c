@@ -29,7 +29,7 @@ int main()
         effects[i].id = -1; // set by ioctl
         effects[i].direction = FF_DIR_WEST + i * 0x2000;
         effects[i].u.rumble.strong_magnitude = 0xc000;
-        effects[i].u.rumble.weak_magnitude = 0;
+        effects[i].u.rumble.weak_magnitude = 0xc000;
         effects[i].replay.length = 1950;
         effects[i].replay.delay = 0;
     }
@@ -42,15 +42,15 @@ int main()
     fd = open("/dev/input/event15", O_RDWR);
     for (int i = 0; i < 5; i++) {
         if (ioctl(fd, EVIOCSFF, &effects[i]) == -1) {
-            perror("Error\n");
+            perror("Error while uploading\n");
             return 1;
         }
     }
-       
-       
+
+
     printf("Press ENTER to play rumble effects\n");
     getchar();
-    
+
     for (int i = 0; i < 5; i++) {
 
         memset(&play, 0, sizeof(play));
@@ -59,12 +59,12 @@ int main()
         play.value = 1;
 
         if (write(fd, (const void*) &play, sizeof(play)) == -1) {
-            perror("Playing effect");
+            perror("Error while playing");
             return 1;
         } else {
             printf("Playing effect %d\n", i);
         }
-        
+
         sleep(2);
     }
 
