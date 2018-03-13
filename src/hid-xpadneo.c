@@ -34,7 +34,7 @@ static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
-static u8 trigger_rumble_damping = 4;
+static u8 trigger_rumble_damping = 2;
 module_param(trigger_rumble_damping, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger rumble by 2^value: 0 (none) to 8+ (triggers off)");
 
