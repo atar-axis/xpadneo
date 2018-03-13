@@ -26,7 +26,7 @@ int main()
     effect.type = FF_RUMBLE;
     effect.id = -1;
     effect.direction = FF_DIR_EAST;
-    effect.u.rumble.strong_magnitude = 0x8000;
+    effect.u.rumble.strong_magnitude = 0xc000;
     effect.u.rumble.weak_magnitude = 0;
     effect.replay.length = 5000;
     effect.replay.delay = 1000;
