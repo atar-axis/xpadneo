@@ -84,12 +84,18 @@ MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RI
  * Use sth. which is aware of the endianess, i.e. __le16 and __le16_to_cpu()
  */
 
-#define FF_ENABLE_LEFT  0x02
-#define FF_ENABLE_RIGHT 0x01
+enum {
+	FF_ENABLE_RIGHT         = 0x01,
+	FF_ENABLE_LEFT          = 0x02,
+	FF_ENABLE_RIGHT_TRIGGER = 0x04,
+	FF_ENABLE_LEFT_TRIGGER  = 0x08,
+	FF_ENABLE_ALL           = 0x0F
+};
 
 struct ff_data {
 	u8 enable_actuators;
-	u8 reserved[2];
+	u8 magnitude_left_trigger;
+	u8 magnitude_right_trigger;
 	u8 magnitude_left;
 	u8 magnitude_right;
 	u8 duration;
@@ -159,22 +165,30 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 */
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct ff_report ff_package;
-	u16 weak, strong;
+	u16 weak, strong, duration, max;
 
 	/* we have to _copy_ the effect values, otherwise we cannot print them
 	 * (kernel oops: unable to handle kernel paging request)
 	 */
-	weak = effect->u.rumble.weak_magnitude;
-	strong = effect->u.rumble.strong_magnitude;
+	weak     = effect->u.rumble.weak_magnitude;
+	strong   = effect->u.rumble.strong_magnitude;
+	duration = effect->direction;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"playing effect: strong: %#04x, weak: %#04x\n", strong, weak);
+		"playing effect: strong: %#04x, weak: %#04x, duration: %#04x\n",
+		strong, weak, duration);
 
-	ff_package.ff                  = ff_clear;
-	ff_package.report_id           = 0x03;
-	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT | FF_ENABLE_LEFT;
-	ff_package.ff.magnitude_right  = (u8)((weak & 0xFF00) >> 8);
-	ff_package.ff.magnitude_left   = (u8)((strong & 0xFF00) >> 8);
+	ff_package.ff = ff_clear;
+	ff_package.report_id = 0x03;
+	ff_package.ff.enable_actuators = FF_ENABLE_ALL;
+	ff_package.ff.magnitude_right = (u8)((weak & 0xFF00) >> 8);
+	ff_package.ff.magnitude_left  = (u8)((strong & 0xFF00) >> 8);
+
+	max = weak > strong ? weak : strong;
+
+	ff_package.ff.magnitude_right_trigger = (u8)((max & 0xFF00) >> 10);
+	ff_package.ff.magnitude_left_trigger  = (u8)((max & 0xFF00) >> 10);
+
 
 	/* It is up to the Input-Subsystem to start and stop effects as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
