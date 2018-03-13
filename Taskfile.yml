@@ -261,7 +261,7 @@ tasks:
         generates:
             - ./{{.BUILD_DIR}}/drivers/hid/hid-xpadneo.c
         cmds:
-            - cp -al src/hid-xpadneo.c {{.BUILD_DIR}}/drivers/hid/
+            - cp -al --force src/hid-xpadneo.c {{.BUILD_DIR}}/drivers/hid/
 
     zip:
         sources:

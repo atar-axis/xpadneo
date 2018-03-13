@@ -190,23 +190,23 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	mag_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
 	max = mag_right > mag_left ? mag_right : mag_left; /* select maximum */
 
-	/* TODO: replace by a simple calculation */
-	switch (direction >> 12) {
-	case 0x4: proportion_left_trigger  = 1000; break;
-	case 0x5: proportion_left_trigger  = 875;  break;
-	case 0x6: proportion_left_trigger  = 750;  break;
-	case 0x7: proportion_left_trigger  = 625;  break;
-	case 0x8: proportion_left_trigger  = 500;  break;
-	case 0x9: proportion_left_trigger  = 375;  break;
-	case 0xA: proportion_left_trigger  = 250;  break;
-	case 0xB: proportion_left_trigger  = 125;  break;
-	case 0xC: proportion_left_trigger  = 0;    break;
-	default:  proportion_left_trigger  = 0;
-		  proportion_right_trigger = 0;
-	}
 
-	if(!(proportion_left_trigger == 0 && proportion_right_trigger == 0))
-		proportion_right_trigger = 1000 - proportion_left_trigger;
+	/* cosine[] = {1000, 924, 707, 383, 0, -383, -707, -924, -1000} */
+	/* (1000 + cosine[index]) / 2; */
+	int proportions[] = {1000, 962, 854, 691, 500, 309, 146, 38, 0};
+
+	proportion_left_trigger  = 0;
+	proportion_right_trigger = 0;
+
+	if (0x4000 <= direction && direction <= 0xC000) {
+
+		int index_left = (direction >> 12) - 0x04;
+		int index_right = 8 - index_left;
+
+		proportion_left_trigger  = proportions[index_left];
+		proportion_right_trigger = proportions[index_right];
+
+	}
 
 
 	/* prepare ff package */
