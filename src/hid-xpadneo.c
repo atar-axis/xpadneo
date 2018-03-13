@@ -165,18 +165,18 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 */
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct ff_report ff_package;
-	u16 weak, strong, duration, max;
+	u16 weak, strong, direction, max;
 
 	/* we have to _copy_ the effect values, otherwise we cannot print them
 	 * (kernel oops: unable to handle kernel paging request)
 	 */
 	weak     = effect->u.rumble.weak_magnitude;
 	strong   = effect->u.rumble.strong_magnitude;
-	duration = effect->direction;
+	direction = effect->direction;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"playing effect: strong: %#04x, weak: %#04x, duration: %#04x\n",
-		strong, weak, duration);
+		"playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
+		strong, weak, direction);
 
 	ff_package.ff = ff_clear;
 	ff_package.report_id = 0x03;
