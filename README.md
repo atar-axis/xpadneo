@@ -18,7 +18,7 @@ The buildsystem consists not only of the driver itself, it also fixes a bug I fo
 * Supports Bluetooth
 * Supports Force Feedback over Bluetooth
 * Supports Force Feedback at the triggers (not even supported at Windows)
-  https://www.youtube.com/watch?v=G4PHupKm2OQ
+  * take a look here https://www.youtube.com/watch?v=G4PHupKm2OQ
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
 * Agile Development
