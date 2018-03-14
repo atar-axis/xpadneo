@@ -13,6 +13,15 @@ At the moment of development there was no driver available which supports force 
 
 The buildsystem consists not only of the driver itself, it also fixes a bug I found in L2CAP (which initially forced us to disable ertm completely), futhermore it adds the new driver to the hid-core (this way it automatically loads the new driver whenever the controller is registered). As an alternative, it offers a Udev-rule to load the driver, this is a workaround which is useful whenever you are not able to recompile hid-core (e.g. if it is not a module - e.g. on Raspbian - and you don't want to recompile the whole kernel).
 
+## Advantages
+
+* Supports Bluetooth
+* Supports Force Feedback over Bluetooth
+* Supports Force Feedback at the triggers (not even supported at Windows)
+  https://www.youtube.com/watch?v=G4PHupKm2OQ
+* Offers a consistent mapping, even if paired to Windows before
+* Working Select, Start, Mode buttons
+
 ## Build
 
 You have to build the driver yourself if there is no suitable version available in out/.
