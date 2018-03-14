@@ -19,8 +19,8 @@
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
-MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (bt), incl. FF");
-MODULE_VERSION("0.1.3");
+MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
+MODULE_VERSION("0.2.0");
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -34,9 +34,9 @@ static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
 
-static u8 trigger_rumble_damping = 2;
+static u8 trigger_rumble_damping = 4;
 module_param(trigger_rumble_damping, byte, 0644);
-MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger rumble by 2^value: 0 (none) to 8+ (triggers off)");
+MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
 
 /*
@@ -169,14 +169,15 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 */
 
 	struct ff_report ff_package;
-	u16 weak, strong, direction, max;
+	u16 weak, strong, direction, max, max_damped;
 	u8 mag_right, mag_left;
 
 	const int fractions_milli[]
 		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
 	const int proportions_idx_max = 8;
-	int index_left, index_right;
+	u8 index_left, index_right;
 	int fraction_TL, fraction_TR;
+	u8 trigger_rumble_damping_nonzero;
 
 	enum {
 		DIRECTION_DOWN  = 0x0000,
@@ -184,6 +185,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		DIRECTION_UP    = 0x8000,
 		DIRECTION_RIGHT = 0xC000,
 	};
+
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
@@ -195,14 +197,12 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	strong    = effect->u.rumble.strong_magnitude;
 	direction = effect->direction;
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
 		strong, weak, direction);
 
 	/* calculate the physical magnitudes */
 	mag_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
 	mag_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
-	max = mag_right > mag_left ? mag_right : mag_left; /* select maximum */
 
 	/* get the proportions from a precalculated cosine table
 	 * calculation goes like:
@@ -220,6 +220,17 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		fraction_TR = fractions_milli[index_right];
 	}
 
+	/* we want to keep the rumbling at the triggers below the maximum
+	 * of the weak and strong main rumble
+	 */
+	max = mag_right > mag_left ? mag_right : mag_left;
+
+	/* the user can change the damping at runtime, hence check the range */
+	trigger_rumble_damping_nonzero
+		= trigger_rumble_damping == 0 ? 1: trigger_rumble_damping;
+
+	max_damped = max / trigger_rumble_damping_nonzero;
+
 	/* prepare ff package */
 	ff_package.ff = ff_clear;
 	ff_package.report_id = 0x03;
@@ -227,9 +238,9 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	ff_package.ff.magnitude_right = mag_right;
 	ff_package.ff.magnitude_left  = mag_left;
 	ff_package.ff.magnitude_right_trigger
-		= (u8)(((max >> trigger_rumble_damping) * fraction_TR) / 1000);
+		= (u8)((max_damped * fraction_TR) / 1000);
 	ff_package.ff.magnitude_left_trigger
-		= (u8)(((max >> trigger_rumble_damping) * fraction_TL)  / 1000);
+		= (u8)((max_damped * fraction_TL) / 1000);
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
@@ -1269,6 +1280,7 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 static int __init xpadneo_initModule(void)
 {
 	pr_info("%s: hello there!\n", xpadneo_driver.name);
+
 	return hid_register_driver(&xpadneo_driver);
 }
 

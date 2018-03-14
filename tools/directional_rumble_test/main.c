@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <time.h>
 
+
+
 enum {
     FF_DIR_WEST       = 0x4000,
     FF_DIR_WEST_NORTH = 0x6000,
@@ -15,8 +17,34 @@ enum {
     FF_DIR_EAST       = 0xC000
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+
+    /* Read in arguments */
+
+    if ((argc < 2 || argc > 3))
+    {
+        printf("./directional_rumble_rest <eventnumber> [<magnitude, 0 to 65535>]\n ");
+        return 0;
+    }
+
+    char device[80];
+    snprintf(device, 80, "/dev/input/event%d", atoi(argv[1]));
+
+
+    int magnitude = -1;
+
+    if (argc == 3) {
+        magnitude = atoi(argv[2]);
+    }
+
+    if (magnitude < 0 || magnitude > 65535)
+        magnitude = 0xC000;
+
+
+
+    /* Start */
+
     printf("Directional Rumble Test\n");
 
     int fd;
@@ -28,8 +56,8 @@ int main()
         effects[i].type = FF_RUMBLE;
         effects[i].id = -1; // set by ioctl
         effects[i].direction = FF_DIR_WEST + i * 0x1000;
-        effects[i].u.rumble.strong_magnitude = 0xc000;
-        effects[i].u.rumble.weak_magnitude = 0xc000;
+        effects[i].u.rumble.strong_magnitude = magnitude;
+        effects[i].u.rumble.weak_magnitude = magnitude;
         effects[i].replay.length = 1950;
         effects[i].replay.delay = 0;
     }
@@ -39,7 +67,7 @@ int main()
 
 
     /* uploading */
-    fd = open("/dev/input/event15", O_RDWR);
+    fd = open(device, O_RDWR);
     for (int i = 0; i < 10; i++) {
         if (ioctl(fd, EVIOCSFF, &effects[i]) == -1) {
             perror("Error while uploading\n");
@@ -61,13 +89,11 @@ int main()
             perror("Error while playing");
             return 1;
         } else {
-            printf("Playing effect %d\n", i);
+            printf("effect %d, direction: %04x\n", i, effects[i].direction);
         }
 
         sleep(1);
     }
-
-    sleep(1);
 
     return 0;
 }
