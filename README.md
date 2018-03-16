@@ -2,12 +2,6 @@ Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller
 
 *This Driver is currently in development - basic functionality works, but there is still A LOT to do.*
 
----
-
-### I am looking for a (mechanically) broken Xbox One Wireless Controller - Model 1708. The only thing I need is the Mainboard (so it should still turn on). If you have one and if you are located in Germany (or nearby): make me an offer!
-
----
-
 
 # Linux Driver for Xbox One S Wireless Gamepad
 
