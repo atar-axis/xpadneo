@@ -4,7 +4,7 @@ Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller
 
 ---
 
-# I am looking for a (mechanical) broken Xbox One Wireless Controller - Model 1708. The only thing I need is the Mainboard (so it should still turn on). If you have one and if you are located in Germany (or nearby): make me an offer! :D
+### I am looking for a (mechanical) broken Xbox One Wireless Controller - Model 1708. The only thing I need is the Mainboard (so it should still turn on). If you have one and if you are located in Germany (or nearby): make me an offer!
 
 ---
 
