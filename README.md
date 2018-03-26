@@ -30,6 +30,7 @@ You have to build the driver yourself if there is no suitable version available 
 To make life a bit easier, we offer you a Taskfile at the moment (you will need go-task https://github.com/go-task/task to execute that).
 
 Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make` - please make sure those are installed.
+For cross-compilation (raspberry) you also need: `arm-linux-gnueabihf-gcc-stage1`.
 
 - build driver(s) for your local system
   ```
@@ -51,19 +52,17 @@ Until now the Taskfile is tested under the following Distributions
 
 ## Installation
 
-All you have to do is:
+If Hid and Bluetooth are modules (not built-ins), then all you have to do is:
 
 ```
 sudo task install
 ```
 
-#### Problems
+If bluetooth isn't a module but builtin, you can alternatively run
+`echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
+before connecting the controller to the computer.
 
-- If bluetooth isn't a module but builtin, you can alternatively run
-  `echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
-  before connecting the controller to the computer.
-
-- If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
+If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
 
 ## Configuration
