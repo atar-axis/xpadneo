@@ -2,10 +2,8 @@ Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller
 
 *This Driver is currently in development - basic functionality works, but there is still A LOT to do.*
 
----
 
-
-# Linux Driver for Xbox One S Wireless Gamepad
+# Advanced Linux Driver for Xbox One S Wireless Gamepad
 
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
 
@@ -13,12 +11,26 @@ At the moment of development there was no driver available which supports force 
 
 The buildsystem consists not only of the driver itself, it also fixes a bug I found in L2CAP (which initially forced us to disable ertm completely), futhermore it adds the new driver to the hid-core (this way it automatically loads the new driver whenever the controller is registered). As an alternative, it offers a Udev-rule to load the driver, this is a workaround which is useful whenever you are not able to recompile hid-core (e.g. if it is not a module - e.g. on Raspbian - and you don't want to recompile the whole kernel).
 
+## Advantages
+
+* Supports Bluetooth
+* Supports Force Feedback over Bluetooth
+* Supports Force Feedback at the triggers (not even supported at Windows)
+  * take a look here https://www.youtube.com/watch?v=G4PHupKm2OQ
+* Offers a consistent mapping, even if paired to Windows before
+* Working Select, Start, Mode buttons
+* Support for Battery Level Indication
+  * On some KDE desktops it works, on others not. We've already fixed that and are currently waiting for a merge request: https://phabricator.kde.org/D11331
+  * Tested in GNOME
+* Agile Development
+
 ## Build
 
 You have to build the driver yourself if there is no suitable version available in out/.
 To make life a bit easier, we offer you a Taskfile at the moment (you will need go-task https://github.com/go-task/task to execute that).
 
 Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make` - please make sure those are installed.
+For cross-compilation (raspberry) you also need: `arm-linux-gnueabihf-gcc-stage1`.
 
 - build driver(s) for your local system
   ```
@@ -40,19 +52,17 @@ Until now the Taskfile is tested under the following Distributions
 
 ## Installation
 
-All you have to do is:
+If Hid and Bluetooth are modules (not built-ins), then all you have to do is:
 
 ```
 sudo task install
 ```
 
-#### Problems
+If bluetooth isn't a module but builtin, you can alternatively run
+`echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
+before connecting the controller to the computer.
 
-- If bluetooth isn't a module but builtin, you can alternatively run
-  `echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
-  before connecting the controller to the computer.
-
-- If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
+If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
 
 
 ## Configuration
