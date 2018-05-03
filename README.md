@@ -20,7 +20,8 @@ The buildsystem consists not only of the driver itself, it also fixes a bug I fo
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
 * Support for Battery Level Indication
-  * On some KDE desktops it works, on others not. We've already fixed that and are currently waiting for a merge request: https://phabricator.kde.org/D11331
+  * On some KDE desktops it works, on others not. We've already fixed that and ~~are currently waiting for a merge request: https://phabricator.kde.org/D11331~~
+  UPDATE: Merged in https://www.kde.org/announcements/kde-frameworks-5.45.0.php
   * Tested in GNOME
 * Agile Development
 
