@@ -66,21 +66,23 @@ tasks:
     raspi3_main:
         cmds:
             - task: download
-              vars: {LINK: "https://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20171029-1.tar.gz"}
+              vars: {LINK: "http://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20180313-1.tar.gz"}
             - task: unpack
-              vars: {FILE: "dl/raspberrypi-kernel_1.20171029-1.tar.gz", DEST_DIR: "{{.BUILD_DIR}}"}
+              vars: {FILE: "dl/raspberrypi-kernel_1.20180313-1.tar.gz", DEST_DIR: "{{.BUILD_DIR}}"}
             - task: copy_driver
             - task: patch_src
               vars: {PATCHES_DIR: "{{.PATCHES_DIR}}/raspi3"}
             - task: copy_defconfig
-              vars: {CONF_ARCH: "arm", CONF_PATH: "src/", CONF_NAME: "bcm2709_defconfig"}
+              vars: {CONF_ARCH: "arm", CONF_PATH: "src/", CONF_NAME: "bcm2709_defconfig"}         
             - task: make_defconfig
               vars: {DEFCONFIG: "bcm2709_defconfig"}
+            - task: patch_config
+              vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_kernel7plus"}
             - task: make_modulesymvers_if_not_there
             - task: build_xpad
             - task: build_bluetooth
             - task: backup_modules_raspi
-              vars: {BCK_DIR: "out/arm"}
+              vars: {BCK_DIR: "out/arm/4.9.80-v7+"}
         
 
     clean:
@@ -217,6 +219,7 @@ tasks:
 
     make_defconfig:
         cmds:
+            - make --directory={{.BUILD_DIR}} modules_prepare
             - make --directory={{.BUILD_DIR}} {{.DEFCONFIG}}
             - task: patch_config
               vars: {SCRIPTS_DIR: "{{.BUILD_DIR}}/scripts/", OUT_DIR: "{{.BUILD_DIR}}", BASE_FILE: "{{.BUILD_DIR}}/.config", PATCH_FILE: "src/config_mods/config_setXpadNeo"}
