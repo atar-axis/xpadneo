@@ -1,0 +1,10 @@
+#!/bin/sh
+echo "Diabling ERTM immediately"
+echo "y" | sudo tee /sys/module/bluetooth/parameters/disable_ertm
+
+echo "Disabling ERTM permanently..."
+echo "options bluetooth disable_ertm=y" | sudo tee /etc/modprobe.d/bluetooth.conf
+
+echo "Installing UDEV rule to automatically bind xpadneo..."
+sudo cp ./src/udev_rules/99-xpadneo.rules /etc/udev/rules.d/
+sudo udevadmn control --reload
