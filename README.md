@@ -1,5 +1,4 @@
-This is the DKMS version of my hid-xpadneo driver.
-This version is still missing a way to automatically patch the kernel modules `bluetooth` and `hid`.
+This is the DKMS version of my hid-xpadneo driver. Take a look in the master branch for further information.
 
 ## Prerequisites
 To install it, make sure you have installed
