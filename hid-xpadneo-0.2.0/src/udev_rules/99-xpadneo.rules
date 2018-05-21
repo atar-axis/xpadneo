@@ -1,3 +1,3 @@
-ACTION=="bind", KERNELS=="0005:045E:02FD.*|0005:045E:02E0.*", SUBSYSTEMS=="hid", DRIVERS=="hid-generic", \
-RUN+="/bin/bash -c 'echo $kernel > /sys/bus/hid/drivers/$driver/unbind'", \
+ACTION=="add", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", SUBSYSTEM=="hid", DRIVER=="hid-generic", \
+RUN+="/bin/bash -c 'echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind'", \
 RUN+="/bin/bash -c 'echo $kernel > /sys/bus/hid/drivers/xpadneo/bind'" 
