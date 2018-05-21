@@ -1,3 +1,3 @@
 #!/bin/sh
-sudo rm /etc/modprobe.d/bluetooth.conf
+sudo rm /etc/modprobe.d/99-xpadneo-bluetooth.conf
 sudo rm /etc/udev/rules.d/99-xpadneo.rules
