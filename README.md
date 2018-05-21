@@ -18,6 +18,8 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
   * `sudo dkms add hid-xpadneo -v <version>`
   * `sudo dkms install hid-xpadneo -v <version>`
   
+That's it - Installation done!
+  
 ## Connect
 * `sudo bluetoothctl`
 * `scan on`
