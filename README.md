@@ -4,7 +4,7 @@ This is the DKMS version of my hid-xpadneo driver. Take a look in the master bra
 Make sure you have installed the following packages
 * dkms
 * linux-headers
-* build-essential / base-devel
+* build-essential / base-devel (includes make, gcc, g++ and so on)
 
 On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
 `sudo apt-get install dkms linux-headers build-essential`
