@@ -1,9 +1,10 @@
 This is the DKMS version of my hid-xpadneo driver. Take a look in the master branch for further information.
 
 ## Prerequisites
-To install it, make sure you have installed
+Make sure you have installed the following packages
 * dkms
 * linux-headers
+* build-essential / base-devel 
 
 ## Installation
 * Download the Repository to your local machine
@@ -11,3 +12,16 @@ To install it, make sure you have installed
 * Run the following commands
   * `sudo dkms add hid-xpadneo -v <version>`
   * `sudo dkms install hid-xpadneo -v <version>`
+  
+## Connect
+```
+sudo bluetoothctl
+scan on
+# push the connect button on the button until the light starts flashing fast
+# wait for the gamepad to show up 
+pair <MAC>
+trust <MAC>
+connect <MAC>
+```
+You know that everything worked fine when you feel the rumble ;)
+
