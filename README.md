@@ -14,16 +14,13 @@ Make sure you have installed the following packages
   * `sudo dkms install hid-xpadneo -v <version>`
   
 ## Connect
-```
-sudo bluetoothctl
-scan on
-```
+* `sudo bluetoothctl`
+* `scan on`
 * push the connect button on upper side of the gamepad until the light starts flashing fast
 * wait for the gamepad to show up 
-```
-pair <MAC>
-trust <MAC>
-connect <MAC>
-```
-You know that everything worked fine when you feel the rumble ;)
+* `pair <MAC>`
+* `trust <MAC>`
+* `connect <MAC>`
+
+You know that everything works fine when you feel the gamepad rumbling ;)
 
