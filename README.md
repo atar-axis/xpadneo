@@ -76,7 +76,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 ## Caveats
 
-From libSDL 3.3 onward, SDL contains a fix for the wrong mapping introduced
+Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings
 again despite using xpadneo as the driver.
 
@@ -108,6 +108,8 @@ The id `050000005e040000fd02000003090000` is crafted from your device
 id as four 32-bit words. It is, in LSB order, the bus number 5, the
 vendor id `045e`, the device id `02fd`, and the interface version
 or serial `0903` which is not a running number but firmware dependent.
+This version number is not the same as shown in dmesg as the fourth
+component.
 
 You can find the values by looking at dmesg when `xpadneo` detects
 your device. In dmesg, find the device path, then change to the
