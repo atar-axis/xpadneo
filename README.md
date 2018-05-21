@@ -13,7 +13,7 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
 * Download the Repository to your local machine  
   `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
 * Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory (alternatively, create a softlink)  
-  `sudo ln -s ~/xpadneo/hid-xpadneo-0.2.0/ /usr/src/`
+  `sudo ln -s ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
 * Add the driver to DKMS and install it
   * `sudo dkms add hid-xpadneo -v <version>`
   * `sudo dkms install hid-xpadneo -v <version>`
