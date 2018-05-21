@@ -17,8 +17,10 @@ Make sure you have installed the following packages
 ```
 sudo bluetoothctl
 scan on
-# push the connect button on the button until the light starts flashing fast
-# wait for the gamepad to show up 
+```
+* push the connect button on upper side of the gamepad until the light starts flashing fast
+* wait for the gamepad to show up 
+```
 pair <MAC>
 trust <MAC>
 connect <MAC>
