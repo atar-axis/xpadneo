@@ -909,6 +909,8 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
+	input->id.version = 0xDEAD;
+hid_dbg_lvl(DBG_LVL_FEW, hdev, "DEAD DEAD DEAD\n");
 
 	/* TODO: outsource that */
 
