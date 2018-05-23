@@ -1,30 +1,9 @@
-# Please give the DKMS version a try: https://github.com/atar-axis/xpadneo/tree/dkms
-We are going to switch to this version within this week (the master branch is broken)!
-
-**Advantages** of this version are:
-* Extremely easy to install
-* Automatic Recompilation whenever you update your Kernel
-* Same procedure on every distribution (as long as DKMS is available)
-
-
-
----
-
-Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
-
-*This Driver is currently in development - basic functionality works, but there is still A LOT to do.*
-
-
 # Advanced Linux Driver for Xbox One S Wireless Gamepad
-
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
 
 At the moment of development there was no driver available which supports force feedback (Rumble) - at least not for the wireless version (Bluetooth). There still is none at January 2018, but until this driver is in a bit more presentable condition I won't submit it to the linux kernel.
 
-The buildsystem consists not only of the driver itself, it also fixes a bug I found in L2CAP (which initially forced us to disable ertm completely), futhermore it adds the new driver to the hid-core (this way it automatically loads the new driver whenever the controller is registered). As an alternative, it offers a Udev-rule to load the driver, this is a workaround which is useful whenever you are not able to recompile hid-core (e.g. if it is not a module - e.g. on Raspbian - and you don't want to recompile the whole kernel).
-
 ## Advantages
-
 * Supports Bluetooth
 * Supports Force Feedback over Bluetooth
 * Supports Force Feedback at the triggers (not even supported at Windows)
@@ -32,54 +11,41 @@ The buildsystem consists not only of the driver itself, it also fixes a bug I fo
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
 * Support for Battery Level Indication
-  * On some KDE desktops it works, on others not. We've already fixed that and ~~are currently waiting for a merge request: https://phabricator.kde.org/D11331~~
-  UPDATE: Merged in https://www.kde.org/announcements/kde-frameworks-5.45.0.php
-  * Tested in GNOME
 * Agile Development
 
-## Build
 
-You have to build the driver yourself if there is no suitable version available in out/.
-To make life a bit easier, we offer you a Taskfile at the moment (you will need go-task https://github.com/go-task/task to execute that).
+## Prerequisites
+Make sure you have installed the following packages
+* dkms
+* linux-headers
+* build-essential / base-devel (includes make, gcc, g++ and so on)
 
-Furthermore, you need `git`, `build-essential` (gcc), `linux-headers` and `make` - please make sure those are installed.
-For cross-compilation (raspberry) you also need: `arm-linux-gnueabihf-gcc-stage1`.
-
-- build driver(s) for your local system
-  ```
-  task
-  ```
-  Alternatively, you can also run either `task default` or `task local`
-
-- build driver(s) for raspberry pi 3 (linux-raspberrypi-kernel_1.20171029-1)
-  ```
-  task raspi3
-  ```
-
-The Taskfile downloads your current kernel, copies the driver into the extracted folder and patches hid-core and l2cap. Then it compiles the kernel modules and copies the resulting driver to your local ./out directory.
-
-Until now the Taskfile is tested under the following Distributions
-* ARCH
-* Antergos
-* Gentoo
+On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
+`sudo apt-get install dkms linux-headers build-essential`
 
 ## Installation
+* Download the Repository to your local machine  
+  e.g. `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
+* Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory (alternatively, create a softlink)  
+  e.g. `sudo ln -s ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
+* Add the driver to DKMS and install it
+  * `sudo dkms add hid-xpadneo -v <version>`
+  * `sudo dkms install hid-xpadneo -v <version>`
+  
+That's it - Installation done!
+  
+## Connect
+* `sudo bluetoothctl`
+* `scan on`
+* push the connect button on upper side of the gamepad until the light starts flashing fast
+* wait for the gamepad to show up 
+* `pair <MAC>`
+* `trust <MAC>`
+* `connect <MAC>`
 
-If Hid and Bluetooth are modules (not built-ins), then all you have to do is:
-
-```
-sudo task install
-```
-
-If bluetooth isn't a module but builtin, you can alternatively run
-`echo 1 | sudo tee /sys/module/bluetooth/parameters/disable_ertm`
-before connecting the controller to the computer.
-
-If hid isn't a module, you can alternatively copy `99-xpadneo.rules` to `/etc/udev/rules.d/` (run `udevadmn control --reload` afterwards)
-
+You know that everything works fine when you feel the gamepad rumbling ;)
 
 ## Configuration
-
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
@@ -87,7 +53,6 @@ files in `/sys/module/hid_xpadneo/parameters`:
   defaults to N
 
 ## Caveats
-
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings
 again despite using xpadneo as the driver.
@@ -154,8 +119,19 @@ controllers looks like this:
 050000005e040000fd02000003090000,Xbox One Wireless Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,"
 ```
 
-## Debugging
+## Third party Bugs
+While developing this driver we recognized some bugs in KDE and linux itself,
+some of which are fixed now - others are not:
+* Broken Battery Indicator in KDE
+  fixed! https://www.kde.org/announcements/kde-frameworks-5.45.0.php
+* L2CAP Layer does not handle ERTM requests
+  * workaround: disable ERTM
+  * unofficially fixed: see kernel_patches folder
+* Installation of specialized drivers do need recompilation of HIDcore or a workaround using UDEV
+  fixed! https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9
 
+
+## Debugging
 ### Debug Output
 If you are asked to send debug info or want to fix bugs, enable debugging
 first in the driver and upon request send the xpadneo related part:
@@ -188,3 +164,7 @@ ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry,
 Z, Rz) and upload your xpadneo-related `dmesg` output.
 
 
+---
+
+## Credits
+Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
