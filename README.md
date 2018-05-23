@@ -12,7 +12,7 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
   * take a look here https://www.youtube.com/watch?v=G4PHupKm2OQ
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
-* Support for Battery Level Indication
+* Support for Battery Level Indication (including Play `n Charge Kit)
 * Agile Development
 
 ## Getting started
