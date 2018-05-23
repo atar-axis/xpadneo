@@ -1,0 +1,23 @@
+From 8bcfd1f6aa89fdf40591c4181b69dfab88b30403 Mon Sep 17 00:00:00 2001
+From: Florian Dollinger <dollinger.florian@gmx.de>
+Date: Mon, 8 Jan 2018 12:25:06 +0100
+Subject: [PATCH] Added new Xpad driver to the list of specialized drivers, in order
+ to prevent hid-generic claiming Xbox One S devices.
+
+Signed-off-by: Florian Dollinger <dollinger.florian@gmx.de>
+---
+ drivers/hid/hid-core.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/hid/hid-core.c b/drivers/hid/hid-core.c
+index f3fcb836a..5e52255ce 100644
+--- a/drivers/hid/hid-core.c
++++ b/drivers/hid/hid-core.c
+@@ -1769,3 +1769,5 @@ static const struct hid_device_id hid_have_special_driver[] = {
++	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
++	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
+ 	{ HID_USB_DEVICE(USB_VENDOR_ID_A4TECH, USB_DEVICE_ID_A4TECH_WCP32PU) },
+ 	{ HID_USB_DEVICE(USB_VENDOR_ID_A4TECH, USB_DEVICE_ID_A4TECH_X5_005D) },
+ 	{ HID_USB_DEVICE(USB_VENDOR_ID_A4TECH, USB_DEVICE_ID_A4TECH_RP_649) },
+-- 
+2.15.1
