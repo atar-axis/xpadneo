@@ -26,15 +26,18 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
 `sudo apt-get install dkms linux-headers build-essential`
 
 ### Installation
-* Download the Repository to your local machine  
-  e.g. `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
+* Download the Repository to your local machine
+  `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
+* Run the `install.sh` script
+  
+**That's it - Installation done!**
+
+If something wents wrong you can always try to install it by hand like so:
 * Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory (alternatively, create a softlink)  
   e.g. `sudo ln -s ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
 * Add the driver to DKMS and install it
   * `sudo dkms add hid-xpadneo -v <version>`
   * `sudo dkms install hid-xpadneo -v <version>`
-  
-That's it - Installation done!
   
 ### Connection
 * `sudo bluetoothctl`
