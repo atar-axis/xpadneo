@@ -3,7 +3,9 @@ This is a driver for the Xbox One S Wireless Gamepad which I created for a stude
 
 At the moment of development there was no driver available which supports force feedback (Rumble) - at least not for the wireless version (Bluetooth). There still is none at January 2018, but until this driver is in a bit more presentable condition I won't submit it to the linux kernel.
 
-## Advantages
+Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
+
+**Advantages of this driver**
 * Supports Bluetooth
 * Supports Force Feedback over Bluetooth
 * Supports Force Feedback at the triggers (not even supported at Windows)
@@ -13,8 +15,8 @@ At the moment of development there was no driver available which supports force 
 * Support for Battery Level Indication
 * Agile Development
 
-
-## Prerequisites
+## Getting started
+### Prerequisites
 Make sure you have installed the following packages
 * dkms
 * linux-headers
@@ -23,7 +25,7 @@ Make sure you have installed the following packages
 On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
 `sudo apt-get install dkms linux-headers build-essential`
 
-## Installation
+### Installation
 * Download the Repository to your local machine  
   e.g. `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
 * Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory (alternatively, create a softlink)  
@@ -34,7 +36,7 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
   
 That's it - Installation done!
   
-## Connect
+### Connection
 * `sudo bluetoothctl`
 * `scan on`
 * push the connect button on upper side of the gamepad until the light starts flashing fast
@@ -45,14 +47,18 @@ That's it - Installation done!
 
 You know that everything works fine when you feel the gamepad rumbling ;)
 
-## Configuration
+
+### Configuration
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
 - `dpad_to_buttons`: Set to Y to map dpad directional input to button events,
   defaults to N
+- `debug_level`: Value between 0 (none) and 3 (ALL), see below
+  
+## Things to know
 
-## Caveats
+### SDL Mapping
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings
 again despite using xpadneo as the driver.
@@ -119,7 +125,7 @@ controllers looks like this:
 050000005e040000fd02000003090000,Xbox One Wireless Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,"
 ```
 
-## Third party Bugs
+### Third party Bugs
 While developing this driver we recognized some bugs in KDE and linux itself,
 some of which are fixed now - others are not:
 * Broken Battery Indicator in KDE
@@ -127,11 +133,14 @@ some of which are fixed now - others are not:
 * L2CAP Layer does not handle ERTM requests
   * workaround: disable ERTM
   * unofficially fixed: see kernel_patches folder
-* Installation of specialized drivers do need recompilation of HIDcore or a workaround using UDEV
-  fixed! https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9
+* Binding of specialized drivers
+  * before kernel 4.16
+    * official way: Add driver to `hid_have_special_driver` an recompilation of HIDcore
+    * workaround: UDEV rule (see src/udev_rules)
+  * official way as from kernel 4.16: Specialized drivers are binded to the device [automatically](https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9) 
 
 
-## Debugging
+## Troubleshooting
 ### Debug Output
 If you are asked to send debug info or want to fix bugs, enable debugging
 first in the driver and upon request send the xpadneo related part:
@@ -162,9 +171,3 @@ Please activate debug messages, reconnect your gamepad (turn it off and on
 again), press every button (A, B, X, Y, L1, R1, Start, Select, X-Box, ThumbL,
 ThumbR, DpadUp, DpadRight, DpadDown, DpadLeft) and axis once (X, Y, Rx, Ry,
 Z, Rz) and upload your xpadneo-related `dmesg` output.
-
-
----
-
-## Credits
-Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
