@@ -1,4 +1,4 @@
-# Please give the DKMS version a try since we are going to switch within this week: https://github.com/atar-axis/xpadneo/blob/dkms/README.md
+# Please give the DKMS version a try since we are going to switch within this week: https://github.com/atar-axis/xpadneo/tree/dkms
 
 ---
 
