@@ -1,4 +1,12 @@
-# Please give the DKMS version a try since we are going to switch within this week: https://github.com/atar-axis/xpadneo/tree/dkms
+# Please give the DKMS version a try: https://github.com/atar-axis/xpadneo/tree/dkms
+We are going to switch to this version within this week (the master branch is broken)!
+
+**Advantages** of this version are:
+* Extremely easy to install
+* Automatic Recompilation wheneveryou update the Kernel
+* Same procedure on every distribution (as long as DKMS is available)
+
+
 
 ---
 
