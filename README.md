@@ -3,7 +3,7 @@ We are going to switch to this version within this week (the master branch is br
 
 **Advantages** of this version are:
 * Extremely easy to install
-* Automatic Recompilation wheneveryou update the Kernel
+* Automatic Recompilation whenever you update your Kernel
 * Same procedure on every distribution (as long as DKMS is available)
 
 
