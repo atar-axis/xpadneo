@@ -1,3 +1,7 @@
+# Please give the DKMS version a try since we are going to switch within this week: https://github.com/atar-axis/xpadneo/blob/dkms/README.md
+
+---
+
 Many many thanks to *Kai Krakow* who sponsored me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
 
 *This Driver is currently in development - basic functionality works, but there is still A LOT to do.*
