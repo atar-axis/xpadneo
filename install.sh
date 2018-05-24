@@ -1,6 +1,11 @@
-VERSION="0.2.0"
+#!/bin/bash
+VERSION="0.2.1"
 
-sudo ln --symbolic --force $PWD/hid-xpadneo-$VERSION/ /usr/src/
-sudo dkms remove hid-xpadneo -v $VERSION --all
+echo "* copying module into /usr/src"
+sudo cp --recursive $PWD/hid-xpadneo-$VERSION/ /usr/src/
+
+echo "* adding module to DKMS"
 sudo dkms add hid-xpadneo -v $VERSION
+
+echo "* installing module (using DKMS)"
 sudo dkms install hid-xpadneo -v $VERSION
