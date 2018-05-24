@@ -31,10 +31,10 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
 * Done!
 
 If something wents wrong you can always install it by hand like so:
-* Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory
-  e.g. `sudo cp -r ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
-* Add the driver to DKMS and install it
-  * `sudo dkms install hid-xpadneo -v <version>`
+* Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory  
+  `sudo cp -r ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
+* Add the driver to DKMS and install it  
+  `sudo dkms install hid-xpadneo -v <version>`
   
 ### Connection
 * `sudo bluetoothctl`
