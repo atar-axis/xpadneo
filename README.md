@@ -1,7 +1,6 @@
 # Advanced Linux Driver for Xbox One S Wireless Gamepad
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
-
-At the moment of development there was no driver available which supports force feedback (Rumble) - at least not for the wireless version (Bluetooth). There still is none at January 2018, but until this driver is in a bit more presentable condition I won't submit it to the linux kernel.
+It is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
 
