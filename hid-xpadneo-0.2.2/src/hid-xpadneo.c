@@ -20,7 +20,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION("0.2.1");
+MODULE_VERSION("0.2.2");
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -425,7 +425,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	/* Set up power supply */
 
 	xdata->batt_desc.name = kasprintf(GFP_KERNEL,
-					     "xpadneo_batt_%pMR", hdev->phys);
+					     "xpadneo_batt_%pMR_", hdev->uniq);
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
 	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
@@ -1166,6 +1166,8 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* product: 0x%08X\n", hdev->product);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* country: %u\n", hdev->country);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* driverdata: %lu\n", id->driver_data);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* serial: %pMR\n", hdev->uniq);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* physical location: %pMR\n", hdev->phys);
 
 	/* We start our hardware without FF, we will add it afterwards by hand
 	 * HID_CONNECT_DEFAULT = (HID_CONNECT_HIDINPUT | HID_CONNECT_HIDRAW
@@ -1180,8 +1182,17 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	}
 
 	/* Call the device initialization routines */
-	xpadneo_initDevice(hdev);
-	xpadneo_initBatt(hdev);
+	ret = xpadneo_initDevice(hdev);
+	if (ret) {
+		hid_err(hdev, "device initialization failed\n");
+		goto return_error;
+	}
+
+	ret = xpadneo_initBatt(hdev);
+	if (ret) {
+		hid_err(hdev, "battery initialization failed\n");
+		goto return_error;
+	}
 
 
 	/* Everything is fine */
