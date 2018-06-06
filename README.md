@@ -1,15 +1,13 @@
 # Advanced Linux Driver for Xbox One S Wireless Gamepad
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
-
-At the moment of development there was no driver available which supports force feedback (Rumble) - at least not for the wireless version (Bluetooth). There still is none at January 2018, but until this driver is in a bit more presentable condition I won't submit it to the linux kernel.
+It is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
 
 **Advantages of this driver**
 * Supports Bluetooth
 * Supports Force Feedback over Bluetooth
-* Supports Force Feedback at the triggers (not even supported at Windows)
-  * take a look here https://www.youtube.com/watch?v=G4PHupKm2OQ
+* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported at Windows)
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
 * Support for Battery Level Indication (including Play `n Charge Kit)
@@ -26,17 +24,16 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
 `sudo apt-get install dkms linux-headers build-essential`
 
 ### Installation
-* Download the Repository to your local machine
-  `git clone https://github.com/atar-axis/xpadneo.git -b dkms`
+* Download the Repository to your local machine 
+  `git clone https://github.com/atar-axis/xpadneo.git`
 * Run the `install.sh` script
 * Done!
 
 If something wents wrong you can always install it by hand like so:
-* Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory (alternatively, create a softlink)  
-  e.g. `sudo ln -s ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
-* Add the driver to DKMS and install it
-  * `sudo dkms add hid-xpadneo -v <version>`
-  * `sudo dkms install hid-xpadneo -v <version>`
+* Copy the `hid-xpadneo-<version>` folder into the `/usr/src/` directory  
+  `sudo cp -r ~/xpadneo/hid-xpadneo-<version>/ /usr/src/`
+* Add the driver to DKMS and install it  
+  `sudo dkms install hid-xpadneo -v <version>`
   
 ### Connection
 * `sudo bluetoothctl`
@@ -54,10 +51,10 @@ You know that everything works fine when you feel the gamepad rumbling ;)
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
-- `dpad_to_buttons`: Set to Y to map dpad directional input to button events,
-  defaults to N
-- `debug_level`: Value between 0 (none) and 3 (ALL), see below
-  
+- `dpad_to_buttons`: Set to Y to map dpad directional input to button events, defaults to N
+- `debug_level`: 0 (none) to 3 (all), see below
+- `trigger_rumble_damping`: Damp the strength of the trigger force feedback - 1 (none) to 256+ (max)
+
 ## Things to know
 
 ### SDL Mapping
