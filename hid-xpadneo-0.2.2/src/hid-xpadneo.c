@@ -425,7 +425,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	/* Set up power supply */
 
 	xdata->batt_desc.name = kasprintf(GFP_KERNEL,
-					     "xpadneo_batt_%pMR_", hdev->uniq);
+					     "xpadneo_batt_%pMR", hdev->uniq);
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
 	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
