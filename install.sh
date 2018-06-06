@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.2.2"
+VERSION="0.2.3"
 
 echo "* copying module into /usr/src"
 sudo cp --recursive $PWD/hid-xpadneo-$VERSION/ /usr/src/

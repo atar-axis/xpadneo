@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.2.2"
+VERSION="0.2.3"
 
 echo "* uninstalling and removing from DKMS"
 sudo dkms remove hid-xpadneo -v $VERSION --all

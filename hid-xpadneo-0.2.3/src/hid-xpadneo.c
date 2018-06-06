@@ -16,11 +16,15 @@
 
 #define DEBUG
 
+
+static DEFINE_IDA(xpadneo_device_id_allocator);
+
+
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION("0.2.2");
+MODULE_VERSION("0.2.3");
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -133,6 +137,8 @@ enum report_type {
 struct xpadneo_devdata {
 	/* mutual exclusion */
 	spinlock_t lock;
+
+	int id;
 
 	/* devices */
 	struct hid_device *hdev;
@@ -424,8 +430,17 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 	/* Set up power supply */
 
-	xdata->batt_desc.name = kasprintf(GFP_KERNEL,
-					     "xpadneo_batt_%pMR", hdev->uniq);
+	/* TODO: hdev->uniq is meant to be the MAC address and hence
+	 *       it should be unique. Unfortunately, it isn't unique neither is
+	 *       it the bluetooth MAC address here.
+	 *       I don't know yet why - I added an ID as workaround.
+	 */
+
+	xdata->batt_desc.name = kasprintf(GFP_KERNEL, "xpadneo_batt_%pMR_%i",
+				hdev->uniq, xdata->id);
+
+
+
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
 	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
@@ -1128,6 +1143,9 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	if (xdata == NULL)
 		return -ENOMEM;
 
+	xdata->id = ida_simple_get(&xpadneo_device_id_allocator,
+			0, 0, GFP_KERNEL);
+
 	xdata->hdev = hdev;
 
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
@@ -1205,6 +1223,9 @@ return_error:
 
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+
 	hid_hw_close(hdev);
 
 	/* Cleaning up here */
@@ -1298,6 +1319,9 @@ static int __init xpadneo_initModule(void)
 static void __exit xpadneo_exitModule(void)
 {
 	hid_unregister_driver(&xpadneo_driver);
+
+	ida_destroy(&xpadneo_device_id_allocator);
+
 	pr_info("%s: goodbye!\n", xpadneo_driver.name);
 }
 
