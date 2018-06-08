@@ -7,7 +7,9 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 **Advantages of this driver**
 * Supports Bluetooth
 * Supports Force Feedback over Bluetooth
-* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported at Windows)
+* Supports multiple Gamepads over Bluetooth (not even supported in Windows)
+* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)
+  * give it a try! run `misc/tools/directional_rumble_test/direction_rumble_test`
 * Offers a consistent mapping, even if paired to Windows before
 * Working Select, Start, Mode buttons
 * Support for Battery Level Indication (including Play `n Charge Kit)

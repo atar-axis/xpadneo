@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         effects[i].direction = FF_DIR_SOUTH + i * 0x1000;
         effects[i].u.rumble.strong_magnitude = magnitude;
         effects[i].u.rumble.weak_magnitude = magnitude;
-        effects[i].replay.length = 33;
+        effects[i].replay.length = 330;
         effects[i].replay.delay = 0;
     }
 
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
             printf("effect %2d, direction: %04x\n", i, effects[i].direction);
         }
 
-        usleep(33 * 1000);
+        usleep(330 * 1000);
     }
 
     return 0;

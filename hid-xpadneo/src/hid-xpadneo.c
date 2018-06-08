@@ -17,14 +17,11 @@
 #define DEBUG
 
 
-static DEFINE_IDA(xpadneo_device_id_allocator);
-
-
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION("0.2.3");
+MODULE_VERSION("0.2.5");
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -79,6 +76,8 @@ MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8
 		no_printk(KERN_DEBUG pr_fmt(fmt_prefix))
 #endif
 
+
+static DEFINE_IDA(xpadneo_device_id_allocator);
 
 /*
  * FF Output Report
@@ -138,18 +137,19 @@ struct xpadneo_devdata {
 	/* mutual exclusion */
 	spinlock_t lock;
 
+	/* unique physical device id (randomly assigned) */
 	int id;
 
-	/* devices */
+	/* logical device interfaces */
 	struct hid_device *hdev;
 	struct input_dev *idev;
+	struct power_supply *batt;
 
 	/* report types */
 	enum report_type report_descriptor;
 	enum report_type report_behaviour;
 
 	/* battery information */
-	struct power_supply *batt;
 	struct power_supply_desc batt_desc;
 	u8 ps_online;
 	u8 ps_present;
@@ -279,12 +279,9 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 {
 	int error;
 
-	/* Create handle to the input device which is assigned to the hid device
-	 * TODO: replace by get_drvdata
-	 */
-	struct hid_input *hidinput = list_entry(hdev->inputs.next,
-							struct hid_input, list);
-	struct input_dev *idev     = hidinput->input;
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	struct input_dev *idev = xdata->idev;
+
 
 	struct ff_report ff_package;
 
@@ -426,23 +423,24 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	};
 
 
-	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
-
 	/* Set up power supply */
 
-	/* TODO: hdev->uniq is meant to be the MAC address and hence
-	 *       it should be unique. Unfortunately, it isn't unique neither is
-	 *       it the bluetooth MAC address here.
-	 *       I don't know yet why - I added an ID as workaround.
+	/* Set the battery capacity to 'full' until we get our first real
+	 * battery event. Prevents false "critical low battery" notifications
+	 */
+	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+
+	/* NOTE: hdev->uniq is meant to be the MAC address and hence
+	 *       it should be unique. Unfortunately, here it is not unique
+	 *       neither is it the bluetooth MAC address.
+	 *       As a solution we add an unique id for every gamepad.
 	 */
 
 	xdata->batt_desc.name = kasprintf(GFP_KERNEL, "xpadneo_batt_%pMR_%i",
 				hdev->uniq, xdata->id);
-
-
-
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
+
 	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
 
 	/* Which properties of the battery are accessible? */
@@ -468,6 +466,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		hid_err(hdev, "Unable to register battery device\n");
 		goto err_free;
 	}
+
 	power_supply_powers(xdata->batt, &hdev->dev);
 
 
@@ -913,17 +912,18 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
  * We have to fix up the key-bitmap, because there is
  * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
  *
- * TODO:
- * Furthermore we can set the idev value in xpadneo_data
  */
 
 static int xpadneo_input_configured(struct hid_device *hdev,
 				    struct hid_input *hi)
 {
-	struct input_dev *input = hi->input;
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	/* set a pointer to the logical input device at the device structure */
+	xdata->idev = hi->input;
+
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
-
 
 	/* TODO: outsource that */
 
@@ -940,13 +940,13 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 *   official HID usage tables (p.34).
 	 */
 	if (dpad_to_buttons) {
-		__set_bit(BTN_DPAD_UP, input->keybit);
-		__set_bit(BTN_DPAD_RIGHT, input->keybit);
-		__set_bit(BTN_DPAD_DOWN, input->keybit);
-		__set_bit(BTN_DPAD_LEFT, input->keybit);
+		__set_bit(BTN_DPAD_UP, xdata->idev->keybit);
+		__set_bit(BTN_DPAD_RIGHT, xdata->idev->keybit);
+		__set_bit(BTN_DPAD_DOWN, xdata->idev->keybit);
+		__set_bit(BTN_DPAD_LEFT, xdata->idev->keybit);
 
-		__clear_bit(ABS_HAT0X, input->absbit);
-		__clear_bit(ABS_HAT0Y, input->absbit); /* TODO: necessary? */
+		__clear_bit(ABS_HAT0X, xdata->idev->absbit);
+		__clear_bit(ABS_HAT0Y, xdata->idev->absbit);
 	}
 
 	/* In addition to adding new keys to the key-bitmap, we may also
@@ -1000,15 +1000,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	};
 
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
-	/* TODO: use hid_get_drvdata instead */
-	struct hid_input *hidinput = list_entry(hdev->inputs.next,
-							struct hid_input, list);
-	struct input_dev *idev     = hidinput->input;
-
+	struct input_dev *idev = xdata->idev;
 
 	/* TODO:
-	 * This is the workaround for the wrong report (Windows report but
+	 * This is a workaround for the wrong report (Windows report but
 	 * Linux descriptor). We would prefer to fixup the descriptor, but we
 	 * cannot fix it anymore at the time we recognize the wrong behaviour,
 	 * hence we will fire the input events by hand.
