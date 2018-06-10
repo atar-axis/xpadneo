@@ -17,13 +17,12 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 
 ## Getting started
 ### Prerequisites
-Make sure you have installed the following packages
+Make sure you have installed the following packages and their dependencies
 * dkms
 * linux-headers
-* build-essential / base-devel (includes make, gcc, g++ and so on)
 
 On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
-`sudo apt-get install dkms linux-headers build-essential`
+`sudo apt-get install dkms linux-headers`
 
 ### Installation
 * Download the Repository to your local machine 
