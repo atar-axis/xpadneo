@@ -922,7 +922,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	/* set a pointer to the logical input device at the device structure */
 	xdata->idev = hi->input;
 
-	input->id.version = 0xDEAD;
+	hi->input->id.version = 0xDEAD;
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "GOD is DEAD\n");
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
