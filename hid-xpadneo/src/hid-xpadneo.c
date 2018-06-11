@@ -21,7 +21,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION("0.2.6");
+MODULE_VERSION("0.2.7");
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -397,7 +397,7 @@ static int battery_get_property(struct power_supply *ps,
 
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
-	int ret;
+	int ret = 0;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	static enum power_supply_property battery_props[] = {
@@ -465,16 +465,16 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		ret = PTR_ERR(xdata->batt);
 		hid_err(hdev, "Unable to register battery device\n");
 		goto err_free;
+	} else {
+		hid_dbg_lvl(DBG_LVL_SOME, hdev, "battery registered\n");
 	}
 
 	power_supply_powers(xdata->batt, &hdev->dev);
 
-
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "power supply registered\n");
-
 err_free:
 	kfree(xdata->batt_desc.name);
 	xdata->batt_desc.name = NULL;
+
 	return ret;
 }
 
