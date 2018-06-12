@@ -1,3 +1,5 @@
+#define DRV_VER "0.2.9"
+
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *
@@ -21,7 +23,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION("0.2.8");
+MODULE_VERSION(DRV_VER);
 
 
 /* Module Parameters, located at /sys/module/.../parameters */
@@ -1180,6 +1182,8 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	}
 
 	/* Debug Output*/
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "driver:\n");
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* version: %s\n", DRV_VER);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rdesc: (unfixed, see above)\n");
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rsize: %u\n", hdev->dev_rsize);
