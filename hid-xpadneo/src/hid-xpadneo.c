@@ -26,7 +26,15 @@ MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF"
 MODULE_VERSION(DRV_VER);
 
 
-/* Module Parameters, located at /sys/module/.../parameters */
+/* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
+
+/* NOTE:
+ * In general it is not guaranteed that a short variable is no more than
+ * 16 bit long in C, it depends on the computer architecure. But as a kernel
+ * module parameter it is, since <params.c> does use kstrtou16 for shorts
+ * since version 3.14
+ */
+
 #ifdef DEBUG
 static u8 debug_level;
 module_param(debug_level, byte, 0644);
@@ -41,10 +49,9 @@ static u8 trigger_rumble_damping = 4;
 module_param(trigger_rumble_damping, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
-static int fake_dev_version = 0x1130;
-module_param(fake_dev_version, int, 0644);
-MODULE_PARM_DESC(fake_dev_version, "(int) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
-
+static u16 fake_dev_version = 0x1130;
+module_param(fake_dev_version, ushort, 0644);
+MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
 
 
 /*
@@ -931,9 +938,9 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
-	if (fake_dev_version >= 1 && fake_dev_version <= 0xFFFF){
+	if (fake_dev_version){
 		xdata->idev->id.version = (u16) fake_dev_version;
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Faking version to 0x%04X\n",
+		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
 			fake_dev_version);
 	}
 
