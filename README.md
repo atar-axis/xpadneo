@@ -52,9 +52,19 @@ You know that everything works fine when you feel the gamepad rumbling ;)
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
-- `dpad_to_buttons`: Set to Y to map dpad directional input to button events, defaults to N
-- `debug_level`: 0 (none) to 3 (all), see below
-- `trigger_rumble_damping`: Damp the strength of the trigger force feedback - 1 (none) to 256+ (max)
+* `dpad_to_buttons`:
+  * Set to `Y` to map dpad directional input to button events, defaults to `N`
+  * obsolete, will be removed in a future version
+* `debug_level`:
+  * 0 (none) to 3 (all)
+  * for more information, please see [below](https://github.com/atar-axis/xpadneo#troubleshooting)
+* `trigger_rumble_damping`:
+  * Damp the strength of the trigger force feedback
+  * 1 (none) to 256+ (max)
+* `fake_dev_version`:
+  * Fake the input device version to the given value (to prevent SDL from applying another mapping correction, see below)
+  * Values from `1` to `0xFFFF` are handled as a version number
+  * Higher or lower values (i.e. `0`) will result in an untouched version
 
 ## Things to know
 
