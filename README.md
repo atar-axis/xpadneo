@@ -58,16 +58,16 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * obsolete, will be removed in a future version
 * `debug_level`:
   * Default `0`
-  * 0 (none) to 3 (all)
+  * `0` (none) to `3` (all)
   * for more information, please see [below](https://github.com/atar-axis/xpadneo#troubleshooting)
 * `trigger_rumble_damping`:
   * Default `4`
   * Damp the strength of the trigger force feedback
-  * 1 (none) to 256+ (max)
+  * `1` (none) to `256` (max)
 * `fake_dev_version`:
   * Default `0x1130` (NE0)
   * Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)
-  * Values from `1` to `0xFFFF` are handled as a version number, `0` does deactivate this feature
+  * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
 
 ## Things to know
 
