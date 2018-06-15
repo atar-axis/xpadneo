@@ -101,8 +101,6 @@ static DEFINE_IDA(xpadneo_device_id_allocator);
  * Please notice that the structs are __packed, therefore there is no "padding"
  * between the elements (they behave more like an array).
  *
- * TODO:
- * Use sth. which is aware of the endianess, i.e. __le16 and __le16_to_cpu()
  */
 
 enum {
@@ -336,24 +334,24 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	 * Set default values, otherwise tools which depend on the joystick
 	 * subsystem, report arbitrary values until the first real event
 	 */
-	input_report_abs(idev, ABS_X, 32768);
-	input_report_abs(idev, ABS_Y, 32768);
-	input_report_abs(idev, ABS_Z, 0);
-	input_report_abs(idev, ABS_RX, 32768);
-	input_report_abs(idev, ABS_RY, 32768);
-	input_report_abs(idev, ABS_RZ, 0);
-	input_report_key(idev, BTN_A, 0);
-	input_report_key(idev, BTN_B, 0);
-	input_report_key(idev, BTN_X, 0);
-	input_report_key(idev, BTN_Y, 0);
-	input_report_key(idev, BTN_TR, 0);
-	input_report_key(idev, BTN_TL, 0);
+	input_report_abs(idev, ABS_X,      32768);
+	input_report_abs(idev, ABS_Y,      32768);
+	input_report_abs(idev, ABS_Z,      0);
+	input_report_abs(idev, ABS_RX,     32768);
+	input_report_abs(idev, ABS_RY,     32768);
+	input_report_abs(idev, ABS_RZ,     0);
+	input_report_key(idev, BTN_A,      0);
+	input_report_key(idev, BTN_B,      0);
+	input_report_key(idev, BTN_X,      0);
+	input_report_key(idev, BTN_Y,      0);
+	input_report_key(idev, BTN_TR,     0);
+	input_report_key(idev, BTN_TL,     0);
 	input_report_key(idev, BTN_THUMBL, 0);
 	input_report_key(idev, BTN_THUMBR, 0);
-	input_report_key(idev, BTN_START, 0);
-	input_report_key(idev, BTN_MODE, 0);
-	input_report_key(idev, ABS_HAT0X, 0);
-	input_report_key(idev, ABS_HAT0Y, 0);
+	input_report_key(idev, BTN_START,  0);
+	input_report_key(idev, BTN_MODE,   0);
+	input_report_key(idev, ABS_HAT0X,  0);
+	input_report_key(idev, ABS_HAT0Y,  0);
 	input_sync(idev);
 
 	/* TODO: - do not hardcode codes and values but
@@ -408,6 +406,7 @@ static int battery_get_property(struct power_supply *ps,
 
 	return 0;
 }
+
 
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
@@ -769,6 +768,11 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 
 /*
  * Report Descriptor Fixup Hook
+ *
+ * You can either modify the original report in place and just
+ * return the original start address (rdesc) or you reserve a new
+ * one and return a pointer to it. In the latter, you mostly have to
+ * modify the rsize value too.
  */
 
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
@@ -797,27 +801,27 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	 * O: Online
 	 * R: Reserved / Unused
 	 * E: Error (?) / Unknown
-	 * C: Charging, I mean really charging something
+	 * C: Charging, I mean really charging the battery (P 'n C)
 	 *              not (only) the power cord powering the controller
 	 * M M: Mode
-	 *      00: Powered by USB
-	 *      01: Powered by (disposable) batteries
-	 *      10: Powered by Play 'n Charge battery pack (only, no cable)
+	 *   00: Powered by USB
+	 *   01: Powered by (disposable) batteries
+	 *   10: Powered by Play 'n Charge battery pack (only, no cable)
 	 * L L: Capacity Level
-	 *      00: (Super) Critical
-	 *      01: Low
-	 *      10: Medium
-	 *      11: Full
+	 *   00: (Super) Critical
+	 *   01: Low
+	 *   10: Medium
+	 *   11: Full
 	 */
 
 
-	/* We think "online" means if the device is online or shutting down */
+	/* I think "online" means whether the dev is online or shutting down */
 	online = (data[1] & 0x80) >> 7;
 
-	/* The battery is only present if not powered by USB */
+	/* The _battery_ is only present if not powered by USB */
 	present = ((data[1] & 0x0C) != 0x00);
 
-	/* Capacity level, only valid as long as power supply present */
+	/* Capacity level, only valid as long as the battery is present */
 	switch (data[1] & 0x03) {
 	case 0x00:
 		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
@@ -833,7 +837,7 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 		break;
 	}
 
-	/* Is the Battery charged? */
+	/* Is the (Play 'n Charge) battery charging right now? */
 	switch ((data[1] & 0x10) >> 4) {
 	case 0:
 		status = POWER_SUPPLY_STATUS_DISCHARGING;
@@ -878,12 +882,65 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	}
 
 	/* TODO:
-	 * The best solution would be to replace the report descriptor
-	 * in case that the wrong reports are sent. Unfortunately I
-	 * don't know yet how one can replace the descriptor _after_
-	 * the report_fixup hook by hand. I fix it the other way
-	 * (translate the report/event) until I found a better solution.
+	 * Maybe the best solution would be to replace the report descriptor
+	 * in case that the wrong reports are sent. Unfortunately we do not
+	 * know if the report descriptor is the right one until the first
+	 * report is sent to us. At this time, the report_fixup hook is
+	 * already over and the original descriptor is parsed into hdev
+	 * i.e. report_enum and collection.
+	 *
+	 * The next best solution would be to replace the report with
+	 * ID 0x01 with the right one in report_enum (and collection?).
+	 * I don't know yet how this works, peraps like this:
+	 * - create a new report struct
+	 * - fill it by hand
+	 * - add all neccessary fields (automatic way?)
+	 *
+	 * Another way to fix it is:
+	 * - Register another report with a _new_ ID by hand
+	 *   (unfortunately we cannot use the same id again)
+	 * - in raw_event: change the ID from 0x01 to the new one if
+	 *   necessary. leave it if not.
+	 *
+	 * What we acutally do currently is:
+	 * We examine every report and fire the input events by hand.
+	 * That's very error-prone and not very generic.
+	 *
 	 */
+
+
+	// TODO:
+	// * remove old report using list operations
+	// * create new one like they do in hid_register_report
+	// * add it to output_reports->report_list and array
+
+
+	struct hid_report_enum *input_reports
+		= hdev->report_enum + HID_INPUT_REPORT;
+
+	// access through list
+	struct list_head *input_reports_list = &(input_reports->report_list);
+
+	if (list_empty(input_reports_list)) {
+		hid_err(hdev, "no input reports found\n");
+		return -ENODEV;
+	}
+
+	struct hid_report *specific_input_report
+		= list_entry(input_reports_list->next, struct hid_report, list);
+
+	pr_err("first input report in list, address: %p\n", specific_input_report);
+
+
+	// access through array, if we know the id
+	struct hid_report *specific_input_report_2
+		= input_reports->report_id_hash[1];
+
+	if(specific_input_report_2)
+		pr_err("input report (id: 1) in array, address: %p\n", specific_input_report_2);
+	
+	specific_input_report_2->
+
 }
 
 /*
@@ -944,9 +1001,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 			fake_dev_version);
 	}
 
-
-	/* TODO: outsource that */
-
 	/* Add BTN_DPAD_* to the key-bitmap, since they where not originally
 	 * mentioned in the report-description.
 	 *
@@ -972,7 +1026,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	/* In addition to adding new keys to the key-bitmap, we may also
 	 * want to remove the old (original) axis from the absolues-bitmap.
 	 *
-	 * TODO:
+	 * NOTE:
 	 * Maybe we want both, our custom and the original mapping.
 	 * If we decide so, remember that 0x39 is a hat switch on the official
 	 * usage tables, but not at the input subsystem, so be sure to use the
@@ -1045,8 +1099,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		 * But this is not true in general (i.e. for other USAGE_PAGES)
 		 */
 
-		/* TODO: outsource that part*/
-
 		if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
 			switch (usage->hid & HID_USAGE) {
 			case 0x01:
@@ -1091,8 +1143,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	/* Yep, this is the D-pad event */
 	if ((usage->hid & HID_USAGE) == 0x39) {
-
-		/* TODO: outsource that part*/
 
 		/*
 		 * You can press UP and RIGHT, RIGHT and DOWN, ... together!
@@ -1241,15 +1291,15 @@ return_error:
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
 
 	hid_hw_close(hdev);
 
 	/* Cleaning up here */
+	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
 
 	hid_hw_stop(hdev);
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "goodbye %s\n", hdev->name);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "Goodbye %s!\n", hdev->name);
 }
 
 
