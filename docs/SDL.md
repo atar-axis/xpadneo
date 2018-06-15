@@ -1,4 +1,4 @@
-### SDL Mapping
+## SDL Mapping
 
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings
