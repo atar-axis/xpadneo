@@ -1,4 +1,4 @@
 {% include_relative README.md %}
-
-# Additional Information
+{% include_relative DEBUGGING.md %}
+{% include_relative 3P-BUGS.md %}
 {% include_relative SDL.md %}

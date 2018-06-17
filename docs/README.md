@@ -66,39 +66,6 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
 
 
-### Third party Bugs
-While developing this driver we recognized some bugs in KDE and linux itself,
-some of which are fixed now - others are not:
-* Broken Battery Indicator in KDE
-  fixed! https://www.kde.org/announcements/kde-frameworks-5.45.0.php
-* L2CAP Layer does not handle ERTM requests
-  * workaround: disable ERTM
-  * unofficially fixed: see kernel_patches folder
-* Binding of specialized drivers
-  * before kernel 4.16
-    * official way: Add driver to `hid_have_special_driver` an recompilation of HIDcore
-    * workaround: UDEV rule (see src/udev_rules)
-  * official way as from kernel 4.16: Specialized drivers are binded to the device [automatically](https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9) 
+## Further information
 
-
-## Troubleshooting
-### Debug Output
-If you are asked to send debug info or want to fix bugs, enable debugging
-first in the driver and upon request send the xpadneo related part:
-
-```
-echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level
-dmesg | grep xpadneo > ~/xpadneo_log
-```
-
-where `3` is the most verbose debug level. Disable debugging by setting the
-value back to `0`.
-
-You may want to set the debug level at load time of the driver. You can do
-this by applying the setting to modprobe:
-
-```
-echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/xpadneo.conf
-```
-
-Now, the driver will be initialized with debug level 3 during modprobe.
+For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
