@@ -1,4 +1,4 @@
-#define DRV_VER "0.2.9"
+#define DRV_VER "0.3.0"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -913,6 +913,34 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	// * remove old report using list operations
 	// * create new one like they do in hid_register_report
 	// * add it to output_reports->report_list and array
+
+
+
+	struct hid_report_enum *input_reports
+		= hdev->report_enum + HID_INPUT_REPORT;
+
+	// access through list
+	struct list_head *input_reports_list = &(input_reports->report_list);
+
+	if (list_empty(input_reports_list)) {
+		hid_err(hdev, "no input reports found\n");
+		return -ENODEV;
+	}
+
+	struct hid_report *specific_input_report
+		= list_entry(input_reports_list->next, struct hid_report, list);
+
+	pr_err("first input report in list, address: %p\n", specific_input_report);
+
+
+	// access through array, if we know the id
+	struct hid_report *specific_input_report_2
+		= input_reports->report_id_hash[1];
+
+	if(specific_input_report_2)
+		pr_err("input report (id: 1) in array, address: %p\n", specific_input_report_2);
+
+
 }
 
 /*
