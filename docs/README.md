@@ -1,4 +1,4 @@
-# Advanced Linux Driver for Xbox One S Wireless Gamepad
+# Advanced Linux Driver for Xbox One S Wireless Gamepad [![Build Status](https://travis-ci.org/atar-axis/xpadneo.svg?branch=master)](https://travis-ci.org/atar-axis/xpadneo)
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
 It is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
