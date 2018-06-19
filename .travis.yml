@@ -1,0 +1,5 @@
+language: c
+before_install:
+  - sudo apt-get install -y dkms linux-headers
+script:
+  - ./install.sh
