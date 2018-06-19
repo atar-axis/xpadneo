@@ -14,7 +14,7 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 * Working Select, Start, Mode buttons
 * Support for Battery Level Indication (including Play `n Charge Kit)  
   ![Battery Level Indication](./img/battery_support.png)
-* Agile Development  ![Last Commit](https://img.shields.io/github/last-commit/atar-axis/xpadneo.svg) ![Issues Closed](https://img.shields.io/github/issues-closed/atar-axis/xpadneo.svg?colorB=32cc5a)
+* Agile Development
 
 ## Getting started
 ### Prerequisites
