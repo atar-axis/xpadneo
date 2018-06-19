@@ -5,16 +5,16 @@ It is fully functional but does only support the connection via Bluetooth as yet
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
 
 **Advantages of this driver**
-* Supports Bluetooth
+* Supports Bluetooth <i class="fab fa-bluetooth"></i>
 * Supports Force Feedback over Bluetooth
 * Supports multiple Gamepads over Bluetooth (not even supported in Windows)
-* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)
-  * want to see it in action? run `misc/tools/directional_rumble_test/direction_rumble_test`
+* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)  
+  see it in action! run `misc/tools/directional_rumble_test/direction_rumble_test <event# in /dev/input>`
 * Offers a consistent mapping, even if paired to Windows/Xbox before
 * Working Select, Start, Mode buttons
-* Support for Battery Level Indication (including Play `n Charge Kit)
+* Support for Battery Level Indication (including Play `n Charge Kit)  
   ![Battery Level Indication](./img/battery_support.png)
-* Agile Development
+* Agile Development  ![Last Commit](https://img.shields.io/github/last-commit/atar-axis/xpadneo.svg) ![Issues Closed](https://img.shields.io/github/issues-closed/atar-axis/xpadneo.svg?colorB=32cc5a)
 
 ## Getting started
 ### Prerequisites
