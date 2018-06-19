@@ -21,7 +21,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **System information:**
- - `uname -a` output: 
+- `uname -a` output
+- `dmesg` output
+  Please enable debugging output before: https://atar-axis.github.io/xpadneo/index.html#debugging
+
 
 **Additional context**
 Add any other context about the problem here.
