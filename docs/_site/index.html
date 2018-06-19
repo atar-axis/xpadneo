@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>xpadneo | Advanced Linux Driver for Xbox One S Wireless Controller</title>
+<meta name="generator" content="Jekyll v3.7.3" />
+<meta property="og:title" content="xpadneo" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Advanced Linux Driver for Xbox One S Wireless Controller" />
+<meta property="og:description" content="Advanced Linux Driver for Xbox One S Wireless Controller" />
+<link rel="canonical" href="http://localhost:4000/" />
+<meta property="og:url" content="http://localhost:4000/" />
+<meta property="og:site_name" content="xpadneo" />
+<script type="application/ld+json">
+{"description":"Advanced Linux Driver for Xbox One S Wireless Controller","@type":"WebSite","url":"http://localhost:4000/","headline":"xpadneo","name":"xpadneo","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link rel="stylesheet" href="/assets/css/style.css?v=5f454a7ab21ca11d3cf8120b0f04c78965202498">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">xpadneo</h1>
+      <h2 class="project-tagline">Advanced Linux Driver for Xbox One S Wireless Controller</h2>
+      
+        <a href="http://github.com/atar-axis/xpadneo" class="btn">View on GitHub</a>
+      
+      
+    </section>
+
+    <section class="main-content">
+      <h1 id="advanced-linux-driver-for-xbox-one-s-wireless-gamepad">Advanced Linux Driver for Xbox One S Wireless Gamepad</h1>
+<p>This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
+It is fully functional but does only support the connection via Bluetooth as yet - more will follow.</p>
+
+<p>Many thanks to <em>Kai Krakow</em> who <strong>sponsored</strong> me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D</p>
+
+<p><strong>Advantages of this driver</strong></p>
+<ul>
+  <li>Supports Bluetooth</li>
+  <li>Supports Force Feedback over Bluetooth</li>
+  <li>Supports multiple Gamepads over Bluetooth (not even supported in Windows)</li>
+  <li>Supports <a href="https://www.youtube.com/watch?v=G4PHupKm2OQ">Trigger Force Feedback</a> (not even supported in Windows)
+    <ul>
+      <li>want to see it in action? run <code class="highlighter-rouge">misc/tools/directional_rumble_test/direction_rumble_test</code></li>
+    </ul>
+  </li>
+  <li>Offers a consistent mapping, even if paired to Windows/Xbox before</li>
+  <li>Working Select, Start, Mode buttons</li>
+  <li>Support for Battery Level Indication (including Play `n Charge Kit)
+<img src="./img/battery_support.png" alt="Battery Level Indication" /></li>
+  <li>Agile Development</li>
+</ul>
+
+<h2 id="getting-started">Getting started</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>Make sure you have installed the following packages and their dependencies</p>
+<ul>
+  <li>dkms</li>
+  <li>linux-headers</li>
+</ul>
+
+<p>On debian based systems (like Ubuntu or Raspbian) you can install those packages by running<br />
+<code class="highlighter-rouge">sudo apt-get install dkms linux-headers</code></p>
+
+<h3 id="installation">Installation</h3>
+<ul>
+  <li>Download the Repository to your local machine 
+<code class="highlighter-rouge">git clone https://github.com/atar-axis/xpadneo.git</code></li>
+  <li>Run the <code class="highlighter-rouge">install.sh</code> script</li>
+  <li>Done!</li>
+</ul>
+
+<p>If something wents wrong you can always install it by hand like so:</p>
+<ul>
+  <li>Let’s say you have downloaded the driver into your home directory</li>
+  <li>Read out your version: <code class="highlighter-rouge">cat ~/xpadneo/VERSION</code></li>
+  <li>Copy the <code class="highlighter-rouge">hid-xpadneo</code> folder into the <code class="highlighter-rouge">/usr/src/</code> directory (and append the version)<br />
+<code class="highlighter-rouge">sudo cp -r ~/xpadneo/hid-xpadneo/ /usr/src/hid-xpadneo-&lt;version&gt;</code></li>
+  <li>Add the driver to DKMS and install it<br />
+<code class="highlighter-rouge">sudo dkms install hid-xpadneo -v &lt;version&gt;</code></li>
+</ul>
+
+<h3 id="connection">Connection</h3>
+<ul>
+  <li><code class="highlighter-rouge">sudo bluetoothctl</code></li>
+  <li><code class="highlighter-rouge">scan on</code></li>
+  <li>push the connect button on upper side of the gamepad until the light starts flashing fast</li>
+  <li>wait for the gamepad to show up</li>
+  <li><code class="highlighter-rouge">pair &lt;MAC&gt;</code></li>
+  <li><code class="highlighter-rouge">trust &lt;MAC&gt;</code></li>
+  <li><code class="highlighter-rouge">connect &lt;MAC&gt;</code></li>
+</ul>
+
+<p>You know that everything works fine when you feel the gamepad rumbling ;)</p>
+
+<h3 id="configuration">Configuration</h3>
+<p>The driver can be reconfigured at runtime by accessing the following sysfs
+files in <code class="highlighter-rouge">/sys/module/hid_xpadneo/parameters</code>:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">dpad_to_buttons</code> (default <code class="highlighter-rouge">N</code>)
+    <ul>
+      <li>Set to <code class="highlighter-rouge">Y</code> to map dpad directional input to button events</li>
+      <li>Obsolete, will be removed in a future version</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">debug_level</code> (default <code class="highlighter-rouge">0</code>)
+    <ul>
+      <li><code class="highlighter-rouge">0</code> (no debug output) to <code class="highlighter-rouge">3</code> (all)</li>
+      <li>For more information, please see <a href="https://github.com/atar-axis/xpadneo#troubleshooting">below</a></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">trigger_rumble_damping</code> (default <code class="highlighter-rouge">4</code>)
+    <ul>
+      <li>Damp the strength of the trigger force feedback</li>
+      <li><code class="highlighter-rouge">1</code> (none) to <code class="highlighter-rouge">256</code> (max)</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">fake_dev_version</code> (default <code class="highlighter-rouge">0x1130</code>)
+    <ul>
+      <li>Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)</li>
+      <li>Values from <code class="highlighter-rouge">1</code> to <code class="highlighter-rouge">0xFFFF</code> are handled as a version number, <code class="highlighter-rouge">0</code> will retain the original version</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="further-information">Further information</h2>
+
+<p>For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the <code class="highlighter-rouge">/docs</code> folder.</p>
+
+<h2 id="debugging">Debugging</h2>
+<h3 id="enable-debug-output">Enable Debug Output</h3>
+<p>If you are asked to send debug info or want to fix bugs, enable debugging
+first in the driver and upon request send the xpadneo related part:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level
+dmesg | grep xpadneo &gt; ~/xpadneo_log
+</code></pre></div></div>
+
+<p>where <code class="highlighter-rouge">3</code> is the most verbose debug level. Disable debugging by setting the
+value back to <code class="highlighter-rouge">0</code>.</p>
+
+<p>You may want to set the debug level at load time of the driver. You can do
+this by applying the setting to modprobe:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/xpadneo.conf
+</code></pre></div></div>
+
+<p>Now, the driver will be initialized with debug level 3 during modprobe.</p>
+
+<h2 id="third-party-bugs">Third party Bugs</h2>
+<p>While developing this driver we recognized some bugs in KDE and linux itself,
+some of which are fixed now - others are not:</p>
+<ul>
+  <li>Broken Battery Indicator in KDE
+fixed! https://www.kde.org/announcements/kde-frameworks-5.45.0.php</li>
+  <li>L2CAP Layer does not handle ERTM requests
+    <ul>
+      <li>workaround: disable ERTM</li>
+      <li>unofficially fixed: see kernel_patches folder</li>
+    </ul>
+  </li>
+  <li>Binding of specialized drivers
+    <ul>
+      <li>before kernel 4.16
+        <ul>
+          <li>official way: Add driver to <code class="highlighter-rouge">hid_have_special_driver</code> an recompilation of HIDcore</li>
+          <li>workaround: UDEV rule (see src/udev_rules)</li>
+        </ul>
+      </li>
+      <li>official way as from kernel 4.16: Specialized drivers are binded to the device <a href="https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9">automatically</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="sdl-mapping">SDL Mapping</h2>
+
+<p>Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
+by the generic hid driver. Thus, you may experience wrong button mappings
+again despite using xpadneo as the driver.</p>
+
+<p>Also, Wine since version 3.3 supports using SDL for <code class="highlighter-rouge">xinput*.dll</code>, and with
+version 3.4 it includes a patch to detect the Xbox One S controller. Games
+running in Wine and using xinput may thus also see wrong mappings.</p>
+
+<p>The Steam client includes a correction for SDL based games since some
+version, not depending on the SDL version. It provides a custom SDL
+mapping the same way we are describing here.</p>
+
+<p>To fix this and have both SDL-based software and software using the legacy
+joystick interface using correct button mapping, you need to export an
+environment variable which then overrides default behavior:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export SDL_GAMECONTROLLERCONFIG="\
+  050000005e040000fd02000003090000,Xbox One Wireless Controller,\
+  a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,\
+  guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,\
+  rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,\
+  start:b7,x:b2,y:b3,"
+</code></pre></div></div>
+
+<p>You need to set this before starting the software. To apply it globally,
+put this line into your logon scripts.</p>
+
+<p>The id <code class="highlighter-rouge">050000005e040000fd02000003090000</code> is crafted from your device
+id as four 32-bit words. It is, in LSB order, the bus number 5, the
+vendor id <code class="highlighter-rouge">045e</code>, the device id <code class="highlighter-rouge">02fd</code>, and the interface version
+or serial <code class="highlighter-rouge">0903</code> which is not a running number but firmware dependent.
+This version number is not the same as shown in dmesg as the fourth
+component.</p>
+
+<p>You can find the values by looking at dmesg when <code class="highlighter-rouge">xpadneo</code> detects
+your device. In dmesg, find the device path, then change to the
+device path below <code class="highlighter-rouge">/sys</code> and look for the files in the <code class="highlighter-rouge">id</code> directory.</p>
+
+<p>The name value after the id is purely cosmetical, you can name it
+whatever you like. It may show up in games as a visual identifier.</p>
+
+<p>If running Wine games, to properly support xpadneo, ensure you have
+removed any previous xinput hacks (which includes redirecting
+<code class="highlighter-rouge">xinput*.dll</code> to native and placing a hacked xinput dll in the
+game directory. Also ensure your Wine built comes with SDL support
+compiled in.</p>
+
+<p>If you do not want to apply this setting globally, you can instead
+put the SDL mapping inside Steam <code class="highlighter-rouge">config.vdf</code>. You can find this
+file in <code class="highlighter-rouge">$STEAM_BASE/config/config.vdf</code>. Find the line containing
+<code class="highlighter-rouge">"SDL_GamepadBind"</code> and adjust or add your own controller (see
+above). Ensure correct quoting, and Steam is not running
+while editing the file. This may not work for Steam in Wine
+because the Wine SDL layer comes first, you still need to export
+the variable before running Wine. An example with multiple
+controllers looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        "SDL_GamepadBind"               "030000006d0400001fc2000005030000,Logitech F710 Gamepad (XInput),a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,
+03000000de280000fc11000001000000,Steam Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,
+03000000de280000ff11000001000000,Steam Virtual Gamepad,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,
+030000006d04000019c2000011010000,Logitech F710 Gamepad (DInput),a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,
+050000005e040000fd02000003090000,Xbox One Wireless Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,"
+</code></pre></div></div>
+
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="http://github.com/atar-axis/xpadneo">xpadneo</a> is maintained by <a href="http://github.com/atar-axis">atar-axis</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </section>
+
+    
+  </body>
+</html>
