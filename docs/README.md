@@ -26,9 +26,7 @@ Make sure you have installed the following packages and their dependencies
 * linux-headers
 
 On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
-```
-sudo apt-get install dkms linux-headers-`uname -r`
-```
+``sudo apt-get install dkms linux-headers-`uname -r` ``
 
 ### Installation
 * Download the Repository to your local machine 
