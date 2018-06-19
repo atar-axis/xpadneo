@@ -1,5 +1,8 @@
 language: c
+
 before_install:
-  - sudo apt-get install -y dkms linux-headers
+  - sudo apt-get install -y linux-headers-`uname -r`
+  - sudo apt-get install -y dkms
+
 script:
   - ./install.sh
