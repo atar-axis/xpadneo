@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# exit immediately if one command fails
+set -e 
+
 source VERSION
 
 echo "* copying module into /usr/src"
