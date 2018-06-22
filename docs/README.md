@@ -34,25 +34,16 @@ On debian based systems (like Ubuntu or Raspbian) you can install those packages
 * Run the `install.sh` script
 * Done!
 
-If something wents wrong you can always install it by hand like so:
-* Let's say you have downloaded the driver into your home directory
-* Read out your version: `cat ~/xpadneo/VERSION`
-* Copy the `hid-xpadneo` folder into the `/usr/src/` directory (and append the version)  
-  `sudo cp -r ~/xpadneo/hid-xpadneo/ /usr/src/hid-xpadneo-<version>`
-* Add the driver to DKMS and install it  
-  `sudo dkms install hid-xpadneo -v <version>`
-
 ### Connection
 * `sudo bluetoothctl`
-* `scan on`
-* push the connect button on upper side of the gamepad until the light starts flashing fast
-* wait for the gamepad to show up 
-* `pair <MAC>`
-* `trust <MAC>`
-* `connect <MAC>`
+* `[bluetooth]# scan on`
+* push the connect button on upper side of the gamepad, and hold it down, until the light starts flashing fast
+* wait for the gamepad to show up in bluetoothctl, remember the MAC address (C8:3F:26:XX:XX:XX)
+* `[bluetooth]# pair <MAC>`
+* `[bluetooth]# trust <MAC>`
+* `[bluetooth]# connect <MAC>`
 
-You know that everything works fine when you feel the gamepad rumbling ;)
-
+You know that everything works fine when you feel the gamepad rumble ;)
 
 ### Configuration
 The driver can be reconfigured at runtime by accessing the following sysfs
