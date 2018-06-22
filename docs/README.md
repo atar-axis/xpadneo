@@ -5,7 +5,7 @@
 This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
 It is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
-Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller (including Wireless Adapter) and a pack of mouthwatering guarana cacao ;D
+Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless Adapter) and a pack of mouthwatering guarana cacao :coffee:
 
 **Advantages of this driver**
 * Supports Bluetooth <i class="fab fa-bluetooth"></i>
