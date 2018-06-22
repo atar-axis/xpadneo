@@ -65,4 +65,6 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 ## Further information
 
+Please abstain from merging/pushing the driver (or parts of it) to the official kernel. I will do so as soon as I consider it ready and stable enough. Thank you!
+
 For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
