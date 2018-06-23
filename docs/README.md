@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/atar-axis/xpadneo.svg?branch=master)](https://travis-ci.org/atar-axis/xpadneo)
 
-This is a driver for the Xbox One S Wireless Gamepad which I created for a student research project at fortiss GmbH.
+This is a driver for the Xbox One S Wireless Gamepad which I made for a student project at fortiss GmbH.
 It is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless Adapter) and a pack of mouthwatering guarana cacao :coffee:
