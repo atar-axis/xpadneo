@@ -26,8 +26,10 @@ Make sure you have installed the following packages and their dependencies
 * dkms
 * linux-headers
 
-On debian based systems (like Ubuntu or Raspbian) you can install those packages by running  
-``sudo apt-get install dkms linux-headers-`uname -r` ``
+On debian based systems (like Ubuntu) you can install those packages by running  
+``sudo apt-get install dkms linux-headers-`uname -r` ``  
+On Raspbian, it is  
+`sudo apt-get install dkms raspberrypi-kernel-headers`
 
 ### Installation
 * Download the Repository to your local machine 
