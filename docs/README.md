@@ -23,8 +23,9 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 ## Getting started
 ### Prerequisites
 Make sure you have installed the following packages and their dependencies
-* dkms
-* linux-headers
+* `dkms`
+* `linux-headers`
+* `bluez` and `bluez-utils`
 
 On **Debian** based systems (like Ubuntu) you can install those packages by running  
 ``sudo apt-get install dkms linux-headers-`uname -r` ``  
@@ -36,7 +37,8 @@ On **Arch** and similar distros (like Antergos), try
 ### Installation
 * Download the Repository to your local machine 
   `git clone https://github.com/atar-axis/xpadneo.git`
-* Run the `install.sh` script
+* `cd xpadneo`
+* Run `./install.sh`
 * Done!
 
 ### Connection
