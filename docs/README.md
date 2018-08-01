@@ -32,7 +32,7 @@ On **Debian** based systems (like Ubuntu) you can install those packages by runn
 On **Raspbian**, it is  
 `sudo apt-get install dkms raspberrypi-kernel-headers`  
 On **Arch** and similar distros (like Antergos), try  
-`sudo pacman -S dkms linux-headers`
+`sudo pacman -S dkms linux-headers bluez bluez-utils`
 
 ### Installation
 * Download the Repository to your local machine 
