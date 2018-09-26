@@ -1,4 +1,4 @@
-# Advanced Linux Driver for Xbox One S Wireless Gamepad
+# Advanced Linux Driver for Xbox One Wireless Gamepad
 
 [![Build Status](https://travis-ci.org/atar-axis/xpadneo.svg?branch=master)](https://travis-ci.org/atar-axis/xpadneo)
 
