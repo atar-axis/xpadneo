@@ -34,7 +34,7 @@ if [[ "$#" -eq 0 ]]; then
 elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || ! $1 == "disable" ) ]]; then
 	PARAM=$1
 else
-	echo "Usage: sudo ./ff_toggle.sh [enable|disable]"
+	echo "Usage: sudo ./toggle_ff.sh [enable|disable]"
 	echo "Default behaviour is toggling the current force-feedback settings"
 	exit -2
 fi
