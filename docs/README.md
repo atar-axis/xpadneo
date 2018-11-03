@@ -59,9 +59,6 @@ You know that everything works fine when you feel the gamepad rumble ;)
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
-* `dpad_to_buttons` (default `N`)
-  * Set to `Y` to map dpad directional input to button events
-  * Obsolete, will be removed in a future version
 * `debug_level` (default `0`)
   * `0` (no debug output) to `3` (all)
   * For more information, please take a look [here](https://atar-axis.github.io/xpadneo/#debugging)

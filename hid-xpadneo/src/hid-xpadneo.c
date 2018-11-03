@@ -41,10 +41,6 @@ module_param(debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
-static bool dpad_to_buttons;
-module_param(dpad_to_buttons, bool, 0644);
-MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
-
 static bool disable_ff;
 module_param(disable_ff, bool, 0644);
 MODULE_PARM_DESC(disable_ff, "(bool) Disable all force-feedback effects (rumble). 1: disable ff, 0: enable ff.");
@@ -983,51 +979,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 			fake_dev_version);
 	}
 
-	/* Add BTN_DPAD_* to the key-bitmap, since they where not originally
-	 * mentioned in the report-description.
-	 *
-	 * This is necessary to set them later in xpadneo_event
-	 * by input_report_key(). Otherwise, no event would be generated
-	 * (since it would look like the key doesn't even exist)
-	 *
-	 * TODO:
-	 * - Those buttons are still shown as (null) in jstest
-	 * - We should also send out ABS_HAT0X/Y events as mentioned on the
-	 *   official HID usage tables (p.34).
-	 */
-	if (dpad_to_buttons) {
-		__set_bit(BTN_DPAD_UP, xdata->idev->keybit);
-		__set_bit(BTN_DPAD_RIGHT, xdata->idev->keybit);
-		__set_bit(BTN_DPAD_DOWN, xdata->idev->keybit);
-		__set_bit(BTN_DPAD_LEFT, xdata->idev->keybit);
-
-		__clear_bit(ABS_HAT0X, xdata->idev->absbit);
-		__clear_bit(ABS_HAT0Y, xdata->idev->absbit);
-	}
-
-	/* In addition to adding new keys to the key-bitmap, we may also
-	 * want to remove the old (original) axis from the absolues-bitmap.
-	 *
-	 * NOTE:
-	 * Maybe we want both, our custom and the original mapping.
-	 * If we decide so, remember that 0x39 is a hat switch on the official
-	 * usage tables, but not at the input subsystem, so be sure to use the
-	 * right constant!
-	 *
-	 * Either let hid-core decide itself or map it to ABS_HAT0X/Y by hand:
-	 * #define ABS_HAT0X	0x10
-	 * #define ABS_HAT0Y	0x11
-	 *
-	 * Q: I don't know why the usage number does not fit the official
-	 *    usage page numbers, however...
-	 * A: because there is an difference between hid->usage, which is
-	 *    the HID_USAGE_PAGE && HID_USAGE (!), and hid->code, which is
-	 *    the internal input-representation as defined in
-	 *    input-event-codes.h
-	 *
-	 * take a look at drivers/hid/hid-input.c (#L604)
-	 */
-
 	return 0;
 }
 
@@ -1121,44 +1072,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				(usage->hid & HID_USAGE));
 			return EV_STOP_PROCESSING;
 		}
-	}
-
-	/* Yep, this is the D-pad event */
-	if ((usage->hid & HID_USAGE) == 0x39) {
-
-		/*
-		 * You can press UP and RIGHT, RIGHT and DOWN, ... together!
-		 *
-		 * # val   U R D L
-		 * ---------------
-		 * 0 0000  0 0 0 0  U = ((val >= 1) && (val <= 2)) || (val == 8)
-		 * 1 0001  1 0 0 0  R = (val >= 2) && (val <= 4)
-		 * 2 0010  1 1 0 0  D = (val >= 4) && (val <= 6)
-		 * 3 0011  0 1 0 0  L = (val >= 6) && (val <= 8)
-		 * 4 0100  0 1 1 0
-		 * 5 0101  0 0 1 0
-		 * 6 0110  0 0 1 1
-		 * 7 0111  0 0 0 1
-		 * 8 1000  1 0 0 1
-		 */
-
-		input_report_key(idev, BTN_DPAD_UP,
-			(((value >= 1) && (value <= 2)) || (value == 8)));
-		input_report_key(idev, BTN_DPAD_RIGHT,
-			((value >= 2) && (value <= 4)));
-		input_report_key(idev, BTN_DPAD_DOWN,
-			((value >= 4) && (value <= 6)));
-		input_report_key(idev, BTN_DPAD_LEFT,
-			((value >= 6) && (value <= 8)));
-
-		/*
-		 * It is perfectly fine to send those events even if
-		 * dpad_to_buttons is false because the keymap decides if the
-		 * event is really sent or not. It is also easier to send them
-		 * anyway, because dpad_to_buttons may change if the controller
-		 * is connected. This way the behaviour does not change until
-		 * the controller is reconnected.
-		 */
 	}
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev,
