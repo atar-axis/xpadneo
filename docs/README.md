@@ -35,7 +35,7 @@ On **Arch** and similar distros (like Antergos), try
 `sudo pacman -S dkms linux-headers bluez bluez-utils`  
 On **OSMC** you will have to run the following commands  
 ``sudo apt-get install dkms rbp2-headers-`uname -r` ``  
-``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"``
+``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))  
 
 ### Installation
 * Download the Repository to your local machine 
