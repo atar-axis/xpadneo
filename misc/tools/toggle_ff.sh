@@ -5,7 +5,7 @@
 
 enable_ff ()
 {
-	echo "* force feedback is disabled, enabling... "
+	echo "* enabling ff... "
 
 	echo "N" > /sys/module/hid_xpadneo/parameters/disable_ff
 	rm -f /etc/modprobe.d/xpadneo.conf
@@ -14,7 +14,7 @@ enable_ff ()
 
 disable_ff ()
 {
-	echo "* force feedback is enabled, disabling... "
+	echo "* disabling ff... "
 
 	echo "Y" > /sys/module/hid_xpadneo/parameters/disable_ff
 	echo "options hid_xpadneo disable_ff=1" > /etc/modprobe.d/xpadneo.conf
@@ -31,7 +31,7 @@ fi
 
 if [[ "$#" -eq 0 ]]; then
 	PARAM="toggle"
-elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || ! $1 == "disable" ) ]]; then
+elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || $1 == "disable" ) ]]; then
 	PARAM=$1
 else
 	echo "Usage: sudo ./toggle_ff.sh [enable|disable]"
@@ -51,27 +51,29 @@ DISABLED_BOOT=0
 DiSABLED_TMP=0
 
 if grep -q "disable_ff=1" /etc/modprobe.d/xpadneo.conf 2>/dev/null; then
-	echo "* ff currently disabled by modprobe parameter"
+	echo "* ff is currently disabled by modprobe parameter"
 	DISABLED_BOOT=1
 fi
 
 if grep -q "Y" /sys/module/hid_xpadneo/parameters/disable_ff 2>/dev/null; then
-	echo "* ff currently disabled by sysfs parameter"
+	echo "* ff is currently disabled by sysfs parameter"
 	DiSABLED_TMP=1
 fi
 
 
 if [[ $PARAM == "toggle" ]]; then
 	if [[ "$DiSABLED_TMP" -eq 1 || "$DISABLED_BOOT" -eq 1 ]]; then
+		echo "* ff is disabled"
 		enable_ff
 	else
+		echo "* ff is enabled"
 		disable_ff
 	fi
 
-elif [[ $option == "disable" ]]; then
+elif [[ $PARAM == "disable" ]]; then
 	disable_ff
 
-elif [[ $option == "enable" ]]; then
+elif [[ $PARAM == "enable" ]]; then
 	enable_ff
 
 else
