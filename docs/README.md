@@ -32,8 +32,8 @@ On **Debian** based systems (like Ubuntu) you can install those packages by runn
 On **Raspbian**, it is  
 `sudo apt-get install dkms raspberrypi-kernel-headers`  
 On **Arch** and similar distros (like Antergos), try  
-`sudo pacman -S dkms linux-headers bluez bluez-utils`
-on **OSMC** you will have to run the following commands  
+`sudo pacman -S dkms linux-headers bluez bluez-utils`  
+On **OSMC** you will have to run the following commands  
 ``sudo apt-get install dkms rbp2-headers-`uname -r```  
 ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"``
 
