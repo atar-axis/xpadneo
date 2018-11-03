@@ -1,4 +1,4 @@
-#define DRV_VER "0.3.1"
+#define DRV_VER "0.3.2"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -44,6 +44,10 @@ MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (mos
 static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, 0644);
 MODULE_PARM_DESC(dpad_to_buttons, "(bool) Map the DPAD-buttons as BTN_DPAD_UP/RIGHT/DOWN/LEFT instead of as a hat-switch. Restart device to take effect.");
+
+static bool disable_ff;
+module_param(disable_ff, bool, 0644);
+MODULE_PARM_DESC(disable_ff, "(bool) Disable all force-feedback effects (rumble). 1: disable ff, 0: enable ff.");
 
 static u8 trigger_rumble_damping = 4;
 module_param(trigger_rumble_damping, byte, 0644);
@@ -207,6 +211,9 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
+	if(disable_ff)
+		return 0;
+
 	if (effect->type != FF_RUMBLE)
 		return 0;
 
@@ -299,28 +306,30 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 
 	/* TODO: outsource that */
 
-	/* 'HELLO' FROM THE OTHER SIDE */
 	ff_package.ff = ff_clear;
 
-	ff_package.report_id = 0x03;
-	ff_package.ff.magnitude_right = 0x80;
-	ff_package.ff.magnitude_left  = 0x40;
-	ff_package.ff.magnitude_right_trigger = 0x20;
-	ff_package.ff.magnitude_left_trigger  = 0x20;
-	ff_package.ff.duration = 33;
+	/* 'HELLO' FROM THE OTHER SIDE */
+	if (!disable_ff) {
+		ff_package.report_id = 0x03;
+		ff_package.ff.magnitude_right = 0x80;
+		ff_package.ff.magnitude_left  = 0x40;
+		ff_package.ff.magnitude_right_trigger = 0x20;
+		ff_package.ff.magnitude_left_trigger  = 0x20;
+		ff_package.ff.duration = 33;
 
-	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
 
-	ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
 
-	ff_package.ff.enable_actuators
-		= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators
+			= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
+	}
 
 
 	/* Init Input System for Force Feedback (FF) */

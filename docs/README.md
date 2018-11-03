@@ -65,6 +65,8 @@ files in `/sys/module/hid_xpadneo/parameters`:
 * `debug_level` (default `0`)
   * `0` (no debug output) to `3` (all)
   * For more information, please take a look [here](https://atar-axis.github.io/xpadneo/#debugging)
+* `disable_ff` (default `0`)
+  * `0` (ff enabled) to `1` (ff disabled)
 * `trigger_rumble_damping` (default `4`)
   * Damp the strength of the trigger force feedback
   * `1` (none) to `256` (max)
