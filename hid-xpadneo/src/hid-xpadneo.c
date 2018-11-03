@@ -306,28 +306,30 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 
 	/* TODO: outsource that */
 
-	/* 'HELLO' FROM THE OTHER SIDE */
 	ff_package.ff = ff_clear;
 
-	ff_package.report_id = 0x03;
-	ff_package.ff.magnitude_right = 0x80;
-	ff_package.ff.magnitude_left  = 0x40;
-	ff_package.ff.magnitude_right_trigger = 0x20;
-	ff_package.ff.magnitude_left_trigger  = 0x20;
-	ff_package.ff.duration = 33;
+	/* 'HELLO' FROM THE OTHER SIDE */
+	if (!disable_ff) {
+		ff_package.report_id = 0x03;
+		ff_package.ff.magnitude_right = 0x80;
+		ff_package.ff.magnitude_left  = 0x40;
+		ff_package.ff.magnitude_right_trigger = 0x20;
+		ff_package.ff.magnitude_left_trigger  = 0x20;
+		ff_package.ff.duration = 33;
 
-	ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
 
-	ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
 
-	ff_package.ff.enable_actuators
-		= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
-	mdelay(330);
+		ff_package.ff.enable_actuators
+			= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		mdelay(330);
+	}
 
 
 	/* Init Input System for Force Feedback (FF) */
