@@ -23,23 +23,25 @@ disable_ff ()
 
 # --- PROTECTION ---
 
-if (( EUID != 0 )); then
+if [[ $EUID != 0 ]]; then
 	echo "ERROR: You need superuser privileges to toggle vibration, please run toggle-vibration.sh via sudo!"
 	exit -3
 fi
 
 
-if [[ "$#" -eq 0 ]]; then
+if [[ $# == 0 ]]; then
 	PARAM="toggle"
-elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || $1 == "disable" ) ]]; then
+
+elif [[ ( $# == 1 ) && ( ! -z $1 ) && ( $1 == "enable" || $1 == "disable" ) ]]; then
 	PARAM=$1
+
 else
-	echo "Usage: sudo ./toggle_ff.sh [enable|disable]"
+	echo "Usage: sudo ./toggle_ff.sh [[enable|disable]]"
 	echo "Default behaviour is toggling the current force-feedback settings"
 	exit -2
 fi
 
-if [ ! -f /sys/module/hid_xpadneo/parameters/disable_ff ]; then
+if [[ ! -f /sys/module/hid_xpadneo/parameters/disable_ff ]]; then
 	echo "ERROR: file /sys/module/hid_xpadneo/parameters/disable_ff does not exist"
 	exit -4
 fi

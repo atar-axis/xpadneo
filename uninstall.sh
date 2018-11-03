@@ -2,7 +2,7 @@
 
 source VERSION
 
-if (( EUID != 0 )); then
+if [[ $EUID != 0 ]]; then
   echo "ERROR: You most probably need superuser privileges to uninstall modules, please run me via sudo!"
   exit -3
 fi
