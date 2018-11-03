@@ -1,6 +1,6 @@
 #!/bin/bash
 #This script can be ran without a parameter to toggle, or with a toggle parameter with value "enable" to enable vibration and "disable" to disable vibration.
-#Usage: sudo toggle-vibration.sh or: sudo ./toggle-vibration.sh enable or: sudo ./toggle-vibration.sh disable
+#Usage: sudo ./toggle-vibration.sh or: sudo ./toggle-vibration.sh enable or: sudo ./toggle-vibration.sh disable
 if (( EUID != 0 )); then
   echo "ERROR: You most probably need superuser privileges to toggle vibration, please run toggle-vibration.sh via sudo!"
   exit -3
