@@ -5,17 +5,18 @@
 
 enable_ff ()
 {
-	echo "force feedback is disabled, enabling... "
+	echo "* force feedback is disabled, enabling... "
 
+	echo "N" > /sys/module/hid_xpadneo/parameters/disable_ff
 	rm -f /etc/modprobe.d/xpadneo.conf
 }
 
 
 disable_ff ()
 {
-	echo "force feedback is enabled, disabling... "
+	echo "* force feedback is enabled, disabling... "
 
-	echo "1" > /sys/module/hid_xpadneo/parameters/disable_ff
+	echo "Y" > /sys/module/hid_xpadneo/parameters/disable_ff
 	echo "options hid_xpadneo disable_ff=1" > /etc/modprobe.d/xpadneo.conf
 }
 
@@ -33,7 +34,7 @@ if [[ "$#" -eq 0 ]]; then
 elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || ! $1 == "disable" ) ]]; then
 	PARAM=$1
 else
-	echo "Usage: sudo ./toggle-vibration.sh [enable|disable]"
+	echo "Usage: sudo ./ff_toggle.sh [enable|disable]"
 	echo "Default behaviour is toggling the current force-feedback settings"
 	exit -2
 fi
@@ -50,10 +51,12 @@ DISABLED_BOOT=0
 DiSABLED_TMP=0
 
 if grep -q "disable_ff=1" /etc/modprobe.d/xpadneo.conf 2>/dev/null; then
+	echo "* ff currently disabled by modprobe parameter"
 	DISABLED_BOOT=1
 fi
 
 if grep -q "Y" /sys/module/hid_xpadneo/parameters/disable_ff 2>/dev/null; then
+	echo "* ff currently disabled by sysfs parameter"
 	DiSABLED_TMP=1
 fi
 
@@ -76,4 +79,6 @@ else
 	exit -1
 fi
 
+
+echo "* done"
 exit 0
