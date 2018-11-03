@@ -1,31 +1,79 @@
 #!/bin/bash
-#This script can be ran without a parameter to toggle, or with a toggle parameter with value "enable" to enable vibration and "disable" to disable vibration.
-#Usage: sudo ./toggle-vibration.sh or: sudo ./toggle-vibration.sh enable or: sudo ./toggle-vibration.sh disable
+
+
+# --- FUNCTIONS ---
+
+enable_ff ()
+{
+	echo "force feedback is disabled, enabling... "
+
+	rm -f /etc/modprobe.d/xpadneo.conf
+}
+
+
+disable_ff ()
+{
+	echo "force feedback is enabled, disabling... "
+
+	echo "1" > /sys/module/hid_xpadneo/parameters/disable_ff
+	echo "options hid_xpadneo disable_ff=1" > /etc/modprobe.d/xpadneo.conf
+}
+
+
+# --- PROTECTION ---
+
 if (( EUID != 0 )); then
-  echo "ERROR: You most probably need superuser privileges to toggle vibration, please run toggle-vibration.sh via sudo!"
-  exit -3
+	echo "ERROR: You need superuser privileges to toggle vibration, please run toggle-vibration.sh via sudo!"
+	exit -3
 fi
 
-if [[ ! -z $1 ]]; then
-    param=$1
-fi
 
-if [[ $param == "enable" ]] || [[ $param == "disable" ]]; then
-    option=$param
+if [[ "$#" -eq 0 ]]; then
+	PARAM="toggle"
+elif [[ ( "$#" -eq 1 ) && ( ! -z $1 ) && ( $1 == "enable" || ! $1 == "disable" ) ]]; then
+	PARAM=$1
 else
-    if [ ! -f /etc/modprobe.d/xpadneo.conf ]; then
-        option="disable"
-    else 
-        option="enable"
-    fi
+	echo "Usage: sudo ./toggle-vibration.sh [enable|disable]"
+	echo "Default behaviour is toggling the current force-feedback settings"
+	exit -2
 fi
 
-if [[ $option == "disable" ]]; then
-    echo "Vibration exists, now disabling..."
-    echo "options hid_xpadneo disable_ff=1" | sudo tee /etc/modprobe.d/xpadneo.conf
-    echo "Vibration has been disabled."
-else 
-    echo "Vibration doesn't exist, now enabling..."
-    sudo rm /etc/modprobe.d/xpadneo.conf
-    echo "Vibration has been enabled."
+if [ ! -f /sys/module/hid_xpadneo/parameters/disable_ff ]; then
+	echo "ERROR: file /sys/module/hid_xpadneo/parameters/disable_ff does not exist"
+	exit -4
 fi
+
+
+# --- ACTUAL CODE ---
+
+DISABLED_BOOT=0
+DiSABLED_TMP=0
+
+if grep -q "disable_ff=1" /etc/modprobe.d/xpadneo.conf 2>/dev/null; then
+	DISABLED_BOOT=1
+fi
+
+if grep -q "Y" /sys/module/hid_xpadneo/parameters/disable_ff 2>/dev/null; then
+	DiSABLED_TMP=1
+fi
+
+
+if [[ $PARAM == "toggle" ]]; then
+	if [[ "$DiSABLED_TMP" -eq 1 || "$DISABLED_BOOT" -eq 1 ]]; then
+		enable_ff
+	else
+		disable_ff
+	fi
+
+elif [[ $option == "disable" ]]; then
+	disable_ff
+
+elif [[ $option == "enable" ]]; then
+	enable_ff
+
+else
+	echo "ERROR: Unexpected"
+	exit -1
+fi
+
+exit 0
