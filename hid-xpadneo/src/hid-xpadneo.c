@@ -1,4 +1,4 @@
-#define DRV_VER "0.4.0"
+#define DRV_VER "0.4.1"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -339,11 +339,11 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	 * Set default values, otherwise tools which depend on the joystick
 	 * subsystem, report arbitrary values until the first real event
 	 */
-	input_report_abs(idev, ABS_X,      32768);
-	input_report_abs(idev, ABS_Y,      32768);
+	input_report_abs(idev, ABS_X,      0);
+	input_report_abs(idev, ABS_Y,      0);
 	input_report_abs(idev, ABS_Z,      0);
-	input_report_abs(idev, ABS_RX,     32768);
-	input_report_abs(idev, ABS_RY,     32768);
+	input_report_abs(idev, ABS_RX,     0);
+	input_report_abs(idev, ABS_RY,     0);
 	input_report_abs(idev, ABS_RZ,     0);
 	input_report_key(idev, BTN_A,      0);
 	input_report_key(idev, BTN_B,      0);
@@ -979,6 +979,21 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 			fake_dev_version);
 	}
 
+
+	// The HID device descriptor defines a range from 0 to 65535 for all
+	// absolute axis (like ABS_X), this is in contrary to what the linux
+	// gamepad specification defines [–32.768; 32.767].
+	// Therefore, we have to set the min, max, fuzz and flat values by hand:
+
+	input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
+	input_set_abs_params(xdata->idev, ABS_Y, -32768, 32767, 255, 4095);
+
+	input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
+	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
+
+	// furthermore, we need to translate the incoming events to fit within
+	// the new range
+
 	return 0;
 }
 
@@ -989,9 +1004,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
  * This hook is called whenever an event occurs that is listed on
  * xpadneo_driver.usage_table (which is NULL in our case, therefore it is
  * invoked on every event).
- *
- * We use this hook to attach some more events to our D-pad, as a result
- * our D-pad is reported to Input as both, four buttons AND a hat-switch.
  *
  * Before we can send additional input events, we have to enable
  * the corresponding keys in xpadneo_input_configured.
@@ -1073,6 +1085,20 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			return EV_STOP_PROCESSING;
 		}
 	}
+
+
+	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
+	// as already explained in xpadneo_input_configured() above
+
+	switch (usage->code) {
+	case ABS_X:
+	case ABS_Y:
+	case ABS_RX:
+	case ABS_RY:
+		input_report_abs(idev, usage->code, value - 32768);
+		return EV_STOP_PROCESSING;
+	}
+
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev,
 		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
