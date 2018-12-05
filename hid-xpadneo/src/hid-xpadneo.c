@@ -69,7 +69,6 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
 #define DBG_LVL_ALL  3
 
 
-
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
@@ -144,6 +143,15 @@ enum report_type {
 	LINUX,
 	WINDOWS
 };
+
+// TODO: avoid data duplication
+
+const char* report_type_text[] = {
+	"unknown",
+	"linux/android",
+	"windows"
+};
+
 
 struct xpadneo_devdata {
 	/* mutual exclusion */
@@ -886,8 +894,9 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 		}
 	}
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %d, beh: %d\n",
-		xdata->report_descriptor, xdata->report_behaviour);
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %s, beh: %s\n",
+		report_type_text[xdata->report_descriptor],
+		report_type_text[xdata->report_behaviour]);
 
 	/* TODO:
 	 * Maybe the best solution would be to replace the report descriptor
@@ -933,7 +942,7 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 {
 	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
 
-	dbg_hex_dump_lvl(DBG_LVL_ALL, "xpadneo: raw_event: ", data, reportsize);
+	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data, reportsize);
 	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
 	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
 
@@ -1079,7 +1088,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			}
 			input_sync(idev);
 
-			hid_dbg_lvl(DBG_LVL_SOME, hdev,
+			hid_dbg_lvl(DBG_LVL_ALL, hdev,
 				"hid-upage: %02x, hid-usage: %02x fixed\n",
 				(usage->hid & HID_USAGE_PAGE),
 				(usage->hid & HID_USAGE));
@@ -1097,7 +1106,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		case ABS_Y:
 		case ABS_RX:
 		case ABS_RY:
-			hid_dbg_lvl(DBG_LVL_SOME, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
+			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
 			input_report_abs(idev, usage->code, value - 32768);
 			input_sync(idev);
 			return EV_STOP_PROCESSING;
@@ -1105,7 +1114,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	}
 
 
-	hid_dbg_lvl(DBG_LVL_SOME, hdev,
+	hid_dbg_lvl(DBG_LVL_ALL, hdev,
 		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
 		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
 		usage->code, value);
