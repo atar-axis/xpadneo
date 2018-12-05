@@ -992,7 +992,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
 
 	// furthermore, we need to translate the incoming events to fit within
-	// the new range
+	// the new range, we will do that in the xpadneo_event() hook.
 
 	return 0;
 }
@@ -1077,6 +1077,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				input_report_key(idev, BTN_THUMBR, value);
 				break;
 			}
+			input_sync(idev);
 
 			hid_dbg_lvl(DBG_LVL_SOME, hdev,
 				"hid-upage: %02x, hid-usage: %02x fixed\n",
@@ -1090,13 +1091,17 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
 	// as already explained in xpadneo_input_configured() above
 
-	switch (usage->code) {
-	case ABS_X:
-	case ABS_Y:
-	case ABS_RX:
-	case ABS_RY:
-		input_report_abs(idev, usage->code, value - 32768);
-		return EV_STOP_PROCESSING;
+	if (usage->type == EV_ABS) {
+		switch (usage->code) {
+		case ABS_X:
+		case ABS_Y:
+		case ABS_RX:
+		case ABS_RY:
+			hid_dbg_lvl(DBG_LVL_SOME, hdev, "shifted axis %02x, new value: %i\n", usage->code, value - 32768);
+			input_report_abs(idev, usage->code, value - 32768);
+			//input_sync(idev);
+			return EV_STOP_PROCESSING;
+		}
 	}
 
 
