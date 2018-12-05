@@ -1097,9 +1097,9 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		case ABS_Y:
 		case ABS_RX:
 		case ABS_RY:
-			hid_dbg_lvl(DBG_LVL_SOME, hdev, "shifted axis %02x, new value: %i\n", usage->code, value - 32768);
+			hid_dbg_lvl(DBG_LVL_SOME, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
 			input_report_abs(idev, usage->code, value - 32768);
-			//input_sync(idev);
+			input_sync(idev);
 			return EV_STOP_PROCESSING;
 		}
 	}
