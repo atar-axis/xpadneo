@@ -1033,6 +1033,30 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
+
+	hid_dbg_lvl(DBG_LVL_ALL, hdev,
+		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
+		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
+		usage->code, value);
+
+
+	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
+	// as already explained in xpadneo_input_configured() above
+
+	if (usage->type == EV_ABS) {
+		switch (usage->code) {
+		case ABS_X:
+		case ABS_Y:
+		case ABS_RX:
+		case ABS_RY:
+			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
+			input_report_abs(idev, usage->code, value - 32768);
+			input_sync(idev);
+			return EV_STOP_PROCESSING;
+		}
+	}
+
+
 	/* TODO:
 	 * This is a workaround for the wrong report (Windows report but
 	 * Linux descriptor). We would prefer to fixup the descriptor, but we
@@ -1095,29 +1119,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			return EV_STOP_PROCESSING;
 		}
 	}
-
-
-	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
-	// as already explained in xpadneo_input_configured() above
-
-	if (usage->type == EV_ABS) {
-		switch (usage->code) {
-		case ABS_X:
-		case ABS_Y:
-		case ABS_RX:
-		case ABS_RY:
-			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
-			input_report_abs(idev, usage->code, value - 32768);
-			input_sync(idev);
-			return EV_STOP_PROCESSING;
-		}
-	}
-
-
-	hid_dbg_lvl(DBG_LVL_ALL, hdev,
-		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
-		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
-		usage->code, value);
 
 	return EV_CONT_PROCESSING;
 }
