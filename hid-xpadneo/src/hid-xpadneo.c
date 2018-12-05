@@ -886,6 +886,9 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 		}
 	}
 
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %d, beh: %d\n",
+		xdata->report_descriptor, xdata->report_behaviour);
+
 	/* TODO:
 	 * Maybe the best solution would be to replace the report descriptor
 	 * in case that the wrong reports are sent. Unfortunately we do not
@@ -928,11 +931,11 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		      u8 *data, int reportsize)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
+	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
 
 	dbg_hex_dump_lvl(DBG_LVL_ALL, "xpadneo: raw_event: ", data, reportsize);
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
+	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
+	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
 
 
 	switch (report->id) {
@@ -1027,9 +1030,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	 * cannot fix it anymore at the time we recognize the wrong behaviour,
 	 * hence we will fire the input events by hand.
 	 */
-
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %d, beh: %d\n",
-			xdata->report_descriptor, xdata->report_behaviour);
 
 	if (xdata->report_behaviour == WINDOWS
 					&& xdata->report_descriptor == LINUX) {
