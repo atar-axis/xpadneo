@@ -256,7 +256,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	/* the user can change the damping at runtime, hence check the range */
 	trigger_rumble_damping_nonzero
-		= trigger_rumble_damping == 0 ? 1: trigger_rumble_damping;
+		= trigger_rumble_damping == 0 ? 1 : trigger_rumble_damping;
 
 	max_damped = max / trigger_rumble_damping_nonzero;
 
@@ -346,6 +346,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	/*
 	 * Set default values, otherwise tools which depend on the joystick
 	 * subsystem, report arbitrary values until the first real event
+	 * TODO: Is this really necessary?
 	 */
 	input_report_abs(idev, ABS_X,      0);
 	input_report_abs(idev, ABS_Y,      0);
@@ -908,7 +909,7 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	 *
 	 * The next best solution would be to replace the report with
 	 * ID 0x01 with the right one in report_enum (and collection?).
-	 * I don't know yet how this works, peraps like this:
+	 * I don't know yet how this would works, perhaps like this:
 	 * - create a new report struct
 	 * - fill it by hand
 	 * - add all neccessary fields (automatic way?)
@@ -919,9 +920,9 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	 * - in raw_event: change the ID from 0x01 to the new one if
 	 *   necessary. leave it if not.
 	 *
-	 * What we acutally do currently is:
+	 * What we currently do is:
 	 * We examine every report and fire the input events by hand.
-	 * That's very error-prone and not very generic.
+	 * That's not very generic.
 	 *
 	 */
 
@@ -940,6 +941,12 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		      u8 *data, int reportsize)
 {
+	/* Return Codes */
+	enum {
+		RAWEV_CONT_PROCESSING, /* Let the hid-core autodetect the event */
+		RAWEV_STOP_PROCESSING  /* Stop further processing */
+	};
+
 	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
 
 	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data, reportsize);
@@ -953,11 +960,11 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		break;
 	case 04:
 		parse_raw_event_battery(hdev, data, reportsize);
-		return 1;  /* stop processing */
+		return RAWEV_STOP_PROCESSING;
 	}
 
 	/* Continue processing */
-	return 0;
+	return RAWEV_CONT_PROCESSING;
 }
 
 
@@ -1043,16 +1050,15 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
 	// as already explained in xpadneo_input_configured() above
 
-	if (usage->type == EV_ABS) {
-		switch (usage->code) {
-		case ABS_X:
-		case ABS_Y:
-		case ABS_RX:
-		case ABS_RY:
-			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usage->code, value, value - 32768);
-			input_report_abs(idev, usage->code, value - 32768);
-			input_sync(idev);
-			return EV_STOP_PROCESSING;
+	u16 usg_type = usage->type;
+	u16 usg_code = usage->code;
+
+	if (usg_type == EV_ABS) {
+		if (usg_code == ABS_X || usg_code == ABS_Y
+				|| usg_code == ABS_RX || usg_code == ABS_RY) {
+			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usg_code, value, value - 32768);
+			input_report_abs(idev, usg_code, value - 32768);
+			goto sync_and_stop_processing;
 		}
 	}
 
@@ -1110,17 +1116,22 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				input_report_key(idev, BTN_THUMBR, value);
 				break;
 			}
-			input_sync(idev);
 
 			hid_dbg_lvl(DBG_LVL_ALL, hdev,
 				"hid-upage: %02x, hid-usage: %02x fixed\n",
 				(usage->hid & HID_USAGE_PAGE),
 				(usage->hid & HID_USAGE));
-			return EV_STOP_PROCESSING;
+
+			goto sync_and_stop_processing;
 		}
 	}
 
 	return EV_CONT_PROCESSING;
+
+sync_and_stop_processing:
+	input_sync(idev);
+	return EV_STOP_PROCESSING;
+
 }
 
 
