@@ -20,7 +20,6 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 * Supports Battery Level Indication (including the Play \`n Charge Kit)  
   ![Battery Level Indication](./img/battery_support.png)
 * Supports faking the Input Device Version in order to prevent SDL from trying to fix an unbroken mapping.
-
 * Easy Installation
 * Agile Support and Development
 
