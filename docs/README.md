@@ -12,12 +12,15 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 * Supports Force Feedback (Rumble) in General
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)  
   see it in action: run `misc/tools/directional_rumble_test/direction_rumble_test <event# in /dev/input>`
+* Supports disabling FF
 * Supports multiple Gamepads at the same time (not even supported in Windows)
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before
 * Working Select, Start, Mode buttons
 * Correct Axis Range (signed, important for e.g. RPCS3)
 * Supports Battery Level Indication (including the Play \`n Charge Kit)  
   ![Battery Level Indication](./img/battery_support.png)
+* Supports faking the Input Device Version in order to prevent SDL from trying to fix an unbroken mapping.
+
 * Easy Installation
 * Agile Support and Development
 
