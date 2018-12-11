@@ -9,13 +9,14 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 
 **Advantages of this driver**
 * Supports Bluetooth
-* Supports Force Feedback (Rumble) via BT
-* Supports multiple Gamepads at the same time (not even supported in Windows)
+* Supports Force Feedback (Rumble) in General
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)  
   see it in action: run `misc/tools/directional_rumble_test/direction_rumble_test <event# in /dev/input>`
-* Offers a consistent mapping, even if paired to Windows/Xbox before
+* Supports multiple Gamepads at the same time (not even supported in Windows)
+* Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before
 * Working Select, Start, Mode buttons
-* Support for Battery Level Indication (including the Play \`n Charge Kit)  
+* Correct Axis Range (signed, important for e.g. RPCS3)
+* Supports Battery Level Indication (including the Play \`n Charge Kit)  
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
 * Agile Support and Development
@@ -23,21 +24,22 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 ## Getting started
 ### Prerequisites
 Make sure you have installed the following packages and their dependencies
-* `dkms`
-* `linux-headers`
-* `bluez` and `bluez-utils`
 
-On **Debian** based systems (like Ubuntu) you can install those packages by running  
-``sudo apt-get install dkms linux-headers-`uname -r` ``  
-On **Raspbian**, it is  
-`sudo apt-get install dkms raspberrypi-kernel-headers`  
-On **Arch** and similar distros (like Antergos), try  
-`sudo pacman -S dkms linux-headers bluez bluez-utils`  
-On **Fedora**, it is  
-`sudo dnf install dkms bluez bluez-tools kernel-devel-$(uname -r) kernel-headers-$(uname -r)`  
-On **OSMC** you will have to run the following commands  
-``sudo apt-get install dkms rbp2-headers-`uname -r` ``  
-``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
+* On **Debian** based systems (like Ubuntu) you can install those packages by running  
+  ``sudo apt-get install dkms linux-headers-`uname -r` ``  
+
+* On **Raspbian**, it is  
+  `sudo apt-get install dkms raspberrypi-kernel-headers`  
+
+* On **Arch** and Arch-based distros (like **Antergos**), try  
+  `sudo pacman -S dkms linux-headers bluez bluez-utils`  
+
+* On **Fedora**, it is  
+  `sudo dnf install dkms bluez bluez-tools kernel-devel-$(uname -r) kernel-headers-$(uname -r)`  
+
+* On **OSMC** you will have to run the following commands  
+  ``sudo apt-get install dkms rbp2-headers-`uname -r` ``  
+  ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
 
 ### Installation
 * Download the Repository to your local machine 
