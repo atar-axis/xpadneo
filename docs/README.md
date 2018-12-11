@@ -25,17 +25,19 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 ### Prerequisites
 Make sure you have installed the following packages and their dependencies
 
-* On **Debian** based systems (like Ubuntu) you can install those packages by running  
-  ``sudo apt-get install dkms linux-headers-`uname -r` ``  
-* On **Raspbian**, it is  
-  `sudo apt-get install dkms raspberrypi-kernel-headers`  
 * On **Arch** and Arch-based distros (like **Antergos**), try  
   `sudo pacman -S dkms linux-headers bluez bluez-utils`  
+* On **Debian** based systems (like Ubuntu) you can install those packages by running  
+  ``sudo apt-get install dkms linux-headers-`uname -r` ``  
 * On **Fedora**, it is  
-  ``sudo dnf install dkms bluez bluez-tools kernel-devel-`uname -r` kernel-headers-`uname -r` ``  
+  ``sudo dnf install dkms bluez bluez-tools kernel-devel-`uname -r` kernel-headers-`uname -r` `` 
 * On **OSMC** you will have to run the following commands  
   ``sudo apt-get install dkms rbp2-headers-`uname -r` ``  
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
+* On **Raspbian**, it is  
+  `sudo apt-get install dkms raspberrypi-kernel-headers`  
+  
+Please feel free to add other Distributions as well!
 
 ### Installation
 * Download the Repository to your local machine 
