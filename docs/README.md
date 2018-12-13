@@ -38,6 +38,8 @@ Make sure you have installed the following packages and their dependencies
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
 * On **Raspbian**, it is  
   `sudo apt-get install dkms raspberrypi-kernel-headers`  
+  If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for your kernel.  
+  Please follow the steps described at [rpi-src](https://github.com/notro/rpi-source/wiki) to get the headers for your currently running kernel.  
   
 Please feel free to add other Distributions as well!
 
