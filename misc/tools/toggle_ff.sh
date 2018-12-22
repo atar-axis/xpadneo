@@ -24,7 +24,7 @@ disable_ff ()
 # --- PROTECTION ---
 
 if [[ $EUID != 0 ]]; then
-	echo "ERROR: You need superuser privileges to toggle vibration, please run toggle-vibration.sh via sudo!"
+	echo "ERROR: You need superuser privileges to toggle vibration, please run toggle_ff.sh via sudo!"
 	exit -3
 fi
 
