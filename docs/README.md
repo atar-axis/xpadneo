@@ -25,7 +25,7 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 
 ## Getting started
 ### Prerequisites
-Make sure you have installed the following packages and their dependencies
+Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their dependencies.
 
 * On **Arch** and Arch-based distros (like **Antergos**), try  
   `sudo pacman -S dkms linux-headers bluez bluez-utils`  
