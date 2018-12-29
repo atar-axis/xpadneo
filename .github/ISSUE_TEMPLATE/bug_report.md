@@ -20,11 +20,15 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**System information:**
+**System information**
 - `uname -a` output
 - `dmesg` output
-  Please enable debugging output before: https://atar-axis.github.io/xpadneo/index.html#debugging
+  Please enable debugging output before: https://atar-axis.github.io/xpadneo/index.html#debugging  
+  
+The following commands need superuser privileges:
+- `cat /sys/kernel/debug/hid/0005:045E:<TAB>/rdesc`
+- `cksum /sys/kernel/debug/hid/0005:045E:<TAB>/rdes`
 
 
-**Additional context**
+**Additional context**  
 Add any other context about the problem here.
