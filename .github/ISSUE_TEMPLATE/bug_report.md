@@ -25,9 +25,8 @@ If applicable, add screenshots to help explain your problem.
 - `dmesg` output
   Please enable debugging output before: https://atar-axis.github.io/xpadneo/index.html#debugging  
   
-The following commands need superuser privileges:
-- `cat /sys/kernel/debug/hid/0005:045E:<TAB>/rdesc`
-- `cksum /sys/kernel/debug/hid/0005:045E:<TAB>/rdes`
+The following command need superuser privileges:
+- `f=/sys/kernel/debug/hid/0005:045E:<TAB>/rdesc; cat $f && cksum $f`
 
 
 **Additional context**  
