@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source VERSION
+# exit immediately if one command fails
+set -e 
 
 if [[ $EUID != 0 ]]; then
   echo "ERROR: You most probably need superuser privileges to uninstall modules, please run me via sudo!"
