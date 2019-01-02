@@ -50,6 +50,13 @@ Please feel free to add other Distributions as well!
 * Run `./install.sh`
 * Done!
 
+### Update
+* Update your cloned directory by running `git pull`
+* Run `./update.sh`
+
+### Uninstallation
+* Run `./uninstall.sh` to remove all installed versions of hid-xpadneo
+
 ### Connection
 * `sudo bluetoothctl`
 * `[bluetooth]# scan on`
