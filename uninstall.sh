@@ -8,11 +8,21 @@ if [[ $EUID != 0 ]]; then
 fi
 
 
-echo "* unloading driver module"
+echo "* unloading current driver module"
 modprobe -r hid_xpadneo
 
-echo "* uninstalling and removing from DKMS"
-dkms remove -m hid-xpadneo -v $VERSION --all
+echo "* looking for registered instances"
+VER=($(dkms status 2>/dev/null | grep -Po '^hid-xpadneo, \K([0-9]*.[0-9]*.[0-9]*)' 2>/dev/null))
+echo "found ${#VER[@]} registered instance(s) on your system"
 
-echo "* removing folder from /usr/src"
-rm --recursive /usr/src/hid-xpadneo-$VERSION/
+
+for instance in "${VER[@]}"
+do
+    echo "* $instance"
+
+    echo "  * uninstalling and removing $instance from DKMS"
+    dkms remove -m hid-xpadneo -v $instance --all
+
+    echo "  * removing $instance folder from /usr/src"
+    rm --recursive /usr/src/hid-xpadneo-$instance/
+done
