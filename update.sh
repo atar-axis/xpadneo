@@ -13,26 +13,29 @@ IS_GIT=$(git rev-parse --is-inside-work-tree 2>/dev/null)
 
 
 if [[ $LATEST == $VERSION ]]; then
-    echo "This directory is up to date!"
-else
-    echo "* updating the cloned git directory"
+
+    echo "Looks like the repo is up to date, fine!"
     
-    if [[ $IS_GIT == "true" ]]; then
-        git fetch --all
-        git reset --hard HEAD
+    if [[ $LATEST == $INSTALLED ]]; then
+        echo "You have already installed the latest version! Yay."
     else
-        echo "Error, cannot update since this is not a Git repo (please update by hand)."
-        exit -4
+        echo "* uninstalling outdated modules"
+        ./uninstall.sh
+            
+        echo "* installing latest version"
+        ./install.sh
     fi
     
+else
+    
+    if [[ $IS_GIT == "true" ]]; then
+        echo "Please update this directory by running git pull, afterwards run this script again"
+    else
+        echo "Please update this directory by downloading the latest version from https://github.com/atar-axis/xpadneo/archive/master.zip"
+    fi
+    
+    exit -4
+
 fi
 
-if [[ $LATEST == $INSTALLED ]]; then
-    echo "You have already installed the latest version! Yay."
-else
-    echo "* uninstalling outdated modules"
-    ./uninstall.sh
-        
-    echo "* installing latest version"
-    ./install.sh
-fi
+
