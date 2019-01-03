@@ -29,7 +29,7 @@ if [[ $LATEST == $VERSION ]]; then
 else
     
     if [[ $IS_GIT == "true" ]]; then
-        echo "Please update this directory by running `git reset --hard` and `git pull`, afterwards run this script again"
+        echo "Please update this directory by running 'git reset --hard' and 'git pull', afterwards run this script again"
     else
         echo "Please update this directory by downloading the latest version from https://github.com/atar-axis/xpadneo/archive/master.zip"
     fi
