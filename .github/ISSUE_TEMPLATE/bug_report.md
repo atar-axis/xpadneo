@@ -1,32 +1,25 @@
----
-name: Bug report
-about: Create a report to help us improve
-
----
-
 **Describe the bug**
 A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Screenshots/Gifs**
+If applicable, add screenshots or animated gifs to help explain your problem.
 
 **System information**
-- `uname -a` output
-- `dmesg` output
-  Please enable debugging output before: https://atar-axis.github.io/xpadneo/index.html#debugging  
-  
+Please enable debugging output (https://atar-axis.github.io/xpadneo/index.html#debugging)
+and add at least the following outputs
+- `uname -a`
+- `dmesg`
+
 The following command need superuser privileges.
-I recommend to run it as root directly (not using `sudo`), since this way the <TAB>-key will work as expected.
+I recommend to run it as root directly (do not use `sudo`),
+otherwise the auto-completion using <TAB> will not work as expected.
+
 - `head -1 "/sys/kernel/debug/hid/0005:045E:<TAB>/rdesc" | tee /dev/tty | cksum`
 
 **Additional context**  
