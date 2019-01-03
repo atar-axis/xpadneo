@@ -45,9 +45,9 @@ static bool disable_ff;
 module_param(disable_ff, bool, 0644);
 MODULE_PARM_DESC(disable_ff, "(bool) Disable all force-feedback effects (rumble). 1: disable ff, 0: enable ff.");
 
-static bool combine_z_axis = 1;
-module_param(combine_z_axis, bool, 0644);
-MODULE_PARM_DESC(combine_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
+static bool combined_z_axis = 1;
+module_param(combined_z_axis, bool, 0644);
+MODULE_PARM_DESC(combined_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
 
 static u8 trigger_rumble_damping = 4;
 module_param(trigger_rumble_damping, byte, 0644);
@@ -1014,14 +1014,14 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
 	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
 
-	if (combine_z_axis)
+	if (combined_z_axis)
 		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
 
 	// furthermore, we need to translate the incoming events to fit within
 	// the new range, we will do that in the xpadneo_event() hook.
 
-	// We remove the ABS_RZ event if combine_z_axis is enabled
-	if (combine_z_axis) {
+	// We remove the ABS_RZ event if combined_z_axis is enabled
+	if (combined_z_axis) {
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
@@ -1064,7 +1064,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
 	// as already explained in xpadneo_input_configured() above
-	// furthermore we need to combine ABS_Z and ABS_RZ if combine_z_axis
+	// furthermore we need to combine ABS_Z and ABS_RZ if combined_z_axis
 	// is set
 
 	u16 usg_type = usage->type;
@@ -1078,7 +1078,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			goto sync_and_stop_processing;
 		}
 
-		if (combine_z_axis) {
+		if (combined_z_axis) {
 			if (usg_code == ABS_Z || usg_code == ABS_RZ) {
 				if (usg_code == ABS_Z)
 					last_abs_z = value;
