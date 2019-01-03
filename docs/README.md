@@ -50,13 +50,6 @@ Please feel free to add other Distributions as well!
 * Run `./install.sh`
 * Done!
 
-### Update
-* Update your cloned directory by running `git pull`
-* Run `./update.sh`
-
-### Uninstallation
-* Run `./uninstall.sh` to remove all installed versions of hid-xpadneo
-
 ### Connection
 * `sudo bluetoothctl`
 * `[bluetooth]# scan on`
@@ -84,6 +77,13 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)
   * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
 
+### Update
+In order to update xpadneo, do the following
+* Update your cloned directory by running `git pull`
+* Run `./update.sh`
+
+### Uninstallation
+* Run `./uninstall.sh` to remove all installed versions of hid-xpadneo
 
 ## Further information
 
