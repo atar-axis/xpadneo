@@ -87,8 +87,8 @@ To set the highest level of debug verbosity, run
 ### Update
 In order to update xpadneo, do the following
 * Update your cloned directory (and reset all locally changes files) by running
-** `git reset --hard`
-** `git pull`
+  * `git reset --hard`
+  * `git pull`
 * Run `./update.sh`
 
 ### Uninstallation
