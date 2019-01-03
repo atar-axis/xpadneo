@@ -1015,7 +1015,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
 
 	if (combine_triggers)
-		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 255, 4095);
+		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
 
 	// furthermore, we need to translate the incoming events to fit within
 	// the new range, we will do that in the xpadneo_event() hook.
