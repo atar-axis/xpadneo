@@ -77,7 +77,9 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)
   * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
   
-You can easily manipulate those files by running e.g. `echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level`
+#### Example
+To set the highest level of debug verbosity, run  
+`echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level`
 
 ### Update
 In order to update xpadneo, do the following
