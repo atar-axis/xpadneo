@@ -1,4 +1,4 @@
-#define DRV_VER "DUMMY"
+#define DRV_VER "@DO_NOT_CHANGE@"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
