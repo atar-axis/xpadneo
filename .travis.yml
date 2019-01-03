@@ -6,3 +6,5 @@ before_install:
 
 script:
   - sudo ./install.sh
+  - sudo ./update.sh
+  - sudo ./uninstall.sh
