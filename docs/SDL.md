@@ -1,8 +1,11 @@
 ## SDL Mapping
 
+We fixed the following problem by faking the *input device version* to `0x1130` by default.
+If you want to go with the original one, please read the following:
+
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings
-again despite using xpadneo as the driver.
+again.
 
 Also, Wine since version 3.3 supports using SDL for `xinput*.dll`, and with
 version 3.4 it includes a patch to detect the Xbox One S controller. Games
