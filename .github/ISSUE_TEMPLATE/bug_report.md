@@ -17,10 +17,7 @@ and add at least the following outputs
 - `dmesg`
 
 The following command need superuser privileges.
-I recommend to run it as root directly (do not use `sudo`),
-otherwise the auto-completion using <TAB> will not work as expected.
-
-- `head -1 "/sys/kernel/debug/hid/0005:045E:<TAB>/rdesc" | tee /dev/tty | cksum`
+- `sudo find "/sys/kernel/debug/hid/" -name "0005:045E:*" -exec sh -c 'echo "{}" && head -1 "{}/rdesc" | tee /dev/tty | cksum && echo' \;`
 
 **Additional context**  
 Add any other context about the problem here.
