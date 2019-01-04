@@ -86,7 +86,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
 * `fake_dev_version` (default `0x1130`)
   * Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)
   * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
-* `combined_z_axis` (default `0´)
+* `combined_z_axis` (default `0`)
   * Combine the triggers (`ABS_Z` and `ABS_RZ`) to form a single axis `ABS_Z` which is used e.g. in flight simulators
   * The left and right trigger will work against each other.
 
