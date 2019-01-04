@@ -1,4 +1,4 @@
-#define DRV_VER "0.5.2"
+#define DRV_VER "@DO_NOT_CHANGE@"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -45,7 +45,7 @@ static bool disable_ff;
 module_param(disable_ff, bool, 0644);
 MODULE_PARM_DESC(disable_ff, "(bool) Disable all force-feedback effects (rumble). 1: disable ff, 0: enable ff.");
 
-static bool combined_z_axis = 1;
+static bool combined_z_axis;
 module_param(combined_z_axis, bool, 0644);
 MODULE_PARM_DESC(combined_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
 
