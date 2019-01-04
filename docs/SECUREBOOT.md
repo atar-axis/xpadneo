@@ -60,3 +60,4 @@ Notes:
 
    Reboot, and follow the procedure.
 * using theses scripts, your private key will be kept unencrypted in the `/root` directory. This may pose a security risk. If you wish to password protect your private keys, use [these scripts, written by dop3j0e](https://gist.github.com/dop3j0e/2a9e2dddca982c4f679552fc1ebb18df). Be warned that you will be asked for your password every time the kernel gets an update.
+  
