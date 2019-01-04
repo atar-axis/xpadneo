@@ -3,13 +3,12 @@
 # exit immediately if one command fails
 set -e 
 
-source VERSION
-
 if [[ $EUID != 0 ]]; then
   echo "ERROR: You most probably need superuser privileges to install new modules, please run me via sudo!"
   exit -3
 fi
 
+VERSION=$(cat VERSION)
 
 echo "* replacing version string if necessary"
 sed -i 's/PACKAGE_VERSION="@DO_NOT_CHANGE@"/PACKAGE_VERSION="'$VERSION'"/g' hid-xpadneo/dkms.conf

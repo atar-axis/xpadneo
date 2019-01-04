@@ -10,11 +10,11 @@ echo "* unloading current driver module"
 modprobe -r hid_xpadneo
 
 echo "* looking for registered instances"
-VER=($(dkms status 2>/dev/null | grep '^hid-xpadneo' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/'))
-echo "found ${#VER[@]} registered instance(s) on your system"
+VERSIONS=($(dkms status 2>/dev/null | grep '^hid-xpadneo' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/'))
+echo "found ${#VERSIONS[@]} registered instance(s) on your system"
 
 
-for instance in "${VER[@]}"
+for instance in "${VERSIONS[@]}"
 do
     echo "* $instance"
 
