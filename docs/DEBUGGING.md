@@ -19,3 +19,13 @@ echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/xpadneo.conf
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
+
+Useful information can now be aquired with the commands:
+
+* `dmesg`: I advise you to run `dmesg -wH` in a terminal while you connect your controller from a second terminal to get hardware information in realtime.
+* `modinfo hid_xpadneo`: get information on xpadneo as a kernel module.
+* When your gamepad is connected, run
+  ```console
+  sudo find "/sys/kernel/debug/hid/" -name "0005:045E:*" -exec sh -c 'echo "{}" && head -1 "{}/rdesc" | tee /dev/tty | cksum && echo' \;
+  ```
+  to get the rdesc identifier of your gamepad.
