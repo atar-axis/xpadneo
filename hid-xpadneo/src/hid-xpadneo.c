@@ -1281,6 +1281,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 }
 
 
+
 /*
  * Device ID Structure, define all supported devices here
  */
