@@ -1,4 +1,4 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
+#define DRV_VER "0.5.3"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -1281,13 +1281,6 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 }
 
 
-static bool xpadneo_match(struct hid_device *hdev, bool ignore_special_driver)
-{
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "omg, he asked me - but I said no!\n", hdev->name);
-	return false;
-}
-
-
 
 /*
  * Device ID Structure, define all supported devices here
@@ -1316,8 +1309,6 @@ static const struct hid_device_id xpadneo_devices[] = {
 static struct hid_driver xpadneo_driver = {
 	/* The name of the driver */
 	.name = "xpadneo",
-
-	.match = xpadneo_match,
 
 	/* Which devices is this driver for */
 	.id_table = xpadneo_devices,
