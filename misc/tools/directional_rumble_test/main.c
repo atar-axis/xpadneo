@@ -20,6 +20,9 @@ enum {
 
 int main(int argc, char *argv[])
 {
+    struct timespec req = {0};
+    req.tv_sec = 0;
+    req.tv_nsec = 330 * 1000000L;
 
     /* Read in arguments */
 
@@ -94,8 +97,11 @@ int main(int argc, char *argv[])
             printf("effect %2d, direction: %04x\n", i, effects[i].direction);
         }
 
-        usleep(330 * 1000);
+        nanosleep(&req, (struct timespec *)NULL);
     }
 
     return 0;
 }
+
+
+

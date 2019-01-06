@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #if [[ $(modinfo hid-xpadneo |& grep "not found") == "" ]]; then echo "already exists"; else echo "not yet registered"; fi
 sudo modprobe -r hid-xpadneo
 sudo cp ./hid-xpadneo.ko /lib/modules/4.14.12-1-ARCH/extramodules/hid-xpadneo.ko

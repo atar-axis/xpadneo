@@ -10,7 +10,7 @@ hid_xpadneo=$(modinfo -n hid-xpadneo 2> /dev/null)
 hid=$(modinfo -n hid 2> /dev/null)
 bluetooth=$(modinfo -n bluetooth 2> /dev/null)
 
-extramodules="/lib/modules/"$(uname -r)"/extramodules/"
+extramodules="/lib/modules/$(uname -r)/extramodules/"
 
 
 sudo [ ! -d "$extramodules"_bak ] && sudo mkdir --parents $extramodules
