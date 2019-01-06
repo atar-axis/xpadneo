@@ -30,6 +30,6 @@ if [[ -z "$INSTALLED" ]]; then
 
 else
 
-    echo "already installed"
+    echo "already installed!"
     
 fi
