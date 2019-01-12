@@ -11,5 +11,7 @@ pool:
 
 steps:
 - script: |
-    install.sh
+    sudo apt-get install -y linux-headers-`uname -r`
+    sudo apt-get install -y dkms
+    sudo ./install.sh
   displayName: 'install'
