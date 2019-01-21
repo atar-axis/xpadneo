@@ -6,6 +6,8 @@ I would like to include support for the **Xbox Elite Wireless Controller**, ther
 [![Build Status](https://dev.azure.com/dollingerflorian/dollingerflorian/_apis/build/status/atar-axis.xpadneo?branchName=master)](https://dev.azure.com/dollingerflorian/dollingerflorian/_build/latest?definitionId=1?branchName=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7bba9bae5e6e493189969dd2a80ac09e)](https://www.codacy.com/app/atar-axis/xpadneo?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=atar-axis/xpadneo&amp;utm_campaign=Badge_Grade)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/atar-axis/xpadneo.svg)](http://isitmaintained.com/project/atar-axis/xpadneo "Average time to resolve an issue")
+[![Backers on Open Collective](https://opencollective.com/xpadneo/backers/badge.svg)](#backers)
+[![Sponsors on Open Collective](https://opencollective.com/xpadneo/sponsors/badge.svg)](#sponsors) 
 
 This is the first and yet only driver for the Xbox One Wireless Gamepad (which is shipped with the Xbox One S). I wrote it for a student project at fortiss GmbH and it is fully functional but does only support the connection via Bluetooth as yet - more will follow.
 
@@ -114,3 +116,24 @@ In order to update xpadneo, do the following
 If someone is interested in helping me getting this driver merged into the kernel, tell me. I would really appreciate that.
 
 For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
+
+## Credits
+
+### Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+
+<a href="graphs/contributors"><img src="https://opencollective.com/xpadneo/contributors.svg?width=890&button=false" /></a>
+
+### Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/xpadneo#backer)]
+
+<a href="https://opencollective.com/xpadneo#backers" target="_blank"><img src="https://opencollective.com/xpadneo/backers.svg?width=890"></a>
+
+### Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/xpadneo#sponsor)]
+
+<a href="https://opencollective.com/xpadneo/sponsor/0/website" target="_blank"><img src="https://opencollective.com/xpadneo/sponsor/0/avatar.svg"></a>
+
