@@ -1,5 +1,4 @@
-I would like to include support for the **Xbox Elite Wireless Controller**, therefore I started a [crowdfunding](https://www.leetchi.com/de/Cagnotte/46484080/b73f2096) project. It would be great if some of you would donate some cents for the necessary hardware.
-
+[![ko-fi](https://www.ko-fi.com/img/donate_sm.png)](https://ko-fi.com/R6R5P6FN)
 
 # Advanced Linux Driver for Xbox One Wireless Gamepad
 
