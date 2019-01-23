@@ -1,5 +1,5 @@
 [![ko-fi](https://www.ko-fi.com/img/donate_sm.png)](https://ko-fi.com/R6R5P6FN)  
-If you want to support me or development of a special feature, consider a small donation :heart:  
+If you want to support me or accelerate the development of a special feature, consider a small donation :heart:  
 Just leave a message if your donation is for a specific use, like support for **Xbox One Wireless Elite**.
 
 # Advanced Linux Driver for Xbox One Wireless Gamepad
