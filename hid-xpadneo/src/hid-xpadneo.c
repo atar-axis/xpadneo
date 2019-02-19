@@ -150,7 +150,7 @@ enum report_type {
 
 // TODO: avoid data duplication
 
-const char* report_type_text[] = {
+const char *report_type_text[] = {
 	"unknown",
 	"linux/android",
 	"windows"
@@ -219,7 +219,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
-	if(disable_ff)
+	if (disable_ff)
 		return 0;
 
 	if (effect->type != FF_RUMBLE)
@@ -996,7 +996,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
-	if (fake_dev_version){
+	if (fake_dev_version) {
 		xdata->idev->id.version = (u16) fake_dev_version;
 		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
 			fake_dev_version);
@@ -1052,8 +1052,11 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	static int last_abs_z = 0;
-	static int last_abs_rz = 0;
+	u16 usg_type = usage->type;
+	u16 usg_code = usage->code;
+
+	static int last_abs_z;
+	static int last_abs_rz;
 
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
@@ -1066,9 +1069,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	// as already explained in xpadneo_input_configured() above
 	// furthermore we need to combine ABS_Z and ABS_RZ if combined_z_axis
 	// is set
-
-	u16 usg_type = usage->type;
-	u16 usg_code = usage->code;
 
 	if (usg_type == EV_ABS) {
 		if (usg_code == ABS_X || usg_code == ABS_Y
@@ -1085,13 +1085,13 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				if (usg_code == ABS_RZ)
 					last_abs_rz = value;
 
-				input_report_abs(idev, ABS_Z, -last_abs_z +last_abs_rz);
+				input_report_abs(idev, ABS_Z, 0 - last_abs_z + last_abs_rz);
 				goto sync_and_stop_processing;
 			}
 		}
 	}
 
-	
+
 
 
 	/* TODO:
