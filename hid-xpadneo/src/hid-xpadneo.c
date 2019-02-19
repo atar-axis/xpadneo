@@ -182,6 +182,30 @@ struct xpadneo_devdata {
 };
 
 
+void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
+	u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
+	u8 start_delay) {
+
+	pck->report_id = id;
+
+	pck->ff.enable_actuators = en_act;
+	pck->ff.magnitude_left_trigger = mag_lt;
+	pck->ff.magnitude_right_trigger = mag_rt;
+	pck->ff.magnitude_left = mag_l;
+	pck->ff.magnitude_right = mag_r;
+	pck->ff.duration = 0xFF;
+	pck->ff.start_delay = start_delay;
+	pck->ff.loop_count = 0xFF;
+
+	/* It is up to the Input-Subsystem to start and stop effects as needed.
+	 * All WE need to do is to play the effect at least 32767 ms long.
+	 * Take a look here:
+	 * https://stackoverflow.com/questions/48034091/
+	 * We therefore simply play the effect as long as possible, which is
+	 * 2, 55s * 255 = 650, 25s ~ = 10min
+	 */
+}
+
 /*
  * Force Feedback Callback
  *
@@ -198,7 +222,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 *    -> hidinput_allocate (sets drvdata to hid_device)
 	 */
 
-	struct ff_report ff_package;
+	struct ff_report ff_pck;
 	u16 weak, strong, direction, max, max_damped;
 	u8 mag_right, mag_left;
 
@@ -245,7 +269,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	fraction_TL = 0;
 	fraction_TR = 0;
 
-	if (DIRECTION_LEFT <= direction && direction <= DIRECTION_RIGHT) {
+	if (direction >= DIRECTION_LEFT && direction <= DIRECTION_RIGHT) {
 		index_left = (direction - DIRECTION_LEFT) >> 12;
 		index_right = proportions_idx_max - index_left;
 
@@ -264,35 +288,23 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	max_damped = max / trigger_rumble_damping_nonzero;
 
-	/* prepare ff package */
-	ff_package.ff = ff_clear;
-	ff_package.report_id = 0x03;
-	ff_package.ff.enable_actuators = FF_ENABLE_ALL;
-	ff_package.ff.magnitude_right = mag_right;
-	ff_package.ff.magnitude_left  = mag_left;
-	ff_package.ff.magnitude_right_trigger
-		= (u8)((max_damped * fraction_TR) / 1000);
-	ff_package.ff.magnitude_left_trigger
-		= (u8)((max_damped * fraction_TL) / 1000);
+
+	create_ff_pck(
+		&ff_pck, 0x03,
+		FF_ENABLE_ALL,
+		(u8)((max_damped * fraction_TL) / 1000),
+		(u8)((max_damped * fraction_TR) / 1000),
+		mag_left, mag_right,
+		0);
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
 		"max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
 		max, fraction_TL, fraction_TR,
-		ff_package.ff.magnitude_left_trigger,
-		ff_package.ff.magnitude_right_trigger);
+		ff_pck.ff.magnitude_left_trigger,
+		ff_pck.ff.magnitude_right_trigger);
 
-
-	/* It is up to the Input-Subsystem to start and stop effects as needed.
-	 * All WE need to do is to play the effect at least 32767 ms long.
-	 * Take a look here:
-	 * https://stackoverflow.com/questions/48034091/
-	 * We therefore simply play the effect as long as possible, which is
-	 * 2, 55s * 255 = 650, 25s ~ = 10min
-	 */
-	ff_package.ff.duration   = 0xFF;
-	ff_package.ff.loop_count = 0xFF;
-	hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 
 	return 0;
 }
@@ -310,32 +322,32 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	struct input_dev *idev = xdata->idev;
 
 
-	struct ff_report ff_package;
+	struct ff_report ff_pck;
 
 	/* TODO: outsource that */
 
-	ff_package.ff = ff_clear;
+	ff_pck.ff = ff_clear;
 
 	/* 'HELLO' FROM THE OTHER SIDE */
 	if (!disable_ff) {
-		ff_package.report_id = 0x03;
-		ff_package.ff.magnitude_right = 0x80;
-		ff_package.ff.magnitude_left  = 0x40;
-		ff_package.ff.magnitude_right_trigger = 0x20;
-		ff_package.ff.magnitude_left_trigger  = 0x20;
-		ff_package.ff.duration = 33;
+		ff_pck.report_id = 0x03;
+		ff_pck.ff.magnitude_right = 0x80;
+		ff_pck.ff.magnitude_left  = 0x40;
+		ff_pck.ff.magnitude_right_trigger = 0x20;
+		ff_pck.ff.magnitude_left_trigger  = 0x20;
+		ff_pck.ff.duration = 33;
 
-		ff_package.ff.enable_actuators = FF_ENABLE_RIGHT;
-		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		mdelay(330);
 
-		ff_package.ff.enable_actuators = FF_ENABLE_LEFT;
-		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		ff_pck.ff.enable_actuators = FF_ENABLE_LEFT;
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		mdelay(330);
 
-		ff_package.ff.enable_actuators
+		ff_pck.ff.enable_actuators
 			= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
-		hid_hw_output_report(hdev, (u8 *)&ff_package, sizeof(ff_package));
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		mdelay(330);
 	}
 
