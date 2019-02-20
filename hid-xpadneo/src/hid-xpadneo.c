@@ -179,6 +179,10 @@ struct xpadneo_devdata {
 	u8 ps_present;
 	u8 ps_capacity_level;
 	u8 ps_status;
+
+	/* button states */
+	int last_abs_z;
+	int last_abs_rz
 };
 
 
@@ -1067,9 +1071,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	u16 usg_type = usage->type;
 	u16 usg_code = usage->code;
 
-	static int last_abs_z;
-	static int last_abs_rz;
-
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
 		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
@@ -1093,11 +1094,11 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		if (combined_z_axis) {
 			if (usg_code == ABS_Z || usg_code == ABS_RZ) {
 				if (usg_code == ABS_Z)
-					last_abs_z = value;
+					xdata->last_abs_z = value;
 				if (usg_code == ABS_RZ)
-					last_abs_rz = value;
+					xdata->last_abs_rz = value;
 
-				input_report_abs(idev, ABS_Z, 0 - last_abs_z + last_abs_rz);
+				input_report_abs(idev, ABS_Z, 0 - xdata->last_abs_z + xdata->last_abs_rz);
 				goto sync_and_stop_processing;
 			}
 		}
@@ -1190,9 +1191,10 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 
 	/*
-	 * Create a "nearly globally" accessible data structure (accessible
-	 * through hid_get_drvdata) the structure is freed automatically as
-	 * soon as hdev->dev is removed, since we use the devm_ derivate.
+	 * Create a per-device data structure which is "nearly globally" accessible
+	 * through hid_get_drvdata. The structure is freed automatically
+	 * as soon as hdev->dev (the device) is removed, since we use the devm_
+	 * derivate.
 	 */
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
 	if (xdata == NULL)

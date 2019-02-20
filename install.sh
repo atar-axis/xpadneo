@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # exit immediately if one command fails
-set -e 
+set -e
 
 if [[ $EUID != 0 ]]; then
   echo "ERROR: You most probably need superuser privileges to install new modules, please run me via sudo!"
@@ -10,9 +10,9 @@ fi
 
 VERSION=$(cat VERSION)
 
-# backup original files
-cp hid-xpadneo/dkms.conf hid-xpadneo/dkms.conf_bck
-cp hid-xpadneo/src/hid-xpadneo.c hid-xpadneo/src/hid-xpadneo.c_bck
+# backup original files, preserve permissions
+cp --preserve hid-xpadneo/dkms.conf hid-xpadneo/dkms.conf_bck
+cp --preserve hid-xpadneo/src/hid-xpadneo.c hid-xpadneo/src/hid-xpadneo.c_bck
 
 echo "* replacing version string if necessary"
 sed -i 's/PACKAGE_VERSION="@DO_NOT_CHANGE@"/PACKAGE_VERSION="'$VERSION'"/g' hid-xpadneo/dkms.conf
@@ -35,7 +35,7 @@ if [[ -z "$INSTALLED" ]]; then
 else
 
     echo "already installed!"
-    
+
 fi
 
 # restore original files
