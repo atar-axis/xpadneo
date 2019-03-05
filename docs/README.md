@@ -102,9 +102,7 @@ To make the setting permanent and applied at loading time, try
 
 ### Update
 In order to update xpadneo, do the following
-* Update your cloned directory (and reset all locally changes files) by running
-  * `git reset --hard`
-  * `git pull`
+* Update your cloned repo: `git pull`
 * Run `./update.sh`
 
 ### Uninstallation
