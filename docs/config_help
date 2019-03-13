@@ -1,0 +1,12 @@
+configure.sh Usage:
+  -h | --help: Displays this help screen.
+
+  -z | --combine-z-axis:(True, False), Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in flight simulators.
+
+  -d | --debug-level: Enables and sets debug output level.
+
+  -f | --disable-ff:(True, False), Set true to disable FF
+
+  -v | --fake-dev-version: Fake the input device version to the given value (to prevent SDL from applying another mapping.
+
+  -r | --trigger-rumble-damping: Damp the strength of the trigger force feedback.
