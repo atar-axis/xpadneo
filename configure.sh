@@ -3,10 +3,17 @@
 # Written by CodeCanna
 
 # Variables n such
-VERSION=0.5.4
-SOURCE_DIR=/usr/src/hid-xpadneo-$VERSION
+VERSION=$(cat ./VERSION)
+XPAD_DIR="$(ls /usr/src/ | grep hid-xpadneo)"
+SOURCE_PATH=/usr/src/$XPAD_DIR
+DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/")
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters/
+
+#echo "Path:" $SOURCE_PATH
+#echo "Detected Version:" $DETECTED_VERSION
+#echo "Directory:" $XPAD_DIR
+#echo "Current Version:" $VERSION
 
 # ARGS=("$@")
 NAME=$0
@@ -18,12 +25,20 @@ then
   exit -3
 fi
 
+if [[ $DETECTED_VERSION != $VERSION ]];
+then
+  echo "Version out of date!  Please update."
+  echo "Run ./update.sh in the xpadneo git directory."
+  exit
+fi
+
 # Detect installation
 # echo "Detecting installation"
-if [[ -d "$SOURCE_DIR" ]];
+if [[ -d "$SOURCE_PATH" ]];
 then
   # echo "Installation found in $SOURCE_DIR."
   # echo "Detecting if module is inserted."
+
   if [[ -d "$MODULE" ]];  # Detect if hid_xpadneo is inserted
   then
     # echo "Module detected"
@@ -34,7 +49,7 @@ then
     exit
   fi
 else
-  echo "Installaion not detected, did you run install.sh?"
+  echo "Installation not detected, did you run ./install.sh?"
   exit
 fi
 
