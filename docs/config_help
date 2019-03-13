@@ -1,0 +1,31 @@
+configure.sh Usage:
+NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 vs. --debug-level=3
+
+-h, --help
+	Display this help screen.
+
+--version
+	Display version number of xpadneo
+
+-d, --debug-level
+	If you are asked to send debug info or want to fix bugs.  [0 to 3]
+	Ex. https://atar-axis.github.io/xpadneo/#debugging
+
+-f, --disable-ff
+	Set true to disable ff or set false to enable ff.  [y, n]
+
+-r, --trigger-rumble-damping
+	Damp the strength of the trigger force feedback. [1 (none) to 256 (max)]
+
+-v, --fake-dev-version
+	Fake the input device version to the given value. [1 to 65535]
+
+-z, --combined-z-axis
+	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in 
+	flight simulators.  The left and right trigger will work against each other.  [y, n]
+
+
+NOTE: For more information on configuring xpadneo visit https://atar-axis.github.io/xpadneo/
+      Or the GitHub page: https://github.com/atar-axis/xpadneo
+
+
