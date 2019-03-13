@@ -8,7 +8,7 @@ SOURCE_DIR=/usr/src/hid-xpadneo-$VERSION
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters/
 
-ARGS=("$@")
+# ARGS=("$@")
 NAME=$0
 
 # Check if root
