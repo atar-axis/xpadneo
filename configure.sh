@@ -167,12 +167,16 @@ do
       # Fake Dev Version
     -v | --fake-dev-version)
       # echo "Fake Dev"
+      # TODO: Make it so you don't have to use read, see fkdv()
+      # ex. ./configure.sh -v=4400
       fkdv
       ;;
 
       # Trigger Rumble Damping
     -r | --trigger-rumble-damping)
       # echo "Trigger rumble"
+      # TODO: Make it so you don't have to use read, see trid_rd()
+      # ex. ./configure.sh -r=4
       trig_rd
       ;;
 
