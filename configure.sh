@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+# Version 0.0.2
 
 set -o posix
 # Define Variables
 VERSION=$(cat ./VERSION)
-DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text TODO" Find a better way to do this.
 XPAD_DIR="$(ls /usr/src/ | grep hid-xpadneo)"
 SOURCE_PATH=/usr/src/$XPAD_DIR
+DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text TODO" Find a better way to do this.
 
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
@@ -15,6 +16,8 @@ CONF_PATH=/etc/modprobe.d/$CONF_FILE
 NAME=$0
 OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
 
+echo $DETECTED_VERSION
+exit 0
 # Check if variables are holding the right info.
 #echo "Xpadneo version: "$VERSION
 #echo "xpadneo directory name: "$XPAD_DIR
@@ -33,14 +36,16 @@ then
 fi
 
 function main {
-  is_installed
+  check_version
 }
 
+# Check if version is out of date.
 function check_version {
-  if [[ $VERSION -ne $DETECTED_VERSION ]];
+  if [[ "$VERSION" != "$DETECTED_VERSION" ]];
   then
     echo $NAME:"Your version of xpadneo seems to be out of date."
     echo $NAME:"Please run ./update.sh from the git directory to update to the latest version."
+    echo $DETECTED_VERSION
     exit 1
   else
     parse_args
@@ -60,7 +65,6 @@ function is_installed {
       exit
     fi
     check_version # Function parse_args()
-    # echo "Installation detected."
   fi
 }
 
