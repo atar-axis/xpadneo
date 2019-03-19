@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Version 0.0.2
-# Written by CodeCanna
+# Written by CodeCanna/Mark Waid Jr
 
 set -o posix
 # Define Variables
 VERSION=$(cat ./VERSION)
 XPAD_DIR="$(ls /usr/src/ | grep hid-xpadneo)"
 SOURCE_PATH=/usr/src/$XPAD_DIR
-DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text TODO" Find a better way to do this.
+DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text. TODO: Find a better way to do this.
 
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
@@ -119,7 +119,7 @@ function display_help {
 
 ## Version ##
 function display_version {
-  echo "Xpadneo Version: $VERSION"
+  echo "Xpadneo Version: $DETECTED_VERSION"
   exit 0
 }
 
@@ -180,9 +180,9 @@ function disable_ff {
   shift
   value=$1
 
-  if [[ "$value" != "true" ]] && [[ "$value" != "false" ]];
+  if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
-    echo $NAME:"Invalid Entry! please enter 'true' or 'false'."
+    echo $NAME:"Invalid Entry! please enter 'y' or 'n'."
     exit 1
   fi
 
@@ -190,7 +190,7 @@ function disable_ff {
   if [[ -d $MODULE ]];
   then
     echo $NAME:"Module is inserted writing to $PARAMS."
-    if [[ "$value" == "true" ]];
+    if [[ "$value" == "y" ]];
     then
       echo 0 > $PARAMS/disable_ff
     else
@@ -342,7 +342,7 @@ function z_axis {
   shift
   value=$1
 
-  if [[ "$value" != "true" ]] && [[ "$value" != "false" ]];
+  if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
     echo $NAME:"Invalid Entry! please enter 'true' or 'false'."
     exit 1
@@ -352,7 +352,7 @@ function z_axis {
   if [[ -d $MODULE ]];
   then
     echo $NAME:"Module is inserted writing to $PARAMS."
-    if [[ "$value" == "true" ]];
+    if [[ "$value" == "y" ]];
     then
       echo 1 > $PARAMS/combined_z_axis
     else
