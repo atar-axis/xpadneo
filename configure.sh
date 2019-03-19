@@ -58,11 +58,6 @@ function is_installed {
     echo "Installation not found.  Did you run ./install.sh?"
     exit
   else
-    if [[ ! -d "$MODULE" ]];
-    then
-      echo $NAME:"Module not detected, try running 'modprobe hid_xpadneo' and try again."
-      exit
-    fi
     parse_args # Function parse_args()
   fi
 }
@@ -139,14 +134,20 @@ function debug_level {
     exit 1
   fi
 
-  echo $value > $PARAMS/debug_level   # Write to parameters
-  if [[ $? -ne 0 ]];
+  # If module is inserted edit parameters.
+  if [[ -d "$MODULE" ]];
   then
-    echo $NAME:"Problem writing to $PARAMS"
-    exit 1
+    echo $NAME:"Module inserted writing to $PARAMS"
+    echo $value > $PARAMS/debug_level   # Write to parameters
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"Problem writing to $PARAMS"
+      exit 1
+    fi
   fi
 
-  local LINE_EXISTS=$(cat $CONF_PATH | grep debug_level)
+  # local LINE_EXISTS=$(cat $CONF_PATH | grep debug_level)    # TODO: Fix git complaint about cat.
+  local LINE_EXISTS=$(grep debug_level $CONF_PATH)
 
   if [[ $LINE_EXISTS ]];
   then
@@ -185,21 +186,26 @@ function disable_ff {
     exit 1
   fi
 
-  # Write to parameters.
-  if [[ "$value" == "true" ]];
+  # If module is inserted edit parameters.
+  if [[ -d $MODULE ]];
   then
-    echo 0 > $PARAMS/disable_ff
-  else
-    echo 1 > $PARAMS/disable_ff
+    echo $NAME:"Module is inserted writing to $PARAMS."
+    if [[ "$value" == "true" ]];
+    then
+      echo 0 > $PARAMS/disable_ff
+    else
+      echo 1 > $PARAMS/disable_ff
+    fi
+
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"ERROR! Problem writing to $PARAMS."
+      exit 1
+    fi
   fi
 
-  if [[ $? -ne 0 ]];
-  then
-    echo $NAME:"ERROR! Problem writing to $PARAMS."
-    exit 1
-  fi
-
-  local LINE_EXISTS=$(cat $CONF_PATH | grep disable_ff)
+  # local LINE_EXISTS=$(cat $CONF_PATH | grep disable_ff)
+  local LINE_EXISTS=$(grep disable_ff $CONF_PATH)
 
   if [[ $LINE_EXISTS ]];
   then
@@ -238,14 +244,20 @@ function trigger_damping {
     exit 1
   fi
 
-  echo $value > $PARAMS/trigger_rumble_damping
-  if [[ $? -ne 0 ]];
+  # If module is inserted edit parameters.
+  if [[ -d $MODULE ]];
   then
-    echo $NAME:"ERROR! Could not write to $PARAMS."
-    exit 1
+    echo $NAME:"Module is inserted writing to $PARAMS."
+    echo $value > $PARAMS/trigger_rumble_damping
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"ERROR! Could not write to $PARAMS."
+      exit 1
+    fi
   fi
 
-  local LINE_EXISTS=$(cat $CONF_PATH | grep trigger_rumble_damping)
+  # local LINE_EXISTS=$(cat $CONF_PATH | grep trigger_rumble_damping)
+  local LINE_EXISTS=$(grep trigger_rumble_damping $CONF_PATH)
 
   if [[ $LINE_EXISTS ]];
   then
@@ -284,14 +296,20 @@ function fkdv {
     exit 1
   fi
 
-  echo $value > $PARAMS/fake_dev_version
-  if [[ $? -ne 0 ]];
+  # If module is inserted edit parameters.
+  if [[ -d $MODULE ]];
   then
-    echo $NAME:"ERROR! Could not write to $PARAMS."
-    exit 1
+    echo $NAME:"Module is inserted writing to $PARAMS."
+    echo $value > $PARAMS/fake_dev_version
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"ERROR! Could not write to $PARAMS."
+      exit 1
+    fi
   fi
 
-  local LINE_EXISTS=$(cat $CONF_PATH | grep fake_dev_version)
+  # local LINE_EXISTS=$(cat $CONF_PATH | grep fake_dev_version)
+  local LINE_EXISTS=$(grep fake_dev_version $CONF_PATH)
 
   if [[ $LINE_EXISTS ]];
   then
@@ -330,21 +348,26 @@ function z_axis {
     exit 1
   fi
 
-  # Write to parameters.
-  if [[ "$value" == "true" ]];
+  # If module is inserted edit parameters.
+  if [[ -d $MODULE ]];
   then
-    echo 1 > $PARAMS/combined_z_axis
-  else
-    echo 0 > $PARAMS/combined_z_axis
+    echo $NAME:"Module is inserted writing to $PARAMS."
+    if [[ "$value" == "true" ]];
+    then
+      echo 1 > $PARAMS/combined_z_axis
+    else
+      echo 0 > $PARAMS/combined_z_axis
+    fi
+
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"ERROR! Problem writing to $PARAMS."
+      exit 1
+    fi
   fi
 
-  if [[ $? -ne 0 ]];
-  then
-    echo $NAME:"ERROR! Problem writing to $PARAMS."
-    exit 1
-  fi
-
-  LINE_EXISTS=$(cat $CONF_PATH | grep combined_z_axis)
+  # local LINE_EXISTS=$(cat $CONF_PATH | grep combined_z_axis)
+  local LINE_EXISTS=$(grep combined_z_axis $CONF_PATH)
 
   if [[ $LINE_EXISTS ]];
   then
