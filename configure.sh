@@ -1,202 +1,351 @@
-#!/bin/bash
-# configure.sh v0.0.1
-# Written by CodeCanna
+#!/usr/bin/env bash
 
-# Variables n such
+set -o posix
+# Define Variables
 VERSION=$(cat ./VERSION)
+DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text TODO" Find a better way to do this.
 XPAD_DIR="$(ls /usr/src/ | grep hid-xpadneo)"
 SOURCE_PATH=/usr/src/$XPAD_DIR
-DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/")
+
 MODULE=/sys/module/hid_xpadneo/
-PARAMS=/sys/module/hid_xpadneo/parameters/
+PARAMS=/sys/module/hid_xpadneo/parameters
+CONF_FILE=$(ls /etc/modprobe.d/ | grep xpadneo)
+CONF_PATH=/etc/modprobe.d/$CONF_FILE
 
-#echo "Path:" $SOURCE_PATH
-#echo "Detected Version:" $DETECTED_VERSION
-#echo "Directory:" $XPAD_DIR
-#echo "Current Version:" $VERSION
-
-# ARGS=("$@")
 NAME=$0
+OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
 
-# Check if root
+# Check if variables are holding the right info.
+#echo "Xpadneo version: "$VERSION
+#echo "xpadneo directory name: "$XPAD_DIR
+#echo "Path to xpadneo source: " $SOURCE_PATH
+#echo "Installed version of xpadneo: " $DETECTED_VERSION
+#echo "xpadneo module path: " $MODULE
+#echo "xpadneo local settings: " $PARAMS
+#echo "xpadneo module config file: " $CONF_FILE
+#echo "xpadneo path to config: " $CONF_PATH
+
+# Check if ran as root
 if [[ "$EUID" -ne 0 ]];
 then
-  echo "This script must be ran as root."
+  echo "This script must be ran as root!"
   exit -3
 fi
 
-if [[ $DETECTED_VERSION != $VERSION ]];
-then
-  echo "Version out of date!  Please update."
-  echo "Run ./update.sh in the xpadneo git directory."
-  exit
-fi
-
-# Detect installation
-# echo "Detecting installation"
-if [[ -d "$SOURCE_PATH" ]];
-then
-  # echo "Installation found in $SOURCE_DIR."
-  # echo "Detecting if module is inserted."
-
-  if [[ -d "$MODULE" ]];  # Detect if hid_xpadneo is inserted
-  then
-    # echo "Module detected"
-    echo ""
-  else
-    echo "Module not inserted."
-    echo "Try running 'modprobe hid_xpadneo' and try again."
-    exit
-  fi
-else
-  echo "Installation not detected, did you run ./install.sh?"
-  exit
-fi
-
-###Arg Functions###
-# Display Help
-function disp_help() {
-  cat ./docs/config_help
+function main {
+  is_installed
 }
 
-# Combine the triggers (ABS_Z and ABS_RZ) to form a single axis
-#function z_axis() {
-#  echo "Combined Z Axis"
-#}
-
-# Debug Output
-#function dbg_level() {
-#  echo "Debug Level"
-#}
-
-# Disable FF
-# function disable_ff() {
-#  echo "Disable FF"
-#}
-
-# Fake Dev Version
-function fkdv() {
-  echo "Enter fake dev version from 1 to 65535: "
-  read version
-  if [[ $version -lt 1 ]];
+# Check if xpadneo is Installed
+function is_installed {
+  if [[ ! -d "$SOURCE_PATH" ]];
   then
-    echo $NAME:"No value given. Value not changed"
+    echo "Installation not found.  Did you run ./install.sh?"
     exit
-  elif [[ $version -gt 65535 ]];
-  then
-    echo $NAME:"Value given too high.  Value not changed."
-    exit
-#  elif [[ $? -ne 0 ]];
-#  then
-#    echo $NAME:"Value must be a number. Value not changed."
   else
-    echo $version > $PARAMS/fake_dev_version
-    echo $NAME:"Fake Dev Version changed to $version"
-  fi
-}
-
-# Trigger Rumble Dampening
-function trig_rd() {
-  echo "Enter in a value between 1 and 256: "
-  read val
-  if [[ $val -lt 1 ]];
-  then
-    echo $NAME:"No value given.  Value not changed!"
-    exit
-  elif [[ $val -gt 256 ]];
-  then
-    echo $NAME:"Value too high. Value not changed!"
-    exit
-#  elif [[ $? -ne 0 ]];
-#  then
-#    echo "Value must be a number.  Value not changed!"
-  else
-    echo $val > $PARAMS/trigger_rumble_damping
-    echo "Trigger Rumble Damping set to $val"
+    if [[ ! -d "$MODULE" ]];
+    then
+      echo $NAME:"Module not detected, try running 'modprobe hid_xpadneo' and try again."
+      exit
+    fi
+    parse_args # Function parse_args()
+    # echo "Installation detected."
   fi
 }
 
 # Parse arguments.
-for arg in "$@"
-do
-  case $arg in
-    -h | --help)
-      #echo "Help is here!"
-      disp_help
-      ;;
+function parse_args {
+  eval set -- "$OPTS"
 
-      # Combine Z Axis
-    -z=* | -z= | -z | --combined-z-axis=* | --combined-z-axis= | --combined-z-axis)
-      #echo "Combined Z Axis"
-      if [[ $arg == '-z=true' ]] || [[ $arg == '--combined-z-axis=true' ]];
-      then
-        echo 1 > $PARAMS/combined_z_axis
-        echo $NAME:"Combined Z Axis Enabled"
-      elif [[ $arg == '-z=false' ]] || [[ $arg == '--combined-z-axis=false' ]];
-      then
-        echo 0 > $PARAMS/combined_z_axis
-        echo $NAME:"Combined Z Axis Disabled."
-      else
-        echo $NAME:"No values given set to default 0"
-        echo 0 > $PARAMS/combined_z_axis
-      fi
-      ;;
+  while true;
+  do
+    case "$1" in
+      -h | --help)
+        display_help
+        shift
+        ;;
 
-      # Debug Level
-    -d=* | -d= | -d | --debug-level=* | --debug-level= | --debug-level)
-      # echo "Debug Level"
-      if [[ $arg == '-d=3' ]] || [[ $arg == '--debug-level=3' ]];
-      then
-        echo 3 > $PARAMS/debug_level
-        echo $NAME:"Debug Level = 3"
-      elif [[ $arg == '-d=2' ]] || [[ $arg == '--debug-level=2' ]];
-      then
-        echo 2 > $PARAMS/debug_level
-        echo $NAME:"Debug Level = 2"
-      elif [[ $arg == '-d=1' ]] || [[ $arg == '--debug-level=1' ]];
-      then
-        echo 1 > $PARAMS/debug_level
-        echo $NAME:"Debug Level = 1"
-      else
-        echo 0 > $PARAMS/debug_level
-        echo $NAME:"Set To Default = 0"
-      fi
-      ;;
+      --version)
+        display_version
+        ;;
 
-      # Disable FF
-    -f=* | -f= | -f | --disable-ff=* | --disable-ff= | --dissable-ff)
-      # echo "FF"
-      if [[ $arg == '-f=true' ]] || [[ $arg == '--disable-ff=true' ]];
-      then
-        echo 1 > $PARAMS/disable_ff
-        echo $NAME:"FF Disabled"
-      elif [[ $arg == '-f=false' ]] || [[ $arg == '--disable-ff=false' ]];
-      then
-        echo 0 > $PARAMS/disable_ff
-        echo $NAME:"FF Enabled."
-      else
-        echo $NAME:"No values given FF Disabled"
-      fi
-      ;;
+      -d | --debug-level)
+        debug_level $@
+        ;;
 
-      # Fake Dev Version
-    -v | --fake-dev-version)
-      # echo "Fake Dev"
-      # TODO: Make it so you don't have to use read, see fkdv()
-      # ex. ./configure.sh -v=4400
-      fkdv
-      ;;
+      -f | --disable-ff)
+        disable_ff $@
+        ;;
 
-      # Trigger Rumble Damping
-    -r | --trigger-rumble-damping)
-      # echo "Trigger rumble"
-      # TODO: Make it so you don't have to use read, see trid_rd()
-      # ex. ./configure.sh -r=4
-      trig_rd
-      ;;
+      -r | --trigger-rumble-damping)
+        trigger_damping $@
+        ;;
 
-    *)
-      echo "Invalid Input"
-      exit
-  esac
-done
+      -v | --fake-dev-version)
+        fkdv $@
+        shift
+        ;;
+
+      -z | --combined-z-axis)
+        z_axis $@
+        shift
+        ;;
+
+      *)
+        echo "Invalid option"
+        display_help
+        exit 1
+        ;;
+    esac
+  done
+}
+
+### Arg Functions ###
+
+## Help ##
+function display_help {
+  cat ./docs/config_help
+  exit 0
+}
+
+## Version ##
+function display_version {
+  echo "Xpadneo Version: $VERSION"
+  exit 0
+}
+
+## Set debug level ##
+function debug_level {
+  shift
+  value=$1
+
+  if [[ "$value" -ne 0 ]] && [[ "$value" -ne 1 ]] && [[ "$value" -ne 2 ]] && [[ "$value" -ne 3 ]];
+  then
+    echo "Invalid Debug Level! Number must be between 0 and 3."
+    exit 1
+  fi
+
+  echo $value > $PARAMS/debug_level   # Write to parameters
+  if [[ $? -ne 0 ]];
+  then
+    echo $NAME:"Problem writing to $PARAMS"
+    exit 1
+  fi
+
+  if [[ $(cat $CONF_PATH | grep debug_level) ]];
+  then
+    sed -i 's/options hid_xpadneo debug_level=.*/options hid_xpadneo debug_level='"$value"'/' $CONF_PATH
+    if [[ $? -ne 0 ]];  # Did above command run successfully?
+    then
+      echo "There was a problem writing to $CONF_PATH"
+      exit 1
+    else
+      echo $NAME:"Debug Level set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  else
+    echo "options hid_xpadneo debug_level=$value" >> $CONF_PATH   # Write to config file.
+    if [[ $? -ne 0 ]];
+    then
+      echo "There was a problem writing to $CONF_PATH."
+      exit 1
+    else
+      echo $NAME:"Debug Level set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  fi
+}
+
+## Set FF ##
+function disable_ff {
+  shift
+  value=$1
+
+  if [[ "$value" != "true" ]] && [[ "$value" != "false" ]];
+  then
+    echo $NAME:"Invalid Entry! please enter 'true' or 'false'."
+    exit 1
+  fi
+
+  # Write to parameters.
+  if [[ "$value" == "true" ]];
+  then
+    echo 0 > $PARAMS/disable_ff
+  else
+    echo 1 > $PARAMS/disable_ff
+  fi
+
+  if [[ $? -ne 0 ]];
+  then
+    echo $NAME:"ERROR! Problem writing to $PARAMS."
+    exit 1
+  fi
+
+  if [[ $(cat $CONF_PATH | grep disable_ff) ]];
+  then
+    sed -i 's/options hid_xpadneo disable_ff=.*/options hid_xpadneo disable_ff='"$value"'/' $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH"
+      exit 1
+    else
+      echo $NAME:"Disable_ff set to $value"
+      echo $NAME:"Config written to $CONF_PATH."
+      exit 0
+    fi
+  else
+    echo "options hid_xpadneo disable_ff=$value" >> $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH."
+      exit 1
+    else
+      echo $NAME:"Disable_ff set to $value."
+      echo $NAME:"Config written to $CONF_PATH."
+      exit 0
+    fi
+  fi
+}
+
+## Set Trigger Damping ##
+function trigger_damping {
+  shift
+  value=$1
+
+  if [[ "$value" -gt 256 ]] || [[ "$value" -lt 1 ]];
+  then
+    echo "Invalid Entry! Value must be between 1 and 256."
+    exit 1
+  fi
+
+  echo $value > $PARAMS/trigger_rumble_damping
+  if [[ $? -ne 0 ]];
+  then
+    echo $NAME:"ERROR! Could not write to $PARAMS."
+    exit 1
+  fi
+
+  if [[ $(cat $CONF_PATH | grep trigger_rumble_damping) ]];
+  then
+    sed -i 's/options hid_xpadneo trigger_rumble_damping=.*/options hid_xpadneo trigger_rumble_damping='"$value"'/' $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH"
+      exit 1
+    else
+      echo $NAME:"Trigger Rumble Damping set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  else
+    echo "options hid_xpadneo trigger_rumble_damping=$value" >> $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH!"
+      exit 1
+    else
+      echo $NAME:"Trigger Rumble Damping set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  fi
+}
+
+## Set Fake Dev Version ##
+function fkdv {
+  shift
+  value=$1
+
+  if [[ "$value" -gt 65535 ]] || [[ "$value" -lt 1 ]];
+  then
+    echo "Invalid Entry! Value must be between 1 and 65535."
+    exit 1
+  fi
+
+  echo $value > $PARAMS/fake_dev_version
+  if [[ $? -ne 0 ]];
+  then
+    echo $NAME:"ERROR! Could not write to $PARAMS."
+    exit 1
+  fi
+
+  if [[ $(cat $CONF_PATH | grep fake_dev_version) ]];
+  then
+    sed -i 's/options hid_xpadneo fake_dev_version=.*/options hid_xpadneo fake_dev_version='"$value"'/' $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH"
+      exit 1
+    else
+      echo $NAME:"Fake Dev Version set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  else
+    echo "options hid_xpadneo fake_dev_version=$value" >> $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH!"
+      exit 1
+    else
+      echo $NAME:"Fake Dev Version set to $value."
+      echo $NAME:"Config written to $CONF_PATH"
+      exit 0
+    fi
+  fi
+}
+
+## Combined Z Axis ##
+function z_axis {
+  shift
+  value=$1
+
+  if [[ "$value" != "true" ]] && [[ "$value" != "false" ]];
+  then
+    echo $NAME:"Invalid Entry! please enter 'true' or 'false'."
+    exit 1
+  fi
+
+  # Write to parameters.
+  if [[ "$value" == "true" ]];
+  then
+    echo 1 > $PARAMS/combined_z_axis
+  else
+    echo 0 > $PARAMS/combined_z_axis
+  fi
+
+  if [[ $? -ne 0 ]];
+  then
+    echo $NAME:"ERROR! Problem writing to $PARAMS."
+    exit 1
+  fi
+
+  if [[ $(cat $CONF_PATH | grep combined_z_axis) ]];
+  then
+    sed -i 's/options hid_xpadneo combined_z_axis=.*/options hid_xpadneo combined_z_axis='"$value"'/' $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH"
+      exit 1
+    else
+      echo $NAME:"Combined Z Axis set to $value"
+      echo $NAME:"Config written to $CONF_PATH."
+      exit 0
+    fi
+  else
+    echo "options hid_xpadneo combined_z_axis=$value" >> $CONF_PATH
+    if [[ $? -ne 0 ]];
+    then
+      echo $NAME:"There was a problem writing to $CONF_PATH."
+      exit 1
+    else
+      echo $NAME:"combined_z_axis set to $value."
+      echo $NAME:"Config written to $CONF_PATH."
+      exit 0
+    fi
+  fi
+}
+
+main $@
