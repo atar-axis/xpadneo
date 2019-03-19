@@ -36,6 +36,17 @@ function main {
   is_installed
 }
 
+function check_version {
+  if [[ $VERSION -ne $DETECTED_VERSION ]];
+  then
+    echo $NAME:"Your version of xpadneo seems to be out of date."
+    echo $NAME:"Please run ./update.sh from the git directory to update to the latest version."
+    exit 1
+  else
+    parse_args
+  fi
+}
+
 # Check if xpadneo is Installed
 function is_installed {
   if [[ ! -d "$SOURCE_PATH" ]];
@@ -48,7 +59,7 @@ function is_installed {
       echo $NAME:"Module not detected, try running 'modprobe hid_xpadneo' and try again."
       exit
     fi
-    parse_args # Function parse_args()
+    check_version # Function parse_args()
     # echo "Installation detected."
   fi
 }
