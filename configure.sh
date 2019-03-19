@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Version 0.0.2
+# Written by CodeCanna
 
 set -o posix
 # Define Variables
