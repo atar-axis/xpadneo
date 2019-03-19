@@ -47,7 +47,7 @@ function check_version {
     echo $DETECTED_VERSION
     exit 1
   else
-    parse_args
+    is_installed
   fi
 }
 
@@ -63,7 +63,7 @@ function is_installed {
       echo $NAME:"Module not detected, try running 'modprobe hid_xpadneo' and try again."
       exit
     fi
-    check_version # Function parse_args()
+    parse_args # Function parse_args()
   fi
 }
 
