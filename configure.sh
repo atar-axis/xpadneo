@@ -17,8 +17,6 @@ CONF_PATH=/etc/modprobe.d/$CONF_FILE
 NAME=$0
 OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
 
-echo $DETECTED_VERSION
-exit 0
 # Check if variables are holding the right info.
 #echo "Xpadneo version: "$VERSION
 #echo "xpadneo directory name: "$XPAD_DIR
@@ -148,7 +146,9 @@ function debug_level {
     exit 1
   fi
 
-  if [[ $(cat $CONF_PATH | grep debug_level) ]];
+  local LINE_EXISTS=$(cat $CONF_PATH | grep debug_level)
+
+  if [[ $LINE_EXISTS ]];
   then
     sed -i 's/options hid_xpadneo debug_level=.*/options hid_xpadneo debug_level='"$value"'/' $CONF_PATH
     if [[ $? -ne 0 ]];  # Did above command run successfully?
@@ -199,7 +199,9 @@ function disable_ff {
     exit 1
   fi
 
-  if [[ $(cat $CONF_PATH | grep disable_ff) ]];
+  local LINE_EXISTS=$(cat $CONF_PATH | grep disable_ff)
+
+  if [[ $LINE_EXISTS ]];
   then
     sed -i 's/options hid_xpadneo disable_ff=.*/options hid_xpadneo disable_ff='"$value"'/' $CONF_PATH
     if [[ $? -ne 0 ]];
@@ -243,7 +245,9 @@ function trigger_damping {
     exit 1
   fi
 
-  if [[ $(cat $CONF_PATH | grep trigger_rumble_damping) ]];
+  local LINE_EXISTS=$(cat $CONF_PATH | grep trigger_rumble_damping)
+
+  if [[ $LINE_EXISTS ]];
   then
     sed -i 's/options hid_xpadneo trigger_rumble_damping=.*/options hid_xpadneo trigger_rumble_damping='"$value"'/' $CONF_PATH
     if [[ $? -ne 0 ]];
@@ -287,7 +291,9 @@ function fkdv {
     exit 1
   fi
 
-  if [[ $(cat $CONF_PATH | grep fake_dev_version) ]];
+  local LINE_EXISTS=$(cat $CONF_PATH | grep fake_dev_version)
+
+  if [[ $LINE_EXISTS ]];
   then
     sed -i 's/options hid_xpadneo fake_dev_version=.*/options hid_xpadneo fake_dev_version='"$value"'/' $CONF_PATH
     if [[ $? -ne 0 ]];
@@ -338,7 +344,9 @@ function z_axis {
     exit 1
   fi
 
-  if [[ $(cat $CONF_PATH | grep combined_z_axis) ]];
+  LINE_EXISTS=$(cat $CONF_PATH | grep combined_z_axis)
+
+  if [[ $LINE_EXISTS ]];
   then
     sed -i 's/options hid_xpadneo combined_z_axis=.*/options hid_xpadneo combined_z_axis='"$value"'/' $CONF_PATH
     if [[ $? -ne 0 ]];
