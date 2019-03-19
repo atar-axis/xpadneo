@@ -344,7 +344,7 @@ function z_axis {
 
   if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
-    echo $NAME:"Invalid Entry! please enter 'true' or 'false'."
+    echo $NAME:"Invalid Entry! please enter 'y' or 'n'."
     exit 1
   fi
 
