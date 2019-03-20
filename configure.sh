@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Version 0.0.2
-# Written by CodeCanna/Mark Waid Jr
+# Written by CodeCanna
 
 set -o posix
 # Define Variables
@@ -16,16 +16,6 @@ CONF_PATH=/etc/modprobe.d/$CONF_FILE
 
 NAME=$0
 OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
-
-# Check if variables are holding the right info.
-#echo "Xpadneo version: "$VERSION
-#echo "xpadneo directory name: "$XPAD_DIR
-#echo "Path to xpadneo source: " $SOURCE_PATH
-#echo "Installed version of xpadneo: " $DETECTED_VERSION
-#echo "xpadneo module path: " $MODULE
-#echo "xpadneo local settings: " $PARAMS
-#echo "xpadneo module config file: " $CONF_FILE
-#echo "xpadneo path to config: " $CONF_PATH
 
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
