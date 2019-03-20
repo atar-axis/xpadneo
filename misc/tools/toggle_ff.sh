@@ -8,7 +8,7 @@ enable_ff ()
 	echo "* enabling ff... "
 
 	echo "N" > /sys/module/hid_xpadneo/parameters/disable_ff
-	rm -f /etc/modprobe.d/xpadneo.conf
+	rm -f /etc/modprobe.d/99-xpadneo-bluetooth.conf
 }
 
 
