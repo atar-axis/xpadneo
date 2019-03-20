@@ -12,7 +12,7 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 v
 	Ex. https://atar-axis.github.io/xpadneo/#debugging
 
 -f, --disable-ff
-	Set true to disable ff or set false to enable ff.  [true, false]
+	Set true to disable ff or set false to enable ff.  [y, n]
 
 -r, --trigger-rumble-damping
 	Damp the strength of the trigger force feedback. [1 (none) to 256 (max)]
@@ -22,7 +22,7 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 v
 
 -z, --combined-z-axis
 	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in 
-	flight simulators.  The left and right trigger will work against each other.  [true, false]
+	flight simulators.  The left and right trigger will work against each other.  [y, n]
 
 
 NOTE: For more information on configuring xpadneo visit https://atar-axis.github.io/xpadneo/
