@@ -15,7 +15,7 @@ You may want to set the debug level at load time of the driver. You can do
 this by applying the setting to modprobe:
 
 ```
-echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/xpadneo.conf
+echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf
 ```
 
 Now, the driver will be initialized with debug level 3 during modprobe.
