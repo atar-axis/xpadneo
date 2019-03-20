@@ -52,71 +52,21 @@ function is_installed {
   fi
 }
 
-# Parse arguments.
-function parse_args {
-  eval set -- "$OPTS"
-
-  while true;
-  do
-    case "$1" in
-      -h | --help)
-        display_help
-        shift
-        ;;
-
-      --version)
-        display_version
-        ;;
-
-      -d | --debug-level)
-        debug_level $@
-        ;;
-
-      -f | --disable-ff)
-        disable_ff $@
-        ;;
-
-      -r | --trigger-rumble-damping)
-        trigger_damping $@
-        ;;
-
-      -v | --fake-dev-version)
-        fkdv $@
-        shift
-        ;;
-
-      -z | --combined-z-axis)
-        z_axis $@
-        shift
-        ;;
-
-      *)
-        echo "Invalid option"
-        display_help
-        exit 1
-        ;;
-    esac
-  done
-}
-
 ### Arg Functions ###
 
 ## Help ##
 function display_help {
   cat ./docs/config_help
-  exit 0
 }
 
 ## Version ##
 function display_version {
   echo "Xpadneo Version: $DETECTED_VERSION"
-  exit 0
 }
 
 ## Set debug level ##
 function debug_level {
-  shift
-  value=$1
+  value=$2
 
   if [[ "$value" -ne 0 ]] && [[ "$value" -ne 1 ]] && [[ "$value" -ne 2 ]] && [[ "$value" -ne 3 ]];
   then
@@ -149,7 +99,6 @@ function debug_level {
     else
       echo $NAME:"Debug Level set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   else
     echo "options hid_xpadneo debug_level=$value" >> $CONF_PATH   # Write to config file.
@@ -160,15 +109,13 @@ function debug_level {
     else
       echo $NAME:"Debug Level set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   fi
 }
 
 ## Set FF ##
 function disable_ff {
-  shift
-  value=$1
+  value=$2
 
   if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
@@ -207,7 +154,6 @@ function disable_ff {
     else
       echo $NAME:"Disable_ff set to $value"
       echo $NAME:"Config written to $CONF_PATH."
-      exit 0
     fi
   else
     echo "options hid_xpadneo disable_ff=$value" >> $CONF_PATH
@@ -218,7 +164,6 @@ function disable_ff {
     else
       echo $NAME:"Disable_ff set to $value."
       echo $NAME:"Config written to $CONF_PATH."
-      exit 0
     fi
   fi
 }
@@ -259,7 +204,6 @@ function trigger_damping {
     else
       echo $NAME:"Trigger Rumble Damping set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   else
     echo "options hid_xpadneo trigger_rumble_damping=$value" >> $CONF_PATH
@@ -270,7 +214,6 @@ function trigger_damping {
     else
       echo $NAME:"Trigger Rumble Damping set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   fi
 }
@@ -311,7 +254,6 @@ function fkdv {
     else
       echo $NAME:"Fake Dev Version set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   else
     echo "options hid_xpadneo fake_dev_version=$value" >> $CONF_PATH
@@ -322,7 +264,6 @@ function fkdv {
     else
       echo $NAME:"Fake Dev Version set to $value."
       echo $NAME:"Config written to $CONF_PATH"
-      exit 0
     fi
   fi
 }
@@ -369,7 +310,6 @@ function z_axis {
     else
       echo $NAME:"Combined Z Axis set to $value"
       echo $NAME:"Config written to $CONF_PATH."
-      exit 0
     fi
   else
     echo "options hid_xpadneo combined_z_axis=$value" >> $CONF_PATH
@@ -380,9 +320,64 @@ function z_axis {
     else
       echo $NAME:"combined_z_axis set to $value."
       echo $NAME:"Config written to $CONF_PATH."
-      exit 0
     fi
   fi
+}
+
+# Parse arguments.
+function parse_args {
+  eval set -- "$OPTS"
+
+  while true;
+  do
+    case "$1" in
+      -h | --help)
+        display_help
+        shift
+        ;;
+
+      --version)
+        display_version
+        shift
+        ;;
+
+      -d | --debug-level)
+        debug_level $@
+        shift 2
+        ;;
+
+      -f | --disable-ff)
+        disable_ff $@
+        shift 2
+        ;;
+
+      -r | --trigger-rumble-damping)
+        trigger_damping $@
+        shift 2
+        ;;
+
+      -v | --fake-dev-version)
+        fkdv $@
+        shift 2
+        ;;
+
+      -z | --combined-z-axis)
+        z_axis $@
+        shift 2
+        ;;
+
+      --)
+        shift
+        break
+        ;;
+
+      *)
+        echo "Invalid option"
+        display_help
+        exit 1
+        ;;
+    esac
+  done
 }
 
 main $@
