@@ -5,14 +5,12 @@
 set -o posix
 # Define Variables
 VERSION=$(cat ./VERSION)
-XPAD_DIR="$(ls /usr/src/ | grep hid-xpadneo)"
-SOURCE_PATH=/usr/src/$XPAD_DIR
-DETECTED_VERSION=$(echo $SOURCE_PATH | tr -d [:alpha:] | tr -d "-" | tr -d "/") # Clean up the version number text. TODO: Find a better way to do this.
+SOURCE_PATH=$(find /usr/src -mindepth 1 -maxdepth 1 -type d -name "hid-xpadneo*")
+DETECTED_VERSION=$(echo "$SOURCE_PATH" | sed "s/[^[:digit:].]//g")
 
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
-CONF_FILE=$(ls /etc/modprobe.d/ | grep xpadneo)
-CONF_PATH=/etc/modprobe.d/$CONF_FILE
+CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
 NAME=$0
 OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
@@ -86,29 +84,28 @@ function debug_level {
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_PATH | grep debug_level)    # TODO: Fix git complaint about cat.
-  local LINE_EXISTS=$(grep debug_level $CONF_PATH)
+  local LINE_EXISTS=$(grep debug_level $CONF_FILE)
 
   if [[ $LINE_EXISTS ]];
   then
-    sed -i 's/options hid_xpadneo debug_level=.*/options hid_xpadneo debug_level='"$value"'/' $CONF_PATH
+    sed -i 's/options hid_xpadneo debug_level=.*/options hid_xpadneo debug_level='"$value"'/' $CONF_FILE
     if [[ $? -ne 0 ]];  # Did above command run successfully?
     then
-      echo "There was a problem writing to $CONF_PATH"
+      echo "There was a problem writing to $CONF_FILE"
       exit 1
     else
       echo $NAME:"Debug Level set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   else
-    echo "options hid_xpadneo debug_level=$value" >> $CONF_PATH   # Write to config file.
+    echo "options hid_xpadneo debug_level=$value" >> $CONF_FILE   # Write to config file.
     if [[ $? -ne 0 ]];
     then
-      echo "There was a problem writing to $CONF_PATH."
+      echo "There was a problem writing to $CONF_FILE."
       exit 1
     else
       echo $NAME:"Debug Level set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   fi
 }
@@ -141,29 +138,29 @@ function disable_ff {
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_PATH | grep disable_ff)
-  local LINE_EXISTS=$(grep disable_ff $CONF_PATH)
+  # local LINE_EXISTS=$(cat $CONF_FILE | grep disable_ff)
+  local LINE_EXISTS=$(grep disable_ff $CONF_FILE)
 
   if [[ $LINE_EXISTS ]];
   then
-    sed -i 's/options hid_xpadneo disable_ff=.*/options hid_xpadneo disable_ff='"$value"'/' $CONF_PATH
+    sed -i 's/options hid_xpadneo disable_ff=.*/options hid_xpadneo disable_ff='"$value"'/' $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH"
+      echo $NAME:"There was a problem writing to $CONF_FILE"
       exit 1
     else
       echo $NAME:"Disable_ff set to $value"
-      echo $NAME:"Config written to $CONF_PATH."
+      echo $NAME:"Config written to $CONF_FILE."
     fi
   else
-    echo "options hid_xpadneo disable_ff=$value" >> $CONF_PATH
+    echo "options hid_xpadneo disable_ff=$value" >> $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH."
+      echo $NAME:"There was a problem writing to $CONF_FILE."
       exit 1
     else
       echo $NAME:"Disable_ff set to $value."
-      echo $NAME:"Config written to $CONF_PATH."
+      echo $NAME:"Config written to $CONF_FILE."
     fi
   fi
 }
@@ -191,29 +188,29 @@ function trigger_damping {
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_PATH | grep trigger_rumble_damping)
-  local LINE_EXISTS=$(grep trigger_rumble_damping $CONF_PATH)
+  # local LINE_EXISTS=$(cat $CONF_FILE | grep trigger_rumble_damping)
+  local LINE_EXISTS=$(grep trigger_rumble_damping $CONF_FILE)
 
   if [[ $LINE_EXISTS ]];
   then
-    sed -i 's/options hid_xpadneo trigger_rumble_damping=.*/options hid_xpadneo trigger_rumble_damping='"$value"'/' $CONF_PATH
+    sed -i 's/options hid_xpadneo trigger_rumble_damping=.*/options hid_xpadneo trigger_rumble_damping='"$value"'/' $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH"
+      echo $NAME:"There was a problem writing to $CONF_FILE"
       exit 1
     else
       echo $NAME:"Trigger Rumble Damping set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   else
-    echo "options hid_xpadneo trigger_rumble_damping=$value" >> $CONF_PATH
+    echo "options hid_xpadneo trigger_rumble_damping=$value" >> $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH!"
+      echo $NAME:"There was a problem writing to $CONF_FILE!"
       exit 1
     else
       echo $NAME:"Trigger Rumble Damping set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   fi
 }
@@ -241,29 +238,29 @@ function fkdv {
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_PATH | grep fake_dev_version)
-  local LINE_EXISTS=$(grep fake_dev_version $CONF_PATH)
+  # local LINE_EXISTS=$(cat $CONF_FILE | grep fake_dev_version)
+  local LINE_EXISTS=$(grep fake_dev_version $CONF_FILE)
 
   if [[ $LINE_EXISTS ]];
   then
-    sed -i 's/options hid_xpadneo fake_dev_version=.*/options hid_xpadneo fake_dev_version='"$value"'/' $CONF_PATH
+    sed -i 's/options hid_xpadneo fake_dev_version=.*/options hid_xpadneo fake_dev_version='"$value"'/' $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH"
+      echo $NAME:"There was a problem writing to $CONF_FILE"
       exit 1
     else
       echo $NAME:"Fake Dev Version set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   else
-    echo "options hid_xpadneo fake_dev_version=$value" >> $CONF_PATH
+    echo "options hid_xpadneo fake_dev_version=$value" >> $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH!"
+      echo $NAME:"There was a problem writing to $CONF_FILE!"
       exit 1
     else
       echo $NAME:"Fake Dev Version set to $value."
-      echo $NAME:"Config written to $CONF_PATH"
+      echo $NAME:"Config written to $CONF_FILE"
     fi
   fi
 }
@@ -297,29 +294,29 @@ function z_axis {
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_PATH | grep combined_z_axis)
-  local LINE_EXISTS=$(grep combined_z_axis $CONF_PATH)
+  # local LINE_EXISTS=$(cat $CONF_FILE | grep combined_z_axis)
+  local LINE_EXISTS=$(grep combined_z_axis $CONF_FILE)
 
   if [[ $LINE_EXISTS ]];
   then
-    sed -i 's/options hid_xpadneo combined_z_axis=.*/options hid_xpadneo combined_z_axis='"$value"'/' $CONF_PATH
+    sed -i 's/options hid_xpadneo combined_z_axis=.*/options hid_xpadneo combined_z_axis='"$value"'/' $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH"
+      echo $NAME:"There was a problem writing to $CONF_FILE"
       exit 1
     else
       echo $NAME:"Combined Z Axis set to $value"
-      echo $NAME:"Config written to $CONF_PATH."
+      echo $NAME:"Config written to $CONF_FILE."
     fi
   else
-    echo "options hid_xpadneo combined_z_axis=$value" >> $CONF_PATH
+    echo "options hid_xpadneo combined_z_axis=$value" >> $CONF_FILE
     if [[ $? -ne 0 ]];
     then
-      echo $NAME:"There was a problem writing to $CONF_PATH."
+      echo $NAME:"There was a problem writing to $CONF_FILE."
       exit 1
     else
       echo $NAME:"combined_z_axis set to $value."
-      echo $NAME:"Config written to $CONF_PATH."
+      echo $NAME:"Config written to $CONF_FILE."
     fi
   fi
 }
@@ -372,7 +369,7 @@ function parse_args {
         ;;
 
       *)
-        echo "Invalid option"
+        echo $NAME:"Invalid option"
         display_help
         exit 1
         ;;
