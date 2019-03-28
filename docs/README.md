@@ -112,4 +112,3 @@ In order to update xpadneo, do the following
 If someone is interested in helping me getting this driver merged into the kernel, tell me. I would really appreciate that.
 
 For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
-
