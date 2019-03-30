@@ -180,9 +180,9 @@ struct xpadneo_devdata {
 	u8 ps_capacity_level;
 	u8 ps_status;
 
-	/* button states */
-	int last_abs_z;
-	int last_abs_rz
+	/* axis states */
+	s32 last_abs_z;
+	s32 last_abs_rz
 };
 
 
