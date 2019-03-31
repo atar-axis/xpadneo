@@ -1,4 +1,4 @@
-#define DRV_VER "0.5.10"
+#define DRV_VER "@DO_NOT_CHANGE@"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -41,18 +41,14 @@ module_param(param_debug_level, byte, 0644);
 MODULE_PARM_DESC(param_debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
-enum {
-	FF_ENABLE_NONE          = 0x00,
-	FF_ENABLE_RIGHT         = 0x01,
-	FF_ENABLE_LEFT          = 0x02,
-	FF_ENABLE_RIGHT_TRIGGER = 0x04,
-	FF_ENABLE_LEFT_TRIGGER  = 0x08,
-	FF_ENABLE_ALL           = 0x0F
-};
+static u8 param_disable_ff;
+module_param(param_disable_ff, byte, 0644);
+MODULE_PARM_DESC(param_disable_ff, "");
 
-static u8 param_enable_ff = FF_ENABLE_ALL;
-module_param(param_enable_ff, byte, 0644);
-MODULE_PARM_DESC(param_enable_ff, "(u8) Disable force-feedback effects (rumble). 0x0: none, 0x1: right, 0x2: left, 0x4: trigger_right, 0x8: trigger_left, 0xF: all");
+#define PARAM_DISABLE_FF_NONE    0
+#define PARAM_DISABLE_FF_MAIN    1
+#define PARAM_DISABLE_FF_TRIGGER 2
+#define PARAM_DISABLE_FF_ALL     3
 
 static bool param_combined_z_axis;
 module_param(param_combined_z_axis, bool, 0644);
@@ -115,6 +111,14 @@ static DEFINE_IDA(xpadneo_device_id_allocator);
  *
  */
 
+enum {
+	FF_ENABLE_NONE          = 0x00,
+	FF_ENABLE_RIGHT         = 0x01,
+	FF_ENABLE_LEFT          = 0x02,
+	FF_ENABLE_RIGHT_TRIGGER = 0x04,
+	FF_ENABLE_LEFT_TRIGGER  = 0x08,
+	FF_ENABLE_ALL           = 0x0F
+};
 
 struct ff_data {
 	u8 enable_actuators;
@@ -250,7 +254,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
-	if (param_enable_ff == FF_ENABLE_NONE)
+	if (param_disable_ff == PARAM_DISABLE_FF_ALL)
 		return 0;
 
 	if (effect->type != FF_RUMBLE)
@@ -303,8 +307,11 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	ff_active = FF_ENABLE_ALL;
 
-	if (param_enable_ff >= FF_ENABLE_NONE && param_enable_ff <= FF_ENABLE_ALL)
-		ff_active = param_enable_ff;
+	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
+		ff_active &= !(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
+
+	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
+		ff_active &= !(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
 
 
 	create_ff_pck(
@@ -346,7 +353,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	ff_pck.ff = ff_clear;
 
 	/* 'HELLO' FROM THE OTHER SIDE */
-	if (!param_enable_ff) {
+	if (!param_disable_ff) {
 		ff_pck.report_id = 0x03;
 		ff_pck.ff.magnitude_right = 0x80;
 		ff_pck.ff.magnitude_left  = 0x40;
