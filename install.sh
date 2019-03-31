@@ -2,7 +2,6 @@
 
 # exit immediately if one command fails
 set -e
-set -x
 
 if [[ $EUID != 0 ]]; then
   echo "ERROR: You most probably need superuser privileges to install new modules, please run me via sudo!"
