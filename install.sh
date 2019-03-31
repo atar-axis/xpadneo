@@ -21,22 +21,22 @@ sed -i 's/#define DRV_VER "@DO_NOT_CHANGE@"/#define DRV_VER "'$VERSION'"/g' hid-
 
 INSTALLED=$(dkms status 2>/dev/null | grep '^hid-xpadneo,' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/')
 
-#if [[ -z "$INSTALLED" ]]; then
+if [[ -z "$INSTALLED" ]]; then
 
     echo "* copying module into /usr/src"
-    cp --recursive $PWD/hid-xpadneo/ /usr/src/hid-xpadneo-$VERSION
+    cp --recursive "$PWD/hid-xpadneo/ /usr/src/hid-xpadneo-$VERSION"
 
     echo "* adding module to DKMS"
-    dkms add -m hid-xpadneo -v $VERSION
+    dkms add -m hid-xpadneo -v "$VERSION"
 
     echo "* installing module (using DKMS)"
-    dkms install -m hid-xpadneo -v $VERSION
+    dkms install -m hid-xpadneo -v "$VERSION"
 
-#else
+else
 
-#    echo "already installed!"
+    echo "already installed!"
 
-#fi
+fi
 
 # restore original files
 mv hid-xpadneo/dkms.conf_bck hid-xpadneo/dkms.conf

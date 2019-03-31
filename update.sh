@@ -11,11 +11,11 @@ VERSION=$(cat VERSION)
 IS_GIT=$(git rev-parse --is-inside-work-tree 2>/dev/null)
 
 
-if [[ $LATEST == $VERSION ]]; then
+if [[ $LATEST == "$VERSION" ]]; then
 
     echo "Looks like the repo is up to date, fine!"
     
-    if [[ $LATEST == $INSTALLED ]]; then
+    if [[ $LATEST == "$INSTALLED" ]]; then
         echo "You have already installed the latest version! Yay."
     else
         echo "* uninstalling outdated modules"
