@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Version 0.0.2
 # Written by CodeCanna
 
 set -o posix
+#set -x
 # Define Variables
 VERSION=$(cat ./VERSION)
 SOURCE_PATH=$(find /usr/src -mindepth 1 -maxdepth 1 -type d -name "hid-xpadneo*")
@@ -12,30 +13,30 @@ MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
-NAME=$0
-OPTS=$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
+NAME="$0"
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
 
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
 then
   echo "This script must be ran as root!"
-  exit -3
+  exit 1
 fi
 
 function main {
-  check_version
+  check_version "$@"
 }
 
 # Check if version is out of date.
 function check_version {
   if [[ "$VERSION" != "$DETECTED_VERSION" ]];
   then
-    echo $NAME:"Your version of xpadneo seems to be out of date."
-    echo $NAME:"Please run ./update.sh from the git directory to update to the latest version."
-    echo $DETECTED_VERSION
+    echo "$NAME:Your version of xpadneo seems to be out of date."
+    echo "$NAME:Please run ./update.sh from the git directory to update to the latest version."
+    echo "$DETECTED_VERSION"
     exit 1
   else
-    is_installed
+    is_installed "$@"
   fi
 }
 
@@ -46,8 +47,12 @@ function is_installed {
     echo "Installation not found.  Did you run ./install.sh?"
     exit
   else
-    parse_args # Function parse_args()
+    parse_args "$@" # Function parse_args()
   fi
+}
+
+function set_option {
+  sed -i "/^[[:space:]]*options[[:space:]]\+hid_xpadneo/s/$key=[^[:space:]]*/$key=$value/g" "$CONF_FILE"
 }
 
 ### Arg Functions ###
@@ -64,8 +69,6 @@ function display_version {
 
 ## Set debug level ##
 function debug_level {
-  value=$2
-
   if [[ "$value" -ne 0 ]] && [[ "$value" -ne 1 ]] && [[ "$value" -ne 2 ]] && [[ "$value" -ne 3 ]];
   then
     echo "Invalid Debug Level! Number must be between 0 and 3."
@@ -75,101 +78,59 @@ function debug_level {
   # If module is inserted edit parameters.
   if [[ -d "$MODULE" ]];
   then
-    echo $NAME:"Module inserted writing to $PARAMS"
-    echo $value > $PARAMS/debug_level   # Write to parameters
-    if [[ $? -ne 0 ]];
+    echo "$NAME:Module inserted writing to $PARAMS"
+    if [[ $(echo "$value" > "$PARAMS"/debug_level) -ne 0 ]];  # Write to $PARAMS/debug_level
     then
-      echo $NAME:"Problem writing to $PARAMS"
+      echo "$NAME:ERROR! Could not write to $PARAMS!"
       exit 1
     fi
   fi
 
-  local LINE_EXISTS=$(grep debug_level $CONF_FILE)
-
-  if [[ $LINE_EXISTS ]];
+  if [[ $(set_option "$key" "$value") -ne 0 ]];
   then
-    sed -i 's/options hid_xpadneo debug_level=.*/options hid_xpadneo debug_level='"$value"'/' $CONF_FILE
-    if [[ $? -ne 0 ]];  # Did above command run successfully?
-    then
-      echo "There was a problem writing to $CONF_FILE"
-      exit 1
-    else
-      echo $NAME:"Debug Level set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
-  else
-    echo "options hid_xpadneo debug_level=$value" >> $CONF_FILE   # Write to config file.
-    if [[ $? -ne 0 ]];
-    then
-      echo "There was a problem writing to $CONF_FILE."
-      exit 1
-    else
-      echo $NAME:"Debug Level set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
+    echo "$NAME:ERROR! Could not write to $CONF_FILE"
+    exit 1
   fi
 }
 
 ## Set FF ##
 function disable_ff {
-  value=$2
-
+  #if [[ "${VALUES[1]}" != "y" ]] && [[ "${VALUES[1]}" != "n" ]];
   if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
-    echo $NAME:"Invalid Entry! please enter 'y' or 'n'."
+    echo "$NAME:Invalid Entry! please enter 'y' or 'n'."
     exit 1
   fi
 
   # If module is inserted edit parameters.
-  if [[ -d $MODULE ]];
+  if [[ -d "$MODULE" ]];
   then
-    echo $NAME:"Module is inserted writing to $PARAMS."
+    echo "$NAME:Module is inserted writing to $PARAMS."
     if [[ "$value" == "y" ]];
     then
-      echo 0 > $PARAMS/disable_ff
+      if [[ $(echo 0 > $PARAMS/disable_ff) -ne 0 ]];
+      then
+        echo "$NAME:ERROR! Problem writing to $PARAMS."
+        exit 1
+      fi
     else
-      echo 1 > $PARAMS/disable_ff
-    fi
-
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"ERROR! Problem writing to $PARAMS."
-      exit 1
+      if [[ $(echo 1 > $PARAMS/disable_ff) -ne 0 ]];
+      then
+        echo "$NAME:ERROR! Problem writing to $PARAMS."
+        exit 1
+      fi
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_FILE | grep disable_ff)
-  local LINE_EXISTS=$(grep disable_ff $CONF_FILE)
-
-  if [[ $LINE_EXISTS ]];
+  if [[ $(set_option "$key" "$value") -ne 0 ]];
   then
-    sed -i 's/options hid_xpadneo disable_ff=.*/options hid_xpadneo disable_ff='"$value"'/' $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE"
-      exit 1
-    else
-      echo $NAME:"Disable_ff set to $value"
-      echo $NAME:"Config written to $CONF_FILE."
-    fi
-  else
-    echo "options hid_xpadneo disable_ff=$value" >> $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE."
-      exit 1
-    else
-      echo $NAME:"Disable_ff set to $value."
-      echo $NAME:"Config written to $CONF_FILE."
-    fi
+    echo "$NAME:ERROR! Could not write to $CONF_FILE"
+    exit 1
   fi
 }
 
 ## Set Trigger Damping ##
 function trigger_damping {
-  shift
-  value=$1
-
   if [[ "$value" -gt 256 ]] || [[ "$value" -lt 1 ]];
   then
     echo "Invalid Entry! Value must be between 1 and 256."
@@ -177,49 +138,25 @@ function trigger_damping {
   fi
 
   # If module is inserted edit parameters.
-  if [[ -d $MODULE ]];
+  if [[ -d "$MODULE" ]];
   then
-    echo $NAME:"Module is inserted writing to $PARAMS."
-    echo $value > $PARAMS/trigger_rumble_damping
-    if [[ $? -ne 0 ]];
+    echo "$NAME:Module is inserted writing to $PARAMS."
+    if [[ $(echo "$value" > "$PARAMS"/trigger_rumble_damping) -ne 0 ]];
     then
-      echo $NAME:"ERROR! Could not write to $PARAMS."
+      echo "$NAME:ERROR! Could not write to $PARAMS"
       exit 1
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_FILE | grep trigger_rumble_damping)
-  local LINE_EXISTS=$(grep trigger_rumble_damping $CONF_FILE)
-
-  if [[ $LINE_EXISTS ]];
+  if [[ $(set_option "$key" "$value") -ne 0 ]];
   then
-    sed -i 's/options hid_xpadneo trigger_rumble_damping=.*/options hid_xpadneo trigger_rumble_damping='"$value"'/' $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE"
-      exit 1
-    else
-      echo $NAME:"Trigger Rumble Damping set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
-  else
-    echo "options hid_xpadneo trigger_rumble_damping=$value" >> $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE!"
-      exit 1
-    else
-      echo $NAME:"Trigger Rumble Damping set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
+    echo "$NAME:ERROR! Could not write to $CONF_FILE"
+    exit 1
   fi
 }
 
 ## Set Fake Dev Version ##
 function fkdv {
-  shift
-  value=$1
-
   if [[ "$value" -gt 65535 ]] || [[ "$value" -lt 1 ]];
   then
     echo "Invalid Entry! Value must be between 1 and 65535."
@@ -227,102 +164,67 @@ function fkdv {
   fi
 
   # If module is inserted edit parameters.
-  if [[ -d $MODULE ]];
+  if [[ -d "$MODULE" ]];
   then
-    echo $NAME:"Module is inserted writing to $PARAMS."
-    echo $value > $PARAMS/fake_dev_version
-    if [[ $? -ne 0 ]];
+    echo "$NAME:Module is inserted writing to $PARAMS."
+    if [[ $(echo "$value" > $PARAMS/fake_dev_version) -ne 0 ]];
     then
-      echo $NAME:"ERROR! Could not write to $PARAMS."
+      echo "$NAME:ERROR! Could not write to $PARAMS."
       exit 1
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_FILE | grep fake_dev_version)
-  local LINE_EXISTS=$(grep fake_dev_version $CONF_FILE)
-
-  if [[ $LINE_EXISTS ]];
+  if [[ $(set_option "$key" "$value") -ne 0 ]];
   then
-    sed -i 's/options hid_xpadneo fake_dev_version=.*/options hid_xpadneo fake_dev_version='"$value"'/' $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE"
-      exit 1
-    else
-      echo $NAME:"Fake Dev Version set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
-  else
-    echo "options hid_xpadneo fake_dev_version=$value" >> $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE!"
-      exit 1
-    else
-      echo $NAME:"Fake Dev Version set to $value."
-      echo $NAME:"Config written to $CONF_FILE"
-    fi
+    echo "$NAME:ERROR! Could not write to $CONF_FILE!"
+    exit 1
   fi
 }
 
 ## Combined Z Axis ##
 function z_axis {
-  shift
-  value=$1
-
   if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
   then
-    echo $NAME:"Invalid Entry! please enter 'y' or 'n'."
+    echo "NAME:Invalid Entry! please enter 'y' or 'n'."
     exit 1
   fi
 
   # If module is inserted edit parameters.
   if [[ -d $MODULE ]];
   then
-    echo $NAME:"Module is inserted writing to $PARAMS."
+    echo "NAME:Module is inserted writing to $PARAMS."
     if [[ "$value" == "y" ]];
     then
-      echo 1 > $PARAMS/combined_z_axis
+      if [[ $(echo 1 > $PARAMS/combined_z_axis) -ne 0 ]];
+      then
+        echo "$NAME:ERROR! Could not write to $PARAMS!"
+        exit 1
+      fi
     else
-      echo 0 > $PARAMS/combined_z_axis
-    fi
-
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"ERROR! Problem writing to $PARAMS."
-      exit 1
+      if [[ $(echo 0 > $PARAMS/combined_z_axis) -ne 0 ]];
+      then
+        echo "$NAME:ERROR! Could not write to $PARAMS!"
+        exit 1
+      fi
     fi
   fi
 
-  # local LINE_EXISTS=$(cat $CONF_FILE | grep combined_z_axis)
-  local LINE_EXISTS=$(grep combined_z_axis $CONF_FILE)
-
-  if [[ $LINE_EXISTS ]];
+  if [[ $(set_option "$key" "$value") -ne 0 ]];
   then
-    sed -i 's/options hid_xpadneo combined_z_axis=.*/options hid_xpadneo combined_z_axis='"$value"'/' $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE"
-      exit 1
-    else
-      echo $NAME:"Combined Z Axis set to $value"
-      echo $NAME:"Config written to $CONF_FILE."
-    fi
-  else
-    echo "options hid_xpadneo combined_z_axis=$value" >> $CONF_FILE
-    if [[ $? -ne 0 ]];
-    then
-      echo $NAME:"There was a problem writing to $CONF_FILE."
-      exit 1
-    else
-      echo $NAME:"combined_z_axis set to $value."
-      echo $NAME:"Config written to $CONF_FILE."
-    fi
+    echo "$NAME:ERROR! Could not write to $CONF_FILE"
+    exit 1
   fi
 }
 
-# Parse arguments.
+## Parse Arguments ##
 function parse_args {
+  LINE_EXISTS=$(grep 'options hid_xpadneo' "$CONF_FILE")
+  if [[ -z "$LINE_EXISTS" ]];
+  then
+    echo "Line doesn't exist"
+    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=0" >> "$CONF_FILE"
+  fi
+
   eval set -- "$OPTS"
 
   while true;
@@ -339,27 +241,37 @@ function parse_args {
         ;;
 
       -d | --debug-level)
-        debug_level $@
+        key='debug_level'
+        value="${2#*=}"
+        debug_level "$key" "$value"
         shift 2
         ;;
 
       -f | --disable-ff)
-        disable_ff $@
+        key='disable_ff'
+        value="${2#*=}"
+        disable_ff "$key" "$value"
         shift 2
         ;;
 
       -r | --trigger-rumble-damping)
-        trigger_damping $@
+        key='trigger_rumble_damping'
+        value="${2#*=}"
+        trigger_damping "$key" "$value"
         shift 2
         ;;
 
       -v | --fake-dev-version)
-        fkdv $@
+        key='fake_dev_version'
+        value="${2#*=}"
+        fkdv "$key" "$value"
         shift 2
         ;;
 
       -z | --combined-z-axis)
-        z_axis $@
+        key='combined_z_axis'
+        value="${2#*=}"
+        z_axis "$key" "$value"
         shift 2
         ;;
 
@@ -369,7 +281,7 @@ function parse_args {
         ;;
 
       *)
-        echo $NAME:"Invalid option"
+        echo "$NAME:Invalid option"
         display_help
         exit 1
         ;;
@@ -377,4 +289,4 @@ function parse_args {
   done
 }
 
-main $@
+main "$@"
