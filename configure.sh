@@ -55,6 +55,11 @@ function set_option {
   sed -i "/^[[:space:]]*options[[:space:]]\+hid_xpadneo/s/$key=[^[:space:]]*/$key=$value/g" "$CONF_FILE"
 }
 
+function set_param {
+  PARAM="$PARAMS/$key"
+  echo "$value" > "$PARAM"
+}
+
 ### Arg Functions ###
 
 ## Help ##
@@ -79,14 +84,14 @@ function debug_level {
   if [[ -d "$MODULE" ]];
   then
     echo "$NAME:Module inserted writing to $PARAMS"
-    if [[ $(echo "$value" > "$PARAMS"/debug_level) -ne 0 ]];  # Write to $PARAMS/debug_level
+    if ! set_param "$key" "$value";  # Write to $PARAMS/debug_level
     then
       echo "$NAME:ERROR! Could not write to $PARAMS!"
       exit 1
     fi
   fi
 
-  if [[ $(set_option "$key" "$value") -ne 0 ]];
+  if ! set_option "$key" "$value";
   then
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
@@ -106,23 +111,14 @@ function disable_ff {
   if [[ -d "$MODULE" ]];
   then
     echo "$NAME:Module is inserted writing to $PARAMS."
-    if [[ "$value" == "y" ]];
+    if ! set_param "$key" "$value";
     then
-      if [[ $(echo 0 > $PARAMS/disable_ff) -ne 0 ]];
-      then
-        echo "$NAME:ERROR! Problem writing to $PARAMS."
-        exit 1
-      fi
-    else
-      if [[ $(echo 1 > $PARAMS/disable_ff) -ne 0 ]];
-      then
-        echo "$NAME:ERROR! Problem writing to $PARAMS."
-        exit 1
-      fi
+      echo "$NAME:ERROR! Could not write to $PARAMS!"
+      exit 1
     fi
   fi
 
-  if [[ $(set_option "$key" "$value") -ne 0 ]];
+  if ! set_option "$key" "$value";
   then
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
@@ -141,14 +137,14 @@ function trigger_damping {
   if [[ -d "$MODULE" ]];
   then
     echo "$NAME:Module is inserted writing to $PARAMS."
-    if [[ $(echo "$value" > "$PARAMS"/trigger_rumble_damping) -ne 0 ]];
+    if ! set_param "$key" "$value";
     then
       echo "$NAME:ERROR! Could not write to $PARAMS"
       exit 1
     fi
   fi
 
-  if [[ $(set_option "$key" "$value") -ne 0 ]];
+  if ! set_option "$key" "$value";
   then
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
@@ -167,14 +163,14 @@ function fkdv {
   if [[ -d "$MODULE" ]];
   then
     echo "$NAME:Module is inserted writing to $PARAMS."
-    if [[ $(echo "$value" > $PARAMS/fake_dev_version) -ne 0 ]];
+    if ! set_param "$key" "$value";
     then
       echo "$NAME:ERROR! Could not write to $PARAMS."
       exit 1
     fi
   fi
 
-  if [[ $(set_option "$key" "$value") -ne 0 ]];
+  if ! set_option "$key" "$value";
   then
     echo "$NAME:ERROR! Could not write to $CONF_FILE!"
     exit 1
@@ -193,23 +189,14 @@ function z_axis {
   if [[ -d $MODULE ]];
   then
     echo "NAME:Module is inserted writing to $PARAMS."
-    if [[ "$value" == "y" ]];
+    if ! set_param "$key" "$value";
     then
-      if [[ $(echo 1 > $PARAMS/combined_z_axis) -ne 0 ]];
-      then
-        echo "$NAME:ERROR! Could not write to $PARAMS!"
-        exit 1
-      fi
-    else
-      if [[ $(echo 0 > $PARAMS/combined_z_axis) -ne 0 ]];
-      then
-        echo "$NAME:ERROR! Could not write to $PARAMS!"
-        exit 1
-      fi
+      echo "$NAME:ERROR! Could not write to $PARAMS!"
+      exit 1
     fi
   fi
 
-  if [[ $(set_option "$key" "$value") -ne 0 ]];
+  if ! set_option "$key" "$value";
   then
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
@@ -221,7 +208,6 @@ function parse_args {
   LINE_EXISTS=$(grep 'options hid_xpadneo' "$CONF_FILE")
   if [[ -z "$LINE_EXISTS" ]];
   then
-    echo "Line doesn't exist"
     echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=0" >> "$CONF_FILE"
   fi
 
