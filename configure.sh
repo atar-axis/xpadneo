@@ -7,8 +7,7 @@ set -o posix
 # Define Variables
 VERSION=$(cat ./VERSION)
 SOURCE_PATH=$(find /usr/src -mindepth 1 -maxdepth 1 -type d -name "hid-xpadneo*")
-#DETECTED_VERSION=$(echo "$SOURCE_PATH" | sed "s/[^[:digit:].]//g")
-VERSIONS=($(dkms status 2>/dev/null | grep '^hid-xpadneo,' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/'))
+DETECTED_VERSION=($(dkms status 2>/dev/null | grep '^hid-xpadneo,' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/'))
 
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
