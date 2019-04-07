@@ -1,4 +1,4 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
+#define DRV_VER "0.6.0"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -308,10 +308,10 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	ff_active = FF_ENABLE_ALL;
 
 	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
-		ff_active &= !(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
+		ff_active &= ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
 
 	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
-		ff_active &= !(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
+		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
 
 
 	create_ff_pck(
@@ -323,7 +323,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		"active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		ff_active,
 		max, fraction_TL, fraction_TR,
 		ff_pck.ff.magnitude_left_trigger,
 		ff_pck.ff.magnitude_right_trigger);
