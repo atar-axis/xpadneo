@@ -3,7 +3,7 @@
 # Written by CodeCanna
 
 set -o posix
-#set -x
+
 # Define Variables
 VERSION=$(cat ./VERSION)
 SOURCE_PATH=$(find /usr/src -mindepth 1 -maxdepth 1 -type d -name "hid-xpadneo*")
@@ -15,9 +15,6 @@ CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadne
 
 NAME="$0"
 OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
-
-echo "$VERSIONS"
-exit 0
 
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
