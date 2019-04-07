@@ -7,7 +7,8 @@ set -o posix
 # Define Variables
 VERSION=$(cat ./VERSION)
 SOURCE_PATH=$(find /usr/src -mindepth 1 -maxdepth 1 -type d -name "hid-xpadneo*")
-DETECTED_VERSION=$(echo "$SOURCE_PATH" | sed "s/[^[:digit:].]//g")
+#DETECTED_VERSION=$(echo "$SOURCE_PATH" | sed "s/[^[:digit:].]//g")
+VERSIONS=($(dkms status 2>/dev/null | grep '^hid-xpadneo,' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/'))
 
 MODULE=/sys/module/hid_xpadneo/
 PARAMS=/sys/module/hid_xpadneo/parameters
@@ -15,6 +16,9 @@ CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadne
 
 NAME="$0"
 OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")  # Use getopt NOT getopts to parse arguments.
+
+echo "$VERSIONS"
+exit 0
 
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
@@ -96,6 +100,7 @@ function debug_level {
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
   fi
+  echo "$NAME: Config written to $CONF_FILE"
 }
 
 ## Set FF ##
@@ -123,6 +128,7 @@ function disable_ff {
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
   fi
+  echo "$NAME: Config written to $CONF_FILE"
 }
 
 ## Set Trigger Damping ##
@@ -149,6 +155,7 @@ function trigger_damping {
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
   fi
+  echo "$NAME: Config written to $CONF_FILE"
 }
 
 ## Set Fake Dev Version ##
@@ -175,6 +182,7 @@ function fkdv {
     echo "$NAME:ERROR! Could not write to $CONF_FILE!"
     exit 1
   fi
+  echo "$NAME: Config written to $CONF_FILE"
 }
 
 ## Combined Z Axis ##
@@ -201,6 +209,7 @@ function z_axis {
     echo "$NAME:ERROR! Could not write to $CONF_FILE"
     exit 1
   fi
+  echo "$NAME: Config written to $CONF_FILE"
 }
 
 ## Parse Arguments ##
@@ -208,7 +217,14 @@ function parse_args {
   LINE_EXISTS=$(grep 'options hid_xpadneo' "$CONF_FILE")
   if [[ -z "$LINE_EXISTS" ]];
   then
-    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=0" >> "$CONF_FILE"
+    # If line doesn't exist echo all of the defaults.
+    echo "options hid_xpadneo debug_level=0 disable_ff=n trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
+  fi
+
+  if [[ $1 == "" ]];
+  then
+    display_help
+    exit 0
   fi
 
   eval set -- "$OPTS"
