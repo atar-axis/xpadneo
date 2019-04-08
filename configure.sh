@@ -94,10 +94,13 @@ function set_sysfs_param {
 
 function set_param {
 
+  key=$1
+  value=$2
+
   # edit sysfs parameter if module is inserted
   if [[ -d "$MODULE" ]];
   then
-    echo "$NAME: Module inserted writing to $PARAMS"
+    echo "$NAME: Module inserted - writing to $PARAMS"
     if ! set_sysfs_param "$key" "$value";  # Write to $PARAMS/debug_level
     then
       echo "$NAME: ERROR! Could not write to $PARAMS!"
@@ -111,7 +114,8 @@ function set_param {
     echo "$NAME: ERROR! Could not write to $CONF_FILE"
     exit 1
   fi
-  echo "$NAME: Config written to $CONF_FILE"
+  echo "$NAME: $key: parameter written to $CONF_FILE"
+  
 }
 
 ## Parse Arguments ##
