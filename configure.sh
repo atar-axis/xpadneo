@@ -1,5 +1,4 @@
 #!/bin/bash
-# Version 0.0.3
 # Written by CodeCanna, refined by atar-axis
 
 set -o posix
