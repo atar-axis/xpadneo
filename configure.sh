@@ -219,5 +219,5 @@ then
     exit 2
 fi
 
-parse_args "$PARAMETERS"
+parse_args $PARAMETERS
 
