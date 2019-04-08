@@ -74,7 +74,7 @@ You know that everything works fine when you feel the gamepad rumble ;)
 
 ### Configuration
 
-Simply use `./sudo configure.sh` to configure the driver as you wish. The script will show you the available options.
+Simply use `sudo ./configure.sh` to configure the driver as you wish. The script will show you the available options.
 
 **Alternatively**, you can also do it by hand:
 
