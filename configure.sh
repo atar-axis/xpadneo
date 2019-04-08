@@ -46,7 +46,7 @@ function check_param {
     
     case $key in
     "debug_level")
-        if [[ "$value" -ne 0 ]] && [[ "$value" -ne 1 ]] && [[ "$value" -ne 2 ]] && [[ "$value" -ne 3 ]];
+        if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
         then
             echo "$NAME: $key: Invalid value! Value must be between 0 and 3."
             exit 1
