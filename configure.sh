@@ -14,7 +14,7 @@ CONF_FILE="$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadn
 
 NAME="$0"
 # Use getopt NOT getopts to parse arguments.
-OPTS="$(getopt -n $NAME -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- $@)"
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
 
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
@@ -201,7 +201,7 @@ function parse_args {
 
 # MAIN ENTRY POINT
 
-PARAMETERS=$@
+PARAMETERS=( "$@" )
 
 # Check if xpadneo is installed
 if [[ -z "$INSTALLED_VERSION" ]];
