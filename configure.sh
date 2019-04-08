@@ -3,18 +3,6 @@
 
 set -o posix
 
-# Define Variables
-VERSION="$(cat ./VERSION)"
-INSTALLED_VERSION="$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')"
-
-MODULE="/sys/module/hid_xpadneo/"
-PARAMS="/sys/module/hid_xpadneo/parameters"
-CONF_FILE="$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")"
-
-NAME="$0"
-# Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
-
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
 then
@@ -22,19 +10,34 @@ then
   exit 1
 fi
 
+
+
+# Define Variables
+VERSION="$(cat ./VERSION)"
+INSTALLED_VERSION="$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')"
+
+MODULE="/sys/module/hid_xpadneo/"
+PARAMS="/sys/module/hid_xpadneo/parameters"
+CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
+
+NAME="$0"
+# Use getopt NOT getopts to parse arguments.
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
+
+
 ### Arg Functions ###
 
-## Help ##
+## Print Help ##
 function display_help {
   cat ./docs/config_help
 }
 
-## Version ##
+## Print Version ##
 function display_version {
   echo "Xpadneo Version: $INSTALLED_VERSION"
 }
 
-
+## Parameter Validation ##
 function check_param {
     key=$1
     value=$2
@@ -43,14 +46,14 @@ function check_param {
     "debug_level")
         if [[ "$value" -ne 0 ]] && [[ "$value" -ne 1 ]] && [[ "$value" -ne 2 ]] && [[ "$value" -ne 3 ]];
         then
-            echo "$NAME: $key: Invalid value! Number must be between 0 and 3."
+            echo "$NAME: $key: Invalid value! Value must be between 0 and 3."
             exit 1
         fi
         ;;
     "disable_ff")
         if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
         then
-            echo "$NAME: $key: Invalid value! please enter 'y' or 'n'."
+            echo "$NAME: $key: Invalid value! Value must be 'y' or 'n'."
             exit 1
         fi
         ;;
@@ -71,7 +74,7 @@ function check_param {
     "combined_z_axis")
         if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
         then
-            echo "$NAME: $key: Invalid value! please enter 'y' or 'n'."
+            echo "$NAME: $key: Invalid value! Value must be 'y' or 'n'."
             exit 1
         fi
         ;;
@@ -82,7 +85,7 @@ function check_param {
     esac
 }
 
-
+## Parameter Setting Helpers ##
 function set_modprobe_param {
   sed -i "/^[[:space:]]*options[[:space:]]\+hid_xpadneo/s/$1=[^[:space:]]*/$1=$2/g" "$CONF_FILE"
 }
@@ -91,16 +94,21 @@ function set_sysfs_param {
   echo "$2" > "$PARAMS/$1"
 }
 
+
+## Parameter Setting ##
 function set_param {
 
   key=$1
   value=$2
+  
+  # check for valid parameters first
+  check_param "$key" "$value"
 
   # edit sysfs parameter if module is inserted
   if [[ -d "$MODULE" ]];
   then
     echo "$NAME: Module inserted - writing to $PARAMS"
-    if ! set_sysfs_param "$key" "$value";  # Write to $PARAMS/debug_level
+    if ! set_sysfs_param "$key" "$value";
     then
       echo "$NAME: ERROR! Could not write to $PARAMS!"
       exit 1
@@ -117,7 +125,7 @@ function set_param {
   
 }
 
-## Parse Arguments ##
+## Argument Parsing ##
 function parse_args {
   LINE_EXISTS=$(grep 'options hid_xpadneo' "$CONF_FILE")
   if [[ -z "$LINE_EXISTS" ]];
@@ -150,7 +158,6 @@ function parse_args {
       -d | --debug-level)
         key='debug_level'
         value="${2#*=}"
-        check_param "$key" "$value"
         set_param "$key" "$value"
         shift 2
         ;;
@@ -158,7 +165,6 @@ function parse_args {
       -f | --disable-ff)
         key='disable_ff'
         value="${2#*=}"
-        check_param "$key" "$value"
         set_param "$key" "$value"
         shift 2
         ;;
@@ -166,7 +172,6 @@ function parse_args {
       -r | --trigger-rumble-damping)
         key='trigger_rumble_damping'
         value="${2#*=}"
-        check_param "$key" "$value"
         set_param "$key" "$value"
         shift 2
         ;;
@@ -174,7 +179,6 @@ function parse_args {
       -v | --fake-dev-version)
         key='fake_dev_version'
         value="${2#*=}"
-        check_param "$key" "$value"
         set_param "$key" "$value"
         shift 2
         ;;
@@ -182,7 +186,6 @@ function parse_args {
       -z | --combined-z-axis)
         key='combined_z_axis'
         value="${2#*=}"
-        check_param "$key" "$value"
         set_param "$key" "$value"
         shift 2
         ;;
@@ -202,7 +205,7 @@ function parse_args {
 }
 
 
-# MAIN ENTRY POINT
+### Main Entry Point ###
 
 PARAMETERS=( "$@" )
 
