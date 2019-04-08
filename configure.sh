@@ -3,10 +3,12 @@
 
 set -o posix
 
+NAME="$0"
+
 # Check if ran as root
 if [[ "$EUID" -ne 0 ]];
 then
-  echo "This script must be ran as root!"
+  echo "$NAME: This script must be ran as root!"
   exit 1
 fi
 
@@ -20,7 +22,7 @@ MODULE="/sys/module/hid_xpadneo/"
 PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
-NAME="$0"
+
 # Use getopt NOT getopts to parse arguments.
 OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
 
@@ -34,7 +36,7 @@ function display_help {
 
 ## Print Version ##
 function display_version {
-  echo "Xpadneo Version: $INSTALLED_VERSION"
+  echo "$NAME: Installed xpadneo version: $INSTALLED_VERSION"
 }
 
 ## Parameter Validation ##
@@ -118,7 +120,7 @@ function set_param {
   # edit modprobe config file
   if ! set_modprobe_param "$key" "$value";
   then
-    echo "$NAME: ERROR! Could not write to $CONF_FILE"
+    echo "$NAME: ERROR! Could not write to $CONF_FILE!"
     exit 1
   fi
   echo "$NAME: $key: parameter written to $CONF_FILE"
@@ -212,7 +214,7 @@ PARAMETERS=( "$@" )
 # Check if xpadneo is installed
 if [[ -z "$INSTALLED_VERSION" ]];
 then
-    echo "Installation not found. Did you run ./install.sh?"
+    echo "$NAME: Installation not found. Did you run ./install.sh?"
     exit 1
 fi
 
