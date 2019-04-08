@@ -5,7 +5,7 @@ set -o posix
 
 # Define Variables
 VERSION="$(cat ./VERSION)"
-INSTALLED_VERSION="$(dkms status 2>/dev/null | grep '^hid-xpadneo,' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/')"
+INSTALLED_VERSION="$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')"
 
 MODULE="/sys/module/hid_xpadneo/"
 PARAMS="/sys/module/hid_xpadneo/parameters"
