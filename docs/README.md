@@ -51,7 +51,7 @@ Please feel free to add other Distributions as well!
 * Download the Repository to your local machine 
   `git clone https://github.com/atar-axis/xpadneo.git`
 * `cd xpadneo`
-* Run `./install.sh`
+* Run `sudo ./install.sh`
 * Done!
 
 ### Connection
@@ -107,10 +107,10 @@ To make the setting permanent and applied at loading time, try
 ### Update
 In order to update xpadneo, do the following
 * Update your cloned repo: `git pull`
-* Run `./update.sh`
+* Run `sudo ./update.sh`
 
 ### Uninstallation
-* Run `./uninstall.sh` to remove all installed versions of hid-xpadneo
+* Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
 
 ## Further information
 
