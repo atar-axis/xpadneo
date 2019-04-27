@@ -80,4 +80,4 @@ In order to update xpadneo, do the following
 
 
 ## Further information
-For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
+For further information - like [troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting), [debugging](https://atar-axis.github.io/xpadneo/#debugging), [compatible bt dongles](https://atar-axis.github.io/xpadneo/#bt_dongles) -  please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
