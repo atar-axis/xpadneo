@@ -59,7 +59,7 @@ Please feel free to add other Distributions as well!
 * `[bluetooth]# scan on`
 * wait until all available devices are listed (otherwise it may be hard to identify which one is the gamepad)
 * push the connect button on upper side of the gamepad, and hold it down until the light starts flashing fast
-* wait for the gamepad to show up in bluetoothctl, remember the MAC address (C8:3F:26:XX:XX:XX)
+* wait for the gamepad to show up in bluetoothctl, remember the <MAC> address (e.g. `C8:3F:26:XX:XX:XX`)
 * `[bluetooth]# pair <MAC>`
 * `[bluetooth]# trust <MAC>`
 * `[bluetooth]# connect <MAC>`
