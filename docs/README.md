@@ -127,7 +127,7 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
     * Reliable once connected
   * Reported by @ugly95 [here](https://github.com/atar-axis/xpadneo/issues/76#issuecomment-462532230)
 * [MIATONE Bluetooth Adapter Bluetooth CSR 4.0](https://www.amazon.com/gp/product/B00M1ATR4C/)
-  * Chipset: CSR8510
+  * Chipset: CSR 8510
   * `ID 0a12:0001 Cambridge Silicon Radio, Ltd Bluetooth Dongle (HCI mode)`
   * Performance:
     * Re-Connection Problems
