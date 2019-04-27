@@ -43,7 +43,7 @@ MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (mos
 
 static u8 param_disable_ff;
 module_param_named(disable_ff, param_disable_ff, byte, 0644);
-MODULE_PARM_DESC(disable_ff, "");
+MODULE_PARM_DESC(disable_ff, "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
 
 #define PARAM_DISABLE_FF_NONE    0
 #define PARAM_DISABLE_FF_MAIN    1
