@@ -166,8 +166,5 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
   * Reported by @ugly95 [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-481065171) and [here](https://github.com/atar-axis/xpadneo/issues/76#issuecomment-464397584)
 
 ## Further information
-
-If someone is interested in helping me getting this driver merged into the kernel, tell me. I would really appreciate that.
-
-For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
+For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
 
