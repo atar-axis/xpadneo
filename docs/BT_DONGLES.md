@@ -49,3 +49,10 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
     * Connection flawless
     * Sometimes laggy while Gameplay
   * Reported by @ugly95 [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-481065171) and [here](https://github.com/atar-axis/xpadneo/issues/76#issuecomment-464397584) 
+* [Targus BT 4.0 USB adapter](https://www.targus.com/au/acb75au)
+  * Chipset: BCM20702A0
+  * `ID 0a5c:21e8 Broadcom Corp. BCM20702A0 Bluetooth 4.0`
+  * Performance:
+    * Connection flawless
+    * Sometimes laggy while Gameplay
+  * Reported by Zowayix [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-487280791)
