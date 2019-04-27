@@ -1,4 +1,4 @@
-## (Non-) Compatible Bluetooth Dongles
+## BT Dongles
 
 Please report your Dongles and how they work [here](https://github.com/atar-axis/xpadneo/issues/93)
 
