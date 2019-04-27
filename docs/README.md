@@ -51,65 +51,38 @@ Please feel free to add other Distributions as well!
 * Download the Repository to your local machine 
   `git clone https://github.com/atar-axis/xpadneo.git`
 * `cd xpadneo`
-* Run `./install.sh`
+* Run `sudo ./install.sh`
 * Done!
 
 ### Connection
 * `sudo bluetoothctl`
 * `[bluetooth]# scan on`
-* push the connect button on upper side of the gamepad, and hold it down, until the light starts flashing fast
-* wait for the gamepad to show up in bluetoothctl, remember the MAC address (C8:3F:26:XX:XX:XX)
+* wait until all available devices are listed (otherwise it may be hard to identify which one is the gamepad)
+* push the connect button on upper side of the gamepad, and hold it down until the light starts flashing fast
+* wait for the gamepad to show up in bluetoothctl, remember the <MAC> address (e.g. `C8:3F:26:XX:XX:XX`)
 * `[bluetooth]# pair <MAC>`
 * `[bluetooth]# trust <MAC>`
 * `[bluetooth]# connect <MAC>`
 
 You know that everything works fine when you feel the gamepad rumble ;)
 
-> **The gamepad did not rumble ?** Secure Boot may be enabled on your computer. On most Linux distribution, running `mokutil --sb-state` will tell you if it is the case. When Secure Boot is enabled, unsigned kernel module cannot be loaded. Two options are available:
-> 1. Disable Secure Boot.
-> 2. Sign the module yourself.
-> Instructions for both of these options are available [here](https://atar-axis.github.io/xpadneo/#working-with-secure-boot).
->
-> Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar-axis.github.io/xpadneo/#debugging).
-
 ### Configuration
-The driver can be reconfigured at runtime by accessing the following sysfs
-files in `/sys/module/hid_xpadneo/parameters`:
 
-* `debug_level` (default `0`)
-  * `0` (no debug output) to `3` (all)
-  * For more information, please take a look [here](https://atar-axis.github.io/xpadneo/#debugging)
-* `disable_ff` (default `0`)
-  * `0` (ff enabled) to `1` (ff disabled)
-* `trigger_rumble_damping` (default `4`)
-  * Damp the strength of the trigger force feedback
-  * `1` (none) to `256` (max)
-* `fake_dev_version` (default `0x1130`)
-  * Fake the input device version to the given value (to prevent SDL from applying another mapping, see below)
-  * Values from `1` to `0xFFFF` are handled as a version number, `0` will retain the original version
-* `combined_z_axis` (default `0`)
-  * Combine the triggers (`ABS_Z` and `ABS_RZ`) to form a single axis `ABS_Z` which is used e.g. in flight simulators
-  * The left and right trigger will work against each other.
-
-Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
-  
-**Example**
-To set the highest level of debug verbosity temporarily, run  
-`echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level`  
-To make the setting permanent and applied at loading time, try  
-`echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf`
+* Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the available options.
 
 ### Update
 In order to update xpadneo, do the following
 * Update your cloned repo: `git pull`
-* Run `./update.sh`
+* Run `sudo ./update.sh`
 
 ### Uninstallation
-* Run `./uninstall.sh` to remove all installed versions of hid-xpadneo
+* Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
+
 
 ## Further information
+For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
 
-If someone is interested in helping me getting this driver merged into the kernel, tell me. I would really appreciate that.
-
-For further information, like instructions for troubleshooting, please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the input of the `/docs` folder.
-
+You will find there e.g. the following information
+* [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting)
+* [Debugging](https://atar-axis.github.io/xpadneo/#debugging)
+* Compatible BT Dongles

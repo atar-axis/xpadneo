@@ -6,7 +6,7 @@ if [[ $EUID != 0 ]]; then
 fi
 
 LATEST=$(wget --quiet --output-document=/dev/stdout "https://raw.githubusercontent.com/atar-axis/xpadneo/master/VERSION" | sed -E 's/.*"([0-9]*.[0-9]*.[0-9]*)".*/\1/')
-INSTALLED=$(dkms status 2>/dev/null | grep '^hid-xpadneo' 2>/dev/null | sed -E 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/')
+INSTALLED=$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')
 VERSION=$(cat VERSION)
 IS_GIT=$(git rev-parse --is-inside-work-tree 2>/dev/null)
 
