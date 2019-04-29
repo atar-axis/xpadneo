@@ -7,4 +7,5 @@ echo "y" > /sys/module/bluetooth/parameters/disable_ertm
 
 echo "Installing UDEV rule to automatically bind xpadneo (necessary on kernel < 4.16 and >= 4.20)..."
 cp ./src/udev_rules/99-xpadneo.rules /etc/udev/rules.d/
-udevadm control --reload
+cp ./src/udev_rules/xpadneo.sh /etc/udev/rules.d/
+udevadm control --reload # not necessary, we do it anyway
