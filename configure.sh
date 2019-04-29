@@ -51,9 +51,9 @@ function check_param {
         fi
         ;;
     "disable_ff")
-        if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
+        if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
         then
-            echo "$NAME: $key: Invalid value! Value must be 'y' or 'n'."
+            echo "$NAME: $key: Invalid value! Value must be between 0 and 3."
             exit 1
         fi
         ;;
