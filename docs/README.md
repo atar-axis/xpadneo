@@ -82,7 +82,7 @@ In order to update xpadneo, do the following
 ## Further information
 For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
 
-You will find there e.g. the following information
+You will find there e.g. the following sections
 * [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting)
 * [Debugging](https://atar-axis.github.io/xpadneo/#debugging)
-* Compatible BT Dongles
+* [Compatible BT Dongles](https://atar-axis.github.io/xpadneo/#bt-dongles)
