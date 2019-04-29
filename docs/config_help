@@ -12,7 +12,7 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 v
 	Ex. https://atar-axis.github.io/xpadneo/#debugging
 
 -f, --disable-ff
-	Set true to disable ff or set false to enable ff.  [y, n]
+	Disable the force feedback (Rumble).  [0 (enable all), 1 (disable main only), 2 (disable triggers only), 3 (disable all)]
 
 -r, --trigger-rumble-damping
 	Damp the strength of the trigger force feedback. [1 (none) to 256 (max)]

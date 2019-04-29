@@ -36,25 +36,30 @@ MODULE_VERSION(DRV_VER);
  */
 
 #ifdef DEBUG
-static u8 debug_level;
-module_param(debug_level, byte, 0644);
+static u8 param_debug_level;
+module_param_named(debug_level, param_debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
-static bool disable_ff;
-module_param(disable_ff, bool, 0644);
-MODULE_PARM_DESC(disable_ff, "(bool) Disable all force-feedback effects (rumble). 1: disable ff, 0: enable ff.");
+static u8 param_disable_ff;
+module_param_named(disable_ff, param_disable_ff, byte, 0644);
+MODULE_PARM_DESC(disable_ff, "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
 
-static bool combined_z_axis;
-module_param(combined_z_axis, bool, 0644);
+#define PARAM_DISABLE_FF_NONE    0
+#define PARAM_DISABLE_FF_MAIN    1
+#define PARAM_DISABLE_FF_TRIGGER 2
+#define PARAM_DISABLE_FF_ALL     3
+
+static bool param_combined_z_axis;
+module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
 MODULE_PARM_DESC(combined_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
 
-static u8 trigger_rumble_damping = 4;
-module_param(trigger_rumble_damping, byte, 0644);
+static u8 param_trigger_rumble_damping = 4;
+module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
-static u16 fake_dev_version = 0x1130;
-module_param(fake_dev_version, ushort, 0644);
+static u16 param_fake_dev_version = 0x1130;
+module_param_named(fake_dev_version, param_fake_dev_version, ushort, 0644);
 MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
 
 
@@ -63,7 +68,7 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
  *
  * Prints a debug message to kernel (dmesg)
  * only if both is true, this is a DEBUG version and the
- * debug_level-parameter is equal or higher than the level
+ * param_debug_level-parameter is equal or higher than the level
  * specified in hid_dbg_lvl
  */
 
@@ -76,13 +81,13 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
-		if (debug_level >= lvl) \
+		if (param_debug_level >= lvl) \
 			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), \
 				pr_fmt(fmt_str), ##__VA_ARGS__); \
 	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
 	do { \
-		if (debug_level >= lvl) \
+		if (param_debug_level >= lvl) \
 			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), \
 				DUMP_PREFIX_NONE, 32, 1, data, size, false); \
 	} while (0)
@@ -107,6 +112,7 @@ static DEFINE_IDA(xpadneo_device_id_allocator);
  */
 
 enum {
+	FF_ENABLE_NONE          = 0x00,
 	FF_ENABLE_RIGHT         = 0x01,
 	FF_ENABLE_LEFT          = 0x02,
 	FF_ENABLE_RIGHT_TRIGGER = 0x04,
@@ -182,7 +188,7 @@ struct xpadneo_devdata {
 
 	/* axis states */
 	s32 last_abs_z;
-	s32 last_abs_rz
+	s32 last_abs_rz;
 };
 
 
@@ -228,7 +234,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	struct ff_report ff_pck;
 	u16 weak, strong, direction, max, max_damped;
-	u8 mag_right, mag_left;
+	u8 mag_main_right, mag_main_left, mag_trigger_right, mag_trigger_left;
+	u8 ff_active;
 
 	const int fractions_milli[]
 		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
@@ -247,7 +254,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
-	if (disable_ff)
+	if (param_disable_ff == PARAM_DISABLE_FF_ALL)
 		return 0;
 
 	if (effect->type != FF_RUMBLE)
@@ -262,14 +269,16 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		strong, weak, direction);
 
 	/* calculate the physical magnitudes */
-	mag_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
-	mag_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
+	mag_main_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
+	mag_main_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
+
 
 	/* get the proportions from a precalculated cosine table
 	 * calculation goes like:
 	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
 	 * fractions_milli(a) = (1000 + (cosine * 1000)) / 2
 	 */
+
 	fraction_TL = 0;
 	fraction_TR = 0;
 
@@ -282,28 +291,40 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	}
 
 	/* we want to keep the rumbling at the triggers below the maximum
-	 * of the weak and strong main rumble
-	 */
-	max = mag_right > mag_left ? mag_right : mag_left;
+	* of the weak and strong main rumble
+	*/
+	max = mag_main_right > mag_main_left ? mag_main_right : mag_main_left;
 
 	/* the user can change the damping at runtime, hence check the range */
 	trigger_rumble_damping_nonzero
-		= trigger_rumble_damping == 0 ? 1 : trigger_rumble_damping;
+		= param_trigger_rumble_damping == 0 ? 1 : param_trigger_rumble_damping;
 
 	max_damped = max / trigger_rumble_damping_nonzero;
+
+	mag_trigger_left = (u8)((max_damped * fraction_TL) / 1000);
+	mag_trigger_right = (u8)((max_damped * fraction_TR) / 1000);
+
+
+	ff_active = FF_ENABLE_ALL;
+
+	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
+		ff_active &= ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
+
+	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
+		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
 
 
 	create_ff_pck(
 		&ff_pck, 0x03,
-		FF_ENABLE_ALL,
-		(u8)((max_damped * fraction_TL) / 1000),
-		(u8)((max_damped * fraction_TR) / 1000),
-		mag_left, mag_right,
+		ff_active,
+		mag_trigger_left, mag_trigger_right,
+		mag_main_left, mag_main_right,
 		0);
 
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		"active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		ff_active,
 		max, fraction_TL, fraction_TR,
 		ff_pck.ff.magnitude_left_trigger,
 		ff_pck.ff.magnitude_right_trigger);
@@ -333,7 +354,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	ff_pck.ff = ff_clear;
 
 	/* 'HELLO' FROM THE OTHER SIDE */
-	if (!disable_ff) {
+	if (!param_disable_ff) {
 		ff_pck.report_id = 0x03;
 		ff_pck.ff.magnitude_right = 0x80;
 		ff_pck.ff.magnitude_left  = 0x40;
@@ -1012,10 +1033,10 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
-	if (fake_dev_version) {
-		xdata->idev->id.version = (u16) fake_dev_version;
+	if (param_fake_dev_version) {
+		xdata->idev->id.version = (u16) param_fake_dev_version;
 		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
-			fake_dev_version);
+			param_fake_dev_version);
 	}
 
 
@@ -1030,14 +1051,14 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
 	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
 
-	if (combined_z_axis)
+	if (param_combined_z_axis)
 		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
 
 	// furthermore, we need to translate the incoming events to fit within
 	// the new range, we will do that in the xpadneo_event() hook.
 
-	// We remove the ABS_RZ event if combined_z_axis is enabled
-	if (combined_z_axis) {
+	// We remove the ABS_RZ event if param_combined_z_axis is enabled
+	if (param_combined_z_axis) {
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
@@ -1080,7 +1101,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
 	// as already explained in xpadneo_input_configured() above
-	// furthermore we need to combine ABS_Z and ABS_RZ if combined_z_axis
+	// furthermore we need to combine ABS_Z and ABS_RZ if param_combined_z_axis
 	// is set
 
 	if (usg_type == EV_ABS) {
@@ -1091,7 +1112,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			goto sync_and_stop_processing;
 		}
 
-		if (combined_z_axis) {
+		if (param_combined_z_axis) {
 			if (usg_code == ABS_Z || usg_code == ABS_RZ) {
 				if (usg_code == ABS_Z)
 					xdata->last_abs_z = value;
