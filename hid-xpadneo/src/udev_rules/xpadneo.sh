@@ -6,7 +6,7 @@
 
 
 vercomp () {
-    if [[ $1 == $2 ]]
+    if [[ "$1" == "$2" ]]
     then
         return 0
     fi
@@ -48,14 +48,14 @@ vercomp () {
 
 krnl=$(uname -r | sed -E 's/^([0-9]+.[0-9]+).*/\1/')
 
-$(vercomp $krnl "4.20") 
+vercomp "$krnl" "4.20"
 if [[ $? -le 1 ]]; then
     # kernel version is from 4.20 upwards
     echo "3"
     exit 0
 fi
 
-$(vercomp $krnl "4.14")
+vercomp "$krnl" "4.14"
 if [[ $? -le 1 ]]; then
     # kernel version is from 4.14 upwards
     # bind uevents are supported
