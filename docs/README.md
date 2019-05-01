@@ -3,7 +3,7 @@ If you want to support me or accelerate the development of a special feature, co
 Just leave a message if your donation is for a specific use (like a new hardware).
 
 **UPDATE**  
-A new hardware (*Xbox One Wireless Elite*) is fully funded now! Thank you for everyone who donated something!
+A new hardware (*Xbox One Wireless Elite*) is fully funded now! Thank you for everyone who donated something for it!
 I will start development as soon as it arrives :grin:
 
 
