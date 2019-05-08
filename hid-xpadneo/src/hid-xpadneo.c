@@ -1,4 +1,4 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
+#define DRV_VER "0.6.0"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -25,6 +25,8 @@ MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
 
+
+extern void vmouse_movement(int, int);
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
 
@@ -1093,6 +1095,14 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	u16 usg_code = usage->code;
 
 
+	if (usg_type == EV_ABS) {
+		if (usg_code == ABS_X) {
+			printk(KERN_ERR "%d\n", value);
+			vmouse_movement(1, (value > 32768 ? 1 : -1));
+		}
+	}
+
+
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
 		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
 		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
@@ -1124,8 +1134,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			}
 		}
 	}
-
-
 
 
 	/* TODO:
@@ -1389,7 +1397,6 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
  *
  * Caution: do not use both! (module_hid_driver and hid_(un)register_driver)
  */
-
 static int __init xpadneo_initModule(void)
 {
 	pr_info("%s: hello there!\n", xpadneo_driver.name);
