@@ -1,6 +1,11 @@
 [![ko-fi](https://www.ko-fi.com/img/donate_sm.png)](https://ko-fi.com/R6R5P6FN)  
 If you want to support me or accelerate the development of a special feature, consider a small donation :heart:  
-Just leave a message if your donation is for a specific use, like support for **Xbox One Wireless Elite**.
+Just leave a message if your donation is for a specific use (like a new hardware).
+
+**UPDATE**  
+A new hardware (*Xbox One Wireless Elite*) is fully funded now! Thank you for everyone who donated something for it!
+I will start development as soon as it arrives :grin:
+
 
 # Advanced Linux Driver for Xbox One Wireless Gamepad
 
@@ -82,7 +87,7 @@ In order to update xpadneo, do the following
 ## Further information
 For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated automatically from the content of the `/docs` folder.
 
-You will find there e.g. the following information
+You will find there e.g. the following sections
 * [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting)
 * [Debugging](https://atar-axis.github.io/xpadneo/#debugging)
-* Compatible BT Dongles
+* [Compatible BT Dongles](https://atar-axis.github.io/xpadneo/#bt-dongles)
