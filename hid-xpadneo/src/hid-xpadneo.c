@@ -1,4 +1,4 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
+#define DRV_VER "0.6.0"
 
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
@@ -13,6 +13,8 @@
 #include <linux/module.h>	/* MODULE_*, module_*, ... */
 #include <linux/slab.h>		/* kzalloc(), kfree(), ... */
 #include <linux/delay.h>	/* mdelay(), ... */
+#include <linux/jiffies.h>	/* Interrupt Ticks (Timer) */
+
 #include "hid-ids.h"		/* VENDOR_ID... */
 
 
@@ -180,6 +182,12 @@ struct xpadneo_devdata {
 	/* report types */
 	enum report_type report_descriptor;
 	enum report_type report_behaviour;
+
+	/* pointer / gamepad mode */
+	bool mode_gp;
+
+	/* timer values */
+	unsigned long mode_down_jif;
 
 	/* battery information */
 	struct power_supply_desc batt_desc;
@@ -463,7 +471,6 @@ static int battery_get_property(struct power_supply *ps,
 
 	return 0;
 }
-
 
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
@@ -1095,12 +1102,39 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	u16 usg_code = usage->code;
 
 
-	if (usg_type == EV_ABS) {
-		if (usg_code == ABS_X) {
-			printk(KERN_ERR "%d\n", value);
-			vmouse_movement(1, (value > 32768 ? 1 : -1));
+
+	// ============== IN PROGRESS ==============
+
+	// TODO:
+	// Instead of using jiffies, start a timer which
+	// toggles the mode after 2-3 seconds. Stop the timer
+	// when the button is released (if it is still there)
+
+	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
+
+		if (value == 1) {
+			// save current jiffies when button is pressed
+			xdata->mode_down_jif = jiffies;
+		} else {
+			// check if enough jiffies has passed when the button is released
+			unsigned long delay = HZ * 1;
+			if (time_after(jiffies, xdata->mode_down_jif + delay)) {
+				xdata->mode_gp = !(xdata->mode_gp);
+				hid_dbg_lvl(DBG_LVL_FEW, hdev, "switched mode gp <-> mouse\n");
+			}
 		}
 	}
+
+	if (!(xdata->mode_gp)){
+		if (usg_type == EV_ABS) {
+			if (usg_code == ABS_X) {
+				//printk(KERN_ERR "%d\n", value);
+				vmouse_movement(1, (value > 32768 ? 1 : -1));
+			}
+		}
+	}
+
+	// ============== IN PROGRESS ==============
 
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
@@ -1234,6 +1268,8 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	xdata->hdev = hdev;
 
+	xdata->mode_gp = true;
+
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
 
@@ -1256,7 +1292,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	ret = hid_parse(hdev);
 	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	/* Debug Output*/
@@ -1284,28 +1320,24 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	/* Call the device initialization routines */
 	ret = xpadneo_initDevice(hdev);
 	if (ret) {
 		hid_err(hdev, "device initialization failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	ret = xpadneo_initBatt(hdev);
 	if (ret) {
 		hid_err(hdev, "battery initialization failed\n");
-		goto return_error;
+		return ret;
 	}
-
 
 	/* Everything is fine */
 	return 0;
-
-return_error:
-	return ret;
 }
 
 
