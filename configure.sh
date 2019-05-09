@@ -131,7 +131,7 @@ function parse_args {
   if [[ -z "$LINE_EXISTS" ]];
   then
     # If line doesn't exist echo all of the defaults.
-    echo "options hid_xpadneo debug_level=0 disable_ff=n trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
