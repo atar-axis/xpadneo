@@ -956,7 +956,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 			if (usg_code == BTN_A) {
 				vmouse_leftclick(value);
-				printk(KERN_ERR "click %d\n", value);
 			}
 
 		}
