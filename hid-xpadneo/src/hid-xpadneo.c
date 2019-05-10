@@ -13,7 +13,7 @@
 #include <linux/module.h>	/* MODULE_*, module_*, ... */
 #include <linux/slab.h>		/* kzalloc(), kfree(), ... */
 #include <linux/delay.h>	/* mdelay(), ... */
-#include <linux/jiffies.h>	/* Interrupt Ticks (Timer) */
+#include <linux/timer.h>	/* Interrupt Ticks (Timer) */
 
 #include "hid-ids.h"		/* VENDOR_ID... */
 
@@ -186,8 +186,8 @@ struct xpadneo_devdata {
 	/* pointer / gamepad mode */
 	bool mode_gp;
 
-	/* timer values */
-	unsigned long mode_down_jif;
+	/* timers */
+	struct timer_list timer;
 
 	/* battery information */
 	struct power_supply_desc batt_desc;
@@ -1075,6 +1075,38 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 }
 
 
+
+
+
+
+static void switch_mode(struct timer_list *t) {
+
+	struct xpadneo_devdata *xdata = from_timer(xdata, t, timer);
+	struct hid_device *hdev = xdata->hdev;
+	struct ff_report ff_pck;
+
+	xdata->mode_gp = !xdata->mode_gp;
+
+	/* TODO: outsource that */
+
+	ff_pck.ff = ff_clear;
+
+	if (!param_disable_ff) {
+		ff_pck.report_id = 0x03;
+		ff_pck.ff.magnitude_right = 0x80;
+		ff_pck.ff.magnitude_left  = 0x80;
+		ff_pck.ff.duration = 10;
+		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT | FF_ENABLE_LEFT;
+
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		mdelay(ff_pck.ff.duration * 10); // TODO: busy waiting?!
+	}
+
+	hid_dbg_lvl(DBG_LVL_ALL, hdev, "gp/mouse mode changed\n");
+
+}
+
+
 /*
  * Event Hook
  *
@@ -1105,31 +1137,28 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	// ============== IN PROGRESS ==============
 
-	// TODO:
-	// Instead of using jiffies, start a timer which
-	// toggles the mode after 2-3 seconds. Stop the timer
-	// when the button is released (if it is still there)
+	// MODE SWITCH DETECTION
 
 	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
-
 		if (value == 1) {
-			// save current jiffies when button is pressed
-			xdata->mode_down_jif = jiffies;
+			// NOTE: NOT compatible with kernel < 4.14
+			timer_setup(&xdata->timer, switch_mode, 0);
+			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
 		} else {
-			// check if enough jiffies has passed when the button is released
-			unsigned long delay = HZ * 1;
-			if (time_after(jiffies, xdata->mode_down_jif + delay)) {
-				xdata->mode_gp = !(xdata->mode_gp);
-				hid_dbg_lvl(DBG_LVL_FEW, hdev, "switched mode gp <-> mouse\n");
-			}
+			del_timer_sync(&xdata->timer);
 		}
 	}
+
+	// MOUSE MODE HANDLING
+	// TODO: 
 
 	if (!(xdata->mode_gp)){
 		if (usg_type == EV_ABS) {
 			if (usg_code == ABS_X) {
-				//printk(KERN_ERR "%d\n", value);
 				vmouse_movement(1, (value > 32768 ? 1 : -1));
+			}
+			if (usg_code == ABS_Y) {
+				vmouse_movement(0, (value > 32768 ? 1 : -1));
 			}
 		}
 	}
@@ -1349,6 +1378,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+	del_timer_sync(&xdata->timer);
 
 	hid_hw_stop(hdev);
 
