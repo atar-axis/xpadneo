@@ -29,6 +29,8 @@ MODULE_VERSION(DRV_VER);
 
 
 extern void vmouse_movement(int, int);
+extern void vmouse_leftclick(int);
+
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
 
@@ -1150,16 +1152,27 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	}
 
 	// MOUSE MODE HANDLING
-	// TODO: 
+	// TODO:
 
 	if (!(xdata->mode_gp)){
 		if (usg_type == EV_ABS) {
+
+			int centered_value = value - 32768;
+			int mouse_value = centered_value / 3000;
+
 			if (usg_code == ABS_X) {
-				vmouse_movement(1, (value > 32768 ? 1 : -1));
+				vmouse_movement(1, mouse_value);
 			}
 			if (usg_code == ABS_Y) {
-				vmouse_movement(0, (value > 32768 ? 1 : -1));
+				vmouse_movement(0, mouse_value);
 			}
+		} else if (usg_type == EV_KEY) {
+
+			if (usg_code == BTN_A) {
+				vmouse_leftclick(value);
+				printk(KERN_ERR "click %d\n", value);
+			}
+
 		}
 	}
 
