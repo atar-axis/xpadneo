@@ -194,3 +194,17 @@ struct xpadneo_devdata {
 	s32 last_abs_z;
 	s32 last_abs_rz;
 };
+
+
+enum mapping_behaviour {
+	MAP_IGNORE, /* Completely ignore this field */
+	MAP_AUTO,   /* Do not really map it, let hid-core decide */
+	MAP_STATIC  /* Map to the values given */
+};
+
+struct input_ev {
+	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
+	u8 event_type;
+	/* Map to which input code (BTN_A, ABS_X, ...)? */
+	u16 input_code;
+};

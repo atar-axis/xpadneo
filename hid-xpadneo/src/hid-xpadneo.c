@@ -1,5 +1,3 @@
-#include "hid-xpadneo.h"
-
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *
@@ -7,7 +5,10 @@
  * Copyright (c) 2017 Florian Dollinger <dollinger.florian@gmx.de>
  */
 
-void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
+#include "hid-xpadneo.h"
+
+
+static void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
 	u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
 	u8 start_delay) {
 
@@ -27,7 +28,7 @@ void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
 	 * Take a look here:
 	 * https://stackoverflow.com/questions/48034091/
 	 * We therefore simply play the effect as long as possible, which is
-	 * 2, 55s * 255 = 650, 25s ~ = 10min
+	 * 2,55s * 255 = 650,25s ~ = 10min
 	 */
 }
 
@@ -300,7 +301,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 
 	struct power_supply_config ps_config = {
-		/* pass the xpadneo_data to the get_property function */
+		/* pass the driver instance xpadneo_data to the get_property function */
 		.drv_data = xdata
 	};
 
@@ -359,20 +360,6 @@ err_free:
 
 	return ret;
 }
-
-
-enum mapping_behaviour {
-	MAP_IGNORE, /* Completely ignore this field */
-	MAP_AUTO,   /* Do not really map it, let hid-core decide */
-	MAP_STATIC  /* Map to the values given */
-};
-
-struct input_ev {
-	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
-	u8 event_type;
-	/* Map to which input code (BTN_A, ABS_X, ...)? */
-	u16 input_code;
-};
 
 u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
 {
@@ -640,7 +627,7 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
  *
  * You can either modify the original report in place and just
  * return the original start address (rdesc) or you reserve a new
- * one and return a pointer to it. In the latter, you mostly have to
+ * one and return a pointer to it. In the latter, you may have to
  * modify the rsize value too.
  */
 
@@ -802,12 +789,7 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		RAWEV_STOP_PROCESSING  /* Stop further processing */
 	};
 
-	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
-
 	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data, reportsize);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
-
 
 	switch (report->id) {
 	case 01:
@@ -832,8 +814,7 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 /*
  * Input Configured Hook
  *
- * We have to fix up the key-bitmap, because there is
- * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
+ * Called as soon as the Input Device is able to get registered.
  *
  */
 
@@ -856,7 +837,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	// The HID device descriptor defines a range from 0 to 65535 for all
 	// absolute axis (like ABS_X), this is in contrary to what the linux
-	// gamepad specification defines [–32.768; 32.767].
+	// gamepad specification demands [–32.768; 32.767].
 	// Therefore, we have to set the min, max, fuzz and flat values by hand:
 
 	input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
@@ -871,7 +852,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	// furthermore, we need to translate the incoming events to fit within
 	// the new range, we will do that in the xpadneo_event() hook.
 
-	// We remove the ABS_RZ event if param_combined_z_axis is enabled
+	// Remove the ABS_RZ event if param_combined_z_axis is enabled
 	if (param_combined_z_axis) {
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
@@ -907,7 +888,11 @@ static void switch_mode(struct timer_list *t) {
 		mdelay(ff_pck.ff.duration * 10); // TODO: busy waiting?!
 	}
 
-	hid_dbg_lvl(DBG_LVL_ALL, hdev, "gp/mouse mode changed\n");
+	if (xdata->mode_gp) {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Gamepad\n");
+	} else {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Mouse\n");
+	}
 
 }
 
@@ -946,8 +931,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
 		if (value == 1) {
-			// NOTE: NOT compatible with kernel < 4.14
-			timer_setup(&xdata->timer, switch_mode, 0);
 			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
 		} else {
 			del_timer_sync(&xdata->timer);
@@ -1110,13 +1093,13 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	xdata->id = ida_simple_get(&xpadneo_device_id_allocator,
 			0, 0, GFP_KERNEL);
-
 	xdata->hdev = hdev;
-
 	xdata->mode_gp = true;
-
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
+
+	// NOTE: NOT compatible with kernel < 4.14
+	timer_setup(&xdata->timer, switch_mode, 0);
 
 	switch (hdev->dev_rsize) {
 	case 307:
@@ -1211,7 +1194,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 
 	/*
 	 * The ProductID is somehow related to the Firmware Version,
-	 * but it somehow changed back from 0x02FD (newer fw) to 0x02E0 (older)
+	 * but it also changed back from 0x02FD (newer fw) to 0x02E0 (older one)
 	 * and vice versa on one controller here.
 	 *
 	 * Unfortunately you cannot tell from product id how the gamepad really
