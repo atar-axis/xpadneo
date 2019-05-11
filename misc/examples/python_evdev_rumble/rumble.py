@@ -10,9 +10,9 @@ for name in util.list_devices():
         break
 
 if dev is None:
-    
+
     print("Sorry, no FF capable device found")
-    
+
 else:
     print("found " + dev.name + " at " + dev.path)
     print("Preparing FF effect...")
@@ -29,18 +29,18 @@ else:
         ff.Replay(duration_ms, 0), # length and delay
         ff.EffectType(ff_rumble_effect=rumble)
     )
-    
+
     print("Uploading FF effect...")
-    
+
     effect_id = dev.upload_effect(effect)
-    
-    
+
+
     print("Playing FF effect...")
-    
+
     repeat_count = 1
-    
+
 
     dev.write(ecodes.EV_FF, effect_id, repeat_count)
     time.sleep(1)
-    
-    dev.erase_effect(effect_id) 
+
+    dev.erase_effect(effect_id)
