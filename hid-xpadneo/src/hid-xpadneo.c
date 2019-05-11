@@ -948,14 +948,16 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 			if (usg_code == ABS_X) {
 				vmouse_movement(1, mouse_value);
-			}
-			if (usg_code == ABS_Y) {
+			} else if (usg_code == ABS_Y) {
 				vmouse_movement(0, mouse_value);
 			}
+
 		} else if (usg_type == EV_KEY) {
 
 			if (usg_code == BTN_A) {
 				vmouse_leftclick(value);
+			} else if (usg_code == BTN_B) {
+				vmouse_rightclick(value);
 			}
 
 		}

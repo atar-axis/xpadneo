@@ -22,6 +22,7 @@ MODULE_VERSION(DRV_VER);
 
 extern void vmouse_movement(int, int);
 extern void vmouse_leftclick(int);
+extern void vmouse_rightclick(int);
 
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
