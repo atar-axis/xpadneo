@@ -7,6 +7,7 @@
 #include <linux/slab.h>		/* kzalloc(), kfree(), ... */
 #include <linux/delay.h>	/* mdelay(), ... */
 #include <linux/timer.h>	/* Interrupt Ticks (Timer) */
+#include <linux/version.h>  /* LINUX_VERSION_CODE, KERNEL_VERSION(a,b,c) */
 
 #include "hid-ids.h"		/* VENDOR_ID... */
 

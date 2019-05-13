@@ -1261,7 +1261,7 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
  */
 static int __init xpadneo_initModule(void)
 {
-	pr_info("%s: hello there!\n", xpadneo_driver.name);
+	pr_info("%s: hello there (kernel %06X)!\n", xpadneo_driver.name, LINUX_VERSION_CODE);
 
 	return hid_register_driver(&xpadneo_driver);
 }
