@@ -9,21 +9,6 @@
 # according to their name. on every kernel uevent, all rules are
 # compared to that event - one by one.
 
-# NOTES:
-# * The result of PROGRAM is stored per uevent, but if can be overwritten if there is another rule on the same event with a PROGRAM key
-# * RUN equals RUN{program} != RUN{builtin}, but it seems that there is only one run_list per event,
-#   meaning that an assignment via = or := does also delete the other kind of run commands
-# * Final assignments on RUN are not supported, it is always possible to add others (bug)
-# * PROGRAM commands gets executed immediately while processing of the rules for the event
-#   but the RUN commands are collected and then run asynchronously
-# * Therefore the xpn_method file isn't yet created when the program command
-#   of method 1 tries to read it out, program fails and replaces the result of the other rule.
-
-# TODO:
-# instead of using xpn_method as storage I would prefer to use ENV or ATTR, but at least setting an ENV
-# variable in the add event is not available in the bind event on the same device
-# why is ATTR not available there?
-
 # kernel versions        manual binding (bind/unbind)   bind uevent             hid_generic greedy      hid_microsoft support   gamepad     method
 # ---------------        ----------------------------   --------------          ------------------      ---------------------   -------     ------
 # [    ... - 2.6.13 [    no                             no                      yes                     no                      *           rmmod (not supported in xpadneo)
@@ -33,74 +18,7 @@
 # [   4.20 - ...    ]    yes                            yes                     no                      yes                     02FD        3: bind, microsoft
 #                                                                                                                               02E0        automatic
 
-
-### PART 1 ### (do not switch pt1 <> pt2 !)
-
-# DEBUG METHODS
-
-ACTION=="bind", ENV{MODALIAS}=="hid:b0005g0001v0000045Ep000002E0|hid:b0005g0001v0000045Ep000002FD", \
-DRIVER=="?*", \
-PROGRAM="/bin/sh -c 'cat /etc/udev/rules.d/xpn_method'", \
-RESULT=="?", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: method %c fires\" > /dev/kmsg'"
-
-
-# BIND METHODS
-
-# METHOD 1
-
-ACTION=="add", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", SUBSYSTEM=="hid", \
-PROGRAM="/bin/sh -c 'test -f /etc/udev/rules.d/xpn_method && cat /etc/udev/rules.d/xpn_method'", \
-RESULT=="1", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: unbind: hid-generic; bind: xpadneo\" > /dev/kmsg'", \
-RUN+="/bin/sh -c 'echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind'", \
-GOTO="end"
-
-# METHOD 2
-
-ACTION=="bind", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", SUBSYSTEM=="hid", DRIVER=="hid-generic", \
-PROGRAM="/bin/sh -c 'test -f /etc/udev/rules.d/xpn_method && cat /etc/udev/rules.d/xpn_method'", \
-RESULT=="2", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: unbind: hid-generic; bind: xpadneo\" > /dev/kmsg'", \
-RUN+="/bin/sh -c 'echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind'", \
-GOTO="end"
-
-# METHOD 3
-
-# this will only fire on 02FD gamepads since hid_microsoft does not support the 02E0 version yet
-# and therefore there will be no bind event to hid_microsoft
-ACTION=="bind", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", SUBSYSTEM=="hid", DRIVER=="microsoft", \
-PROGRAM="/bin/sh -c 'test -f /etc/udev/rules.d/xpn_method && cat /etc/udev/rules.d/xpn_method'", \
-RESULT=="3", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: unbind: microsoft; bind: xpadneo\" > /dev/kmsg'", \
-RUN+="/bin/sh -c 'echo $kernel > /sys/bus/hid/drivers/microsoft/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind'", \
-GOTO="end"
-
-
-LABEL="end"
-
-
-
-### PART 2 ### (do not switch pt1 <> pt2 !)
-
-# We override the automatic driver loading mechanism, which is defined in /usr/lib/udev/rules.d/80-drivers.rules.
-# We load xpadneo (only) by using the ":=" operator (which empties the RUN list for this event and prevents any other assignment).
-# Furthermore we determine the kernel version (by the PROGRAM assignment, the result is stored immediately in $result/%c and can be
-# matched in all following rules on the _same event_)
-
-ACTION=="add", ENV{MODALIAS}=="hid:b0005g0001v0000045Ep000002E0|hid:b0005g0001v0000045Ep000002FD", \
-PROGRAM="/etc/udev/rules.d/xpadneo.sh", \
-RUN{builtin}:="kmod load hid_xpadneo", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: binding method: %c\" > /dev/kmsg'", \
-RUN+="/bin/sh -c 'echo \"%c\" > /etc/udev/rules.d/xpn_method'"
-
-# ... but preventing the loading of other divers does only work if
-# no other fitting driver was loaded by another device before!
-# if this is the case, we rely on the method detection script result.
-
-
-# remove the xpn_method file when the gamepad gets removed
-
-ACTION=="remove", ENV{MODALIAS}=="hid:b0005g0001v0000045Ep000002E0|hid:b0005g0001v0000045Ep000002FD", \
-RUN+="/bin/sh -c 'echo \"xpadneo udev: removing xpn_method\" > /dev/kmsg'", \
-RUN+="/bin/sh -c 'rm -f /etc/udev/rules.d/xpn_method'"
+ACTION=="add", \
+KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", \
+SUBSYSTEM=="hid", \
+RUN:="/bin/sh -c 'echo xpadneo udev: $kernel > /dev/kmsg; modprobe hid_xpadneo; echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/microsoft/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind; echo xpadneo udev: ok > /dev/kmsg'"
