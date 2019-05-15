@@ -37,7 +37,7 @@ class gamepad():
         duration_ms = 200
         effect = ff.Effect(ecodes.FF_RUMBLE, -1, 0, ff.Trigger(0, 0), ff.Replay(duration_ms, 0), ff.EffectType(ff_rumble_effect=rumble))
         self.effect2_id = self.device_file.upload_effect(effect)
-        
+
 
     async def read_gamepad_input(self): # asyncronus read-out of events
         max_abs_joystick_left_x = 0xFFFF/2
@@ -47,7 +47,7 @@ class gamepad():
         max_abs_joystick_right_x = 0xFFFF/2
         uncertainty_joystick_right_x = 2000
         max_trigger = 1023
-        
+
         async for event in self.device_file.async_read_loop():
                 if not(self.power_on): #stop reading device when power_on = false
                     break
