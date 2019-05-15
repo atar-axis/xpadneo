@@ -21,9 +21,11 @@ MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF"
 MODULE_VERSION(DRV_VER);
 
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 extern void vmouse_movement(int, int);
 extern void vmouse_leftclick(int);
 extern void vmouse_rightclick(int);
+#endif
 
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
@@ -182,8 +184,10 @@ struct xpadneo_devdata {
 	/* pointer / gamepad mode */
 	bool mode_gp;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	/* timers */
 	struct timer_list timer;
+#endif
 
 	/* battery information */
 	struct power_supply_desc batt_desc;

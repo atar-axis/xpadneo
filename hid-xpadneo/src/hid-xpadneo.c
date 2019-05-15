@@ -864,7 +864,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 static void switch_mode(struct timer_list *t) {
 
 	struct xpadneo_devdata *xdata = from_timer(xdata, t, timer);
@@ -895,6 +895,7 @@ static void switch_mode(struct timer_list *t) {
 	}
 
 }
+#endif
 
 
 /*
@@ -929,6 +930,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	// MODE SWITCH DETECTION
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
 		if (value == 1) {
 			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
@@ -936,10 +938,12 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			del_timer_sync(&xdata->timer);
 		}
 	}
+#endif
 
 	// MOUSE MODE HANDLING
 	// TODO:
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	if (!(xdata->mode_gp)){
 		if (usg_type == EV_ABS) {
 
@@ -962,6 +966,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 		}
 	}
+#endif
 
 	// ============== IN PROGRESS ==============
 
@@ -1099,8 +1104,9 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
 
-	// NOTE: NOT compatible with kernel < 4.14
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	timer_setup(&xdata->timer, switch_mode, 0);
+#endif
 
 	switch (hdev->dev_rsize) {
 	case 307:
@@ -1178,7 +1184,10 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	del_timer_sync(&xdata->timer);
+#endif
 
 	hid_hw_stop(hdev);
 
@@ -1262,6 +1271,10 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 static int __init xpadneo_initModule(void)
 {
 	pr_info("%s: hello there (kernel %06X)!\n", xpadneo_driver.name, LINUX_VERSION_CODE);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
+	pr_info("%s: kernel version < 4.14.0, no mouse support!\n", xpadneo_driver.name);
+#endif
 
 	return hid_register_driver(&xpadneo_driver);
 }
