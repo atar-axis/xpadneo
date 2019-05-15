@@ -3,7 +3,7 @@
 """
 example class to use the controller with asyncio
 python>=3.6 is necessary
-script is tested on a raspberry pi 3 
+script is tested on a raspberry pi 3
 """
 import asyncio
 from evdev import InputDevice, ff, ecodes
@@ -77,7 +77,7 @@ class gamepad():
                         self.trigger_right = event.value / max_trigger
                     elif event.code == 2: # left trigger
                         self.trigger_left = event.value / max_trigger
-                if (event.type == 1): # type is button 
+                if (event.type == 1): # type is button
                     if event.code == 307: # button "X" pressed ?
                         self.button_x = True
                     if event.code == 308: # button "Y" pressed ?
@@ -94,12 +94,12 @@ class gamepad():
                 self.device_file.write(ecodes.EV_FF, self.effect2_id, repeat_count)
                 self.rumble_effect = 0 # turn of effect in order to play effect2 only once
             await asyncio.sleep(0.2)
- 
+
     def erase_rumble(self):
         self.device_file.erase_effect(self.effect1_id)
 
 if __name__ == "__main__":
-    
+
     async def main():
         print("press x to stop, Y to rumble light, B to rumble once, trigger and joystick right to see analog value")
         while True:
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                 remote_control.erase_rumble()
                 break
             await asyncio.sleep(0)
-    
+
     remote_control = gamepad(file = '/dev/input/event0')
     futures = [remote_control.read_gamepad_input(), remote_control.rumble(), main()]
     loop = asyncio.get_event_loop()
