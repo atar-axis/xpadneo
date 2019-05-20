@@ -926,11 +926,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 
 
-	// ============== IN PROGRESS ==============
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 
 	// MODE SWITCH DETECTION
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
 		if (value == 1) {
 			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
@@ -938,13 +937,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			del_timer_sync(&xdata->timer);
 		}
 	}
-#endif
 
 	// MOUSE MODE HANDLING
-	// TODO:
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
-	if (!(xdata->mode_gp)){
+	if (!(xdata->mode_gp)) {
 		if (usg_type == EV_ABS) {
 
 			int centered_value = value - 32768;
@@ -965,10 +961,11 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			}
 
 		}
+
+		// do not report GP events in mouse mode
+		return EV_STOP_PROCESSING;
 	}
 #endif
-
-	// ============== IN PROGRESS ==============
 
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
@@ -1072,7 +1069,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 sync_and_stop_processing:
 	input_sync(idev);
 	return EV_STOP_PROCESSING;
-
 }
 
 
