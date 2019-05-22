@@ -957,7 +957,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				vmouse_movement(0, mouse_value);
 				break;
 			case ABS_RY:
-				mouse_value = -(centered_value / 8192);
+				mouse_value = -(centered_value / 16384);
 				vmouse_wheel(mouse_value);
 				break;
 			}
