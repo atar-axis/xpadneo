@@ -957,8 +957,8 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				vmouse_movement(0, mouse_value);
 				break;
 			case ABS_RY:
-				mouse_value = centered_value / 6000;
-				vmouse_wheel(-mouse_value);
+				mouse_value = -(centered_value / 1024);
+				vmouse_wheel(mouse_value);
 				break;
 			}
 
@@ -1285,11 +1285,17 @@ static int __init xpadneo_initModule(void)
 	pr_info("%s: kernel version < 4.14.0, no mouse support!\n", xpadneo_driver.name);
 #endif
 
+	void (*_vmouse_movement)(int,int) = symbol_get(vmouse_movement);
+	if (_vmouse_movement)
+		pr_info("%s: vmouse support enabeld!\n", xpadneo_driver.name);
+
 	return hid_register_driver(&xpadneo_driver);
 }
 
 static void __exit xpadneo_exitModule(void)
 {
+	//symbol_put(vmouse_movement);
+
 	hid_unregister_driver(&xpadneo_driver);
 
 	ida_destroy(&xpadneo_device_id_allocator);
