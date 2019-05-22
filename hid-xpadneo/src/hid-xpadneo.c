@@ -941,23 +941,36 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	// MOUSE MODE HANDLING
 
 	if (!(xdata->mode_gp)) {
+
 		if (usg_type == EV_ABS) {
 
 			int centered_value = value - 32768;
-			int mouse_value = centered_value / 3000;
+			int mouse_value = 0;
 
-			if (usg_code == ABS_X) {
+			switch (usg_code) {
+			case ABS_X:
+				mouse_value = centered_value / 3000;
 				vmouse_movement(1, mouse_value);
-			} else if (usg_code == ABS_Y) {
+				break;
+			case ABS_Y:
+				mouse_value = centered_value / 3000;
 				vmouse_movement(0, mouse_value);
+				break;
+			case ABS_RY:
+				mouse_value = centered_value / 6000;
+				vmouse_wheel(-mouse_value);
+				break;
 			}
 
 		} else if (usg_type == EV_KEY) {
 
-			if (usg_code == BTN_A) {
+			switch (usg_code) {
+			case BTN_A:
 				vmouse_leftclick(value);
-			} else if (usg_code == BTN_B) {
+				break;
+			case BTN_B:
 				vmouse_rightclick(value);
+				break;
 			}
 
 		}
