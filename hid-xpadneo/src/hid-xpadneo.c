@@ -940,7 +940,7 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	// MOUSE MODE HANDLING
 
-	if (!(xdata->mode_gp)) {
+	if (!(xdata->mode_gp) && use_vmouse) {
 
 		if (usg_type == EV_ABS) {
 
@@ -950,15 +950,15 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			switch (usg_code) {
 			case ABS_X:
 				mouse_value = centered_value / 3000;
-				vmouse_movement(1, mouse_value);
+				__vmouse_movement(1, mouse_value);
 				break;
 			case ABS_Y:
 				mouse_value = centered_value / 3000;
-				vmouse_movement(0, mouse_value);
+				__vmouse_movement(0, mouse_value);
 				break;
 			case ABS_RY:
 				mouse_value = -(centered_value / 16384);
-				vmouse_wheel(mouse_value);
+				__vmouse_wheel(mouse_value);
 				break;
 			}
 
@@ -966,10 +966,10 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 			switch (usg_code) {
 			case BTN_A:
-				vmouse_leftclick(value);
+				__vmouse_leftclick(value);
 				break;
 			case BTN_B:
-				vmouse_rightclick(value);
+				__vmouse_rightclick(value);
 				break;
 			}
 
@@ -1285,16 +1285,44 @@ static int __init xpadneo_initModule(void)
 	pr_info("%s: kernel version < 4.14.0, no mouse support!\n", xpadneo_driver.name);
 #endif
 
-	void (*_vmouse_movement)(int,int) = symbol_get(vmouse_movement);
-	if (_vmouse_movement)
-		pr_info("%s: vmouse support enabeld!\n", xpadneo_driver.name);
+	/* Init pointers to vmouse */
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	__vmouse_movement = symbol_get(vmouse_movement);
+	if (!__vmouse_movement)
+		use_vmouse = 0;
+
+	__vmouse_leftclick = symbol_get(vmouse_leftclick);
+	if (!__vmouse_leftclick)
+		use_vmouse = 0;
+
+	__vmouse_rightclick = symbol_get(vmouse_rightclick);
+	if (!__vmouse_rightclick)
+		use_vmouse = 0;
+
+	__vmouse_wheel = symbol_get(vmouse_wheel);
+	if (!vmouse_wheel)
+		use_vmouse = 0;
+
+	if (use_vmouse) {
+		pr_info("%s: vmouse support enabled!\n", xpadneo_driver.name);
+	} else {
+		pr_info("%s: vmouse support disabled!\n", xpadneo_driver.name);
+	}
+
+	#endif
 
 	return hid_register_driver(&xpadneo_driver);
 }
 
 static void __exit xpadneo_exitModule(void)
 {
-	//symbol_put(vmouse_movement);
+	/* we will not use vmouse anymore */
+	if (__vmouse_movement) symbol_put(vmouse_movement);
+	if (__vmouse_leftclick) symbol_put(vmouse_leftclick);
+	if (__vmouse_rightclick) symbol_put(vmouse_rightclick);
+	if (__vmouse_wheel) symbol_put(vmouse_wheel);
+
+
 
 	hid_unregister_driver(&xpadneo_driver);
 

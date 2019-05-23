@@ -22,10 +22,15 @@ MODULE_VERSION(DRV_VER);
 
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+int use_vmouse = 1;
 extern void vmouse_movement(int, int);
 extern void vmouse_leftclick(int);
 extern void vmouse_rightclick(int);
 extern void vmouse_wheel(int);
+void (*__vmouse_movement)(int, int);
+void (*__vmouse_leftclick)(int);
+void (*__vmouse_rightclick)(int);
+void (*__vmouse_wheel)(int);
 #endif
 
 
