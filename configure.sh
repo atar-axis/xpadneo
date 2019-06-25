@@ -23,7 +23,7 @@ PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:p:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-usb-pid:,fake-dev-version:,trigger-rumble-damping: -- "$@")
 
 
 
@@ -41,7 +41,7 @@ function display_version {
 function check_param {
     key=$1
     value=$2
-    
+
     case $key in
     "debug_level")
         if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
@@ -65,9 +65,16 @@ function check_param {
         fi
         ;;
     "fake_dev_version")
-        if [[ "$value" -gt 65535 ]] || [[ "$value" -lt 1 ]];
+        if [[ "$value" -gt 65535 ]] || [[ "$value" -lt 0 ]];
         then
-            echo "$NAME: $key: Invalid value! Value must be between 1 and 65535."
+            echo "$NAME: $key: Invalid value! Value must be between 0 and 65535."
+            exit 1
+        fi
+        ;;
+    "fake_usb_pid")
+        if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
+        then
+            echo "$NAME: $key: Invalid value! Value must be 'y' or 'n'."
             exit 1
         fi
         ;;
@@ -100,7 +107,7 @@ function set_param {
 
   key=$1
   value=$2
-  
+
   # check for valid parameters first
   check_param "$key" "$value"
 
@@ -114,7 +121,7 @@ function set_param {
       exit 1
     fi
   fi
-  
+
   # edit modprobe config file
   if ! set_modprobe_param "$key" "$value";
   then
@@ -122,7 +129,7 @@ function set_param {
     exit 1
   fi
   echo "$NAME: $key: parameter written to $CONF_FILE"
-  
+
 }
 
 ## Argument Parsing ##
@@ -131,7 +138,7 @@ function parse_args {
   if [[ -z "$LINE_EXISTS" ]];
   then
     # If line doesn't exist echo all of the defaults.
-    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 fake_usb_pid=n combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
@@ -178,6 +185,13 @@ function parse_args {
 
       -v | --fake-dev-version)
         key='fake_dev_version'
+        value="${2#*=}"
+        set_param "$key" "$value"
+        shift 2
+        ;;
+
+      -p | --fake-usb-pid)
+        key='fake_usb_pid'
         value="${2#*=}"
         set_param "$key" "$value"
         shift 2

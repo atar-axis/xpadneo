@@ -62,6 +62,11 @@ static u16 param_fake_dev_version = 0x1130;
 module_param_named(fake_dev_version, param_fake_dev_version, ushort, 0644);
 MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
 
+static bool param_fake_usb_pid;
+module_param_named(fake_usb_pid, param_fake_usb_pid, bool, 0644);
+MODULE_PARM_DESC(fake_usb_pid, "(bool) Fake the product ID to 0x02EA, which is the USB pId.");
+
+
 
 /*
  * Debug Printk
@@ -1037,6 +1042,11 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 		xdata->idev->id.version = (u16) param_fake_dev_version;
 		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
 			param_fake_dev_version);
+	}
+
+	if (param_fake_usb_pid) {
+		xdata->idev->id.product = 0x02ea;
+		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake product id: 0x02EA\n");
 	}
 
 
