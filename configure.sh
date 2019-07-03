@@ -23,7 +23,7 @@ PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:p:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-usb-pid:,fake-dev-version:,trigger-rumble-damping: -- "$@")
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:p:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-old-pid:,fake-dev-version:,trigger-rumble-damping: -- "$@")
 
 
 
@@ -71,7 +71,7 @@ function check_param {
             exit 1
         fi
         ;;
-    "fake_usb_pid")
+    "fake_old_pid")
         if [[ "$value" != "y" ]] && [[ "$value" != "n" ]];
         then
             echo "$NAME: $key: Invalid value! Value must be 'y' or 'n'."
@@ -138,7 +138,7 @@ function parse_args {
   if [[ -z "$LINE_EXISTS" ]];
   then
     # If line doesn't exist echo all of the defaults.
-    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 fake_usb_pid=n combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 fake_old_pid=y combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
@@ -190,8 +190,8 @@ function parse_args {
         shift 2
         ;;
 
-      -p | --fake-usb-pid)
-        key='fake_usb_pid'
+      -p | --fake-old-pid)
+        key='fake_old_pid'
         value="${2#*=}"
         set_param "$key" "$value"
         shift 2

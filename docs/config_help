@@ -20,8 +20,8 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 v
 -v, --fake-dev-version
 	Fake the input device version to the given value. [0 to 65535]
 
--p, --fake-usb-pid
-	Fake the input device version to 0x02E0, which is the one which is used for a USB connection. [y, n]
+-p, --fake-old-pid
+	Fake the input device version to 0x02E0, which is the one which is the one for the first firmware version. [y, n]
 
 -z, --combined-z-axis
 	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in
