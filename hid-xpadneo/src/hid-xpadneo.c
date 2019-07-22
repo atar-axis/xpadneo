@@ -244,6 +244,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	int fraction_TL, fraction_TR;
 	u8 trigger_rumble_damping_nonzero;
 
+	int ret = 0;
+
 	enum {
 		DIRECTION_DOWN  = 0x0000,
 		DIRECTION_LEFT  = 0x4000,
@@ -329,7 +331,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		ff_pck.ff.magnitude_left_trigger,
 		ff_pck.ff.magnitude_right_trigger);
 
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	ret = hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hid_hw_output_report returned with %d\n", ret);
 
 	return 0;
 }
