@@ -189,6 +189,10 @@ struct xpadneo_devdata {
 	/* axis states */
 	s32 last_abs_z;
 	s32 last_abs_rz;
+
+	/* buffer and worker for ff report */
+	struct work_struct ff_worker;
+	void *output_report_dmabuf;
 };
 
 
@@ -233,26 +237,13 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 */
 
 	struct ff_report ff_pck;
-	u16 weak, strong, direction, max, max_damped;
-	u8 mag_main_right, mag_main_left, mag_trigger_right, mag_trigger_left;
+	u16 weak, strong;
+	u8 mag_main_right, mag_main_left;
 	u8 ff_active;
 
-	const int fractions_milli[]
-		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
-	const int proportions_idx_max = 8;
 	u8 index_left, index_right;
-	int fraction_TL, fraction_TR;
-	u8 trigger_rumble_damping_nonzero;
 
 	int ret = 0;
-
-	enum {
-		DIRECTION_DOWN  = 0x0000,
-		DIRECTION_LEFT  = 0x4000,
-		DIRECTION_UP    = 0x8000,
-		DIRECTION_RIGHT = 0xC000,
-	};
-
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
@@ -265,71 +256,24 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	/* copy data from effect structure at the very beginning */
 	weak      = effect->u.rumble.weak_magnitude;
 	strong    = effect->u.rumble.strong_magnitude;
-	direction = effect->direction;
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
-		strong, weak, direction);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "playing effect: strong: %#04x, weak: %#04x\n",
+		strong, weak);
 
 	/* calculate the physical magnitudes */
 	mag_main_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
 	mag_main_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
 
 
-	/* get the proportions from a precalculated cosine table
-	 * calculation goes like:
-	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
-	 * fractions_milli(a) = (1000 + (cosine * 1000)) / 2
-	 */
-
-	fraction_TL = 0;
-	fraction_TR = 0;
-
-	if (direction >= DIRECTION_LEFT && direction <= DIRECTION_RIGHT) {
-		index_left = (direction - DIRECTION_LEFT) >> 12;
-		index_right = proportions_idx_max - index_left;
-
-		fraction_TL = fractions_milli[index_left];
-		fraction_TR = fractions_milli[index_right];
-	}
-
-	/* we want to keep the rumbling at the triggers below the maximum
-	* of the weak and strong main rumble
-	*/
-	max = mag_main_right > mag_main_left ? mag_main_right : mag_main_left;
-
-	/* the user can change the damping at runtime, hence check the range */
-	trigger_rumble_damping_nonzero
-		= param_trigger_rumble_damping == 0 ? 1 : param_trigger_rumble_damping;
-
-	max_damped = max / trigger_rumble_damping_nonzero;
-
-	mag_trigger_left = (u8)((max_damped * fraction_TL) / 1000);
-	mag_trigger_right = (u8)((max_damped * fraction_TR) / 1000);
-
-
 	ff_active = FF_ENABLE_ALL;
-
-	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
-		ff_active &= ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
-
-	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
-		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
-
+	ff_active &= ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
 
 	create_ff_pck(
 		&ff_pck, 0x03,
 		ff_active,
-		mag_trigger_left, mag_trigger_right,
+		0x00, 0x00,
 		mag_main_left, mag_main_right,
 		0);
-
-
-	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
-		ff_active,
-		max, fraction_TL, fraction_TR,
-		ff_pck.ff.magnitude_left_trigger,
-		ff_pck.ff.magnitude_right_trigger);
 
 	ret = hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hid_hw_output_report returned with %d\n", ret);
