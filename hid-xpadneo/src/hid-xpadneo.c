@@ -82,7 +82,7 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
 		if (param_debug_level >= lvl) \
-			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), \
+			hid_dbg(pr_fmt(fmt_hdev), \
 				pr_fmt(fmt_str), ##__VA_ARGS__); \
 	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
