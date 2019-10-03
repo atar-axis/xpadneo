@@ -1,5 +1,3 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
-
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *
@@ -7,192 +5,10 @@
  * Copyright (c) 2017 Florian Dollinger <dollinger.florian@gmx.de>
  */
 
-#include <linux/hid.h>
-#include <linux/power_supply.h>
-#include <linux/input.h>	/* ff_memless(), ... */
-#include <linux/module.h>	/* MODULE_*, module_*, ... */
-#include <linux/slab.h>		/* kzalloc(), kfree(), ... */
-#include <linux/delay.h>	/* mdelay(), ... */
-#include "hid-ids.h"		/* VENDOR_ID... */
+#include "hid-xpadneo.h"
 
 
-#define DEBUG
-
-
-/* Module Information */
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
-MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION(DRV_VER);
-
-
-/* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
-
-/* NOTE:
- * In general it is not guaranteed that a short variable is no more than
- * 16 bit long in C, it depends on the computer architecure. But as a kernel
- * module parameter it is, since <params.c> does use kstrtou16 for shorts
- * since version 3.14
- */
-
-#ifdef DEBUG
-static u8 param_debug_level;
-module_param_named(debug_level, param_debug_level, byte, 0644);
-MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
-#endif
-
-static u8 param_disable_ff;
-module_param_named(disable_ff, param_disable_ff, byte, 0644);
-MODULE_PARM_DESC(disable_ff, "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
-
-#define PARAM_DISABLE_FF_NONE    0
-#define PARAM_DISABLE_FF_MAIN    1
-#define PARAM_DISABLE_FF_TRIGGER 2
-#define PARAM_DISABLE_FF_ALL     3
-
-static bool param_combined_z_axis;
-module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
-MODULE_PARM_DESC(combined_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
-
-static u8 param_trigger_rumble_damping = 4;
-module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
-MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
-
-static u16 param_fake_dev_version = 0x1130;
-module_param_named(fake_dev_version, param_fake_dev_version, ushort, 0644);
-MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
-
-
-/*
- * Debug Printk
- *
- * Prints a debug message to kernel (dmesg)
- * only if both is true, this is a DEBUG version and the
- * param_debug_level-parameter is equal or higher than the level
- * specified in hid_dbg_lvl
- */
-
-#define DBG_LVL_NONE 0
-#define DBG_LVL_FEW  1
-#define DBG_LVL_SOME 2
-#define DBG_LVL_ALL  3
-
-
-#ifdef DEBUG
-#define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
-	do { \
-		if (param_debug_level >= lvl) \
-			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), \
-				pr_fmt(fmt_str), ##__VA_ARGS__); \
-	} while (0)
-#define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
-	do { \
-		if (param_debug_level >= lvl) \
-			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), \
-				DUMP_PREFIX_NONE, 32, 1, data, size, false); \
-	} while (0)
-#else
-#define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
-		no_printk(KERN_DEBUG pr_fmt(fmt_str), ##__VA_ARGS__)
-#define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
-		no_printk(KERN_DEBUG pr_fmt(fmt_prefix))
-#endif
-
-
-static DEFINE_IDA(xpadneo_device_id_allocator);
-
-/*
- * FF Output Report
- *
- * This is the structure for the rumble output report. For more information
- * about this structure please take a look in the hid-report description.
- * Please notice that the structs are __packed, therefore there is no "padding"
- * between the elements (they behave more like an array).
- *
- */
-
-enum {
-	FF_ENABLE_NONE          = 0x00,
-	FF_ENABLE_RIGHT         = 0x01,
-	FF_ENABLE_LEFT          = 0x02,
-	FF_ENABLE_RIGHT_TRIGGER = 0x04,
-	FF_ENABLE_LEFT_TRIGGER  = 0x08,
-	FF_ENABLE_ALL           = 0x0F
-};
-
-struct ff_data {
-	u8 enable_actuators;
-	u8 magnitude_left_trigger;
-	u8 magnitude_right_trigger;
-	u8 magnitude_left;
-	u8 magnitude_right;
-	u8 duration;
-	u8 start_delay;
-	u8 loop_count;
-} __packed;
-
-struct ff_report {
-	u8 report_id;
-	struct ff_data ff;
-} __packed;
-
-/* static variables are zeroed => empty initialization struct */
-static const struct ff_data ff_clear;
-
-
-/*
- * Device Data
- *
- * We attach information to hdev, which is therefore nearly globally accessible
- * via hid_get_drvdata(hdev). It is attached to the hid_device via
- * hid_set_drvdata(hdev) at the probing function.
- */
-
-enum report_type {
-	UNKNOWN,
-	LINUX,
-	WINDOWS
-};
-
-// TODO: avoid data duplication
-
-const char *report_type_text[] = {
-	"unknown",
-	"linux/android",
-	"windows"
-};
-
-
-struct xpadneo_devdata {
-	/* mutual exclusion */
-	spinlock_t lock;
-
-	/* unique physical device id (randomly assigned) */
-	int id;
-
-	/* logical device interfaces */
-	struct hid_device *hdev;
-	struct input_dev *idev;
-	struct power_supply *batt;
-
-	/* report types */
-	enum report_type report_descriptor;
-	enum report_type report_behaviour;
-
-	/* battery information */
-	struct power_supply_desc batt_desc;
-	u8 ps_online;
-	u8 ps_present;
-	u8 ps_capacity_level;
-	u8 ps_status;
-
-	/* axis states */
-	s32 last_abs_z;
-	s32 last_abs_rz;
-};
-
-
-void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
+static void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
 	u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
 	u8 start_delay) {
 
@@ -212,7 +28,7 @@ void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
 	 * Take a look here:
 	 * https://stackoverflow.com/questions/48034091/
 	 * We therefore simply play the effect as long as possible, which is
-	 * 2, 55s * 255 = 650, 25s ~ = 10min
+	 * 2,55s * 255 = 650,25s ~ = 10min
 	 */
 }
 
@@ -462,7 +278,6 @@ static int battery_get_property(struct power_supply *ps,
 	return 0;
 }
 
-
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
 	int ret = 0;
@@ -486,7 +301,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 
 
 	struct power_supply_config ps_config = {
-		/* pass the xpadneo_data to the get_property function */
+		/* pass the driver instance xpadneo_data to the get_property function */
 		.drv_data = xdata
 	};
 
@@ -545,20 +360,6 @@ err_free:
 
 	return ret;
 }
-
-
-enum mapping_behaviour {
-	MAP_IGNORE, /* Completely ignore this field */
-	MAP_AUTO,   /* Do not really map it, let hid-core decide */
-	MAP_STATIC  /* Map to the values given */
-};
-
-struct input_ev {
-	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
-	u8 event_type;
-	/* Map to which input code (BTN_A, ABS_X, ...)? */
-	u16 input_code;
-};
 
 u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
 {
@@ -826,7 +627,7 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
  *
  * You can either modify the original report in place and just
  * return the original start address (rdesc) or you reserve a new
- * one and return a pointer to it. In the latter, you mostly have to
+ * one and return a pointer to it. In the latter, you may have to
  * modify the rsize value too.
  */
 
@@ -988,12 +789,7 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		RAWEV_STOP_PROCESSING  /* Stop further processing */
 	};
 
-	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
-
 	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data, reportsize);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
-
 
 	switch (report->id) {
 	case 01:
@@ -1018,8 +814,7 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 /*
  * Input Configured Hook
  *
- * We have to fix up the key-bitmap, because there is
- * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
+ * Called as soon as the Input Device is able to get registered.
  *
  */
 
@@ -1042,7 +837,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	// The HID device descriptor defines a range from 0 to 65535 for all
 	// absolute axis (like ABS_X), this is in contrary to what the linux
-	// gamepad specification defines [–32.768; 32.767].
+	// gamepad specification demands [–32.768; 32.767].
 	// Therefore, we have to set the min, max, fuzz and flat values by hand:
 
 	input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
@@ -1057,13 +852,50 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	// furthermore, we need to translate the incoming events to fit within
 	// the new range, we will do that in the xpadneo_event() hook.
 
-	// We remove the ABS_RZ event if param_combined_z_axis is enabled
+	// Remove the ABS_RZ event if param_combined_z_axis is enabled
 	if (param_combined_z_axis) {
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
 	return 0;
 }
+
+
+
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+static void switch_mode(struct timer_list *t) {
+
+	struct xpadneo_devdata *xdata = from_timer(xdata, t, timer);
+	struct hid_device *hdev = xdata->hdev;
+	struct ff_report ff_pck;
+
+	xdata->mode_gp = !xdata->mode_gp;
+
+	/* TODO: outsource that */
+
+	ff_pck.ff = ff_clear;
+
+	if (!param_disable_ff) {
+		ff_pck.report_id = 0x03;
+		ff_pck.ff.magnitude_right = 0x80;
+		ff_pck.ff.magnitude_left  = 0x80;
+		ff_pck.ff.duration = 10;
+		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT | FF_ENABLE_LEFT;
+
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		mdelay(ff_pck.ff.duration * 10); // TODO: busy waiting?!
+	}
+
+	if (xdata->mode_gp) {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Gamepad\n");
+	} else {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Mouse\n");
+	}
+
+}
+#endif
 
 
 /*
@@ -1091,6 +923,62 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	u16 usg_type = usage->type;
 	u16 usg_code = usage->code;
+
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+
+	// MODE SWITCH DETECTION
+
+	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
+		if (value == 1) {
+			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
+		} else {
+			del_timer_sync(&xdata->timer);
+		}
+	}
+
+	// MOUSE MODE HANDLING
+
+	if (!(xdata->mode_gp) && use_vmouse) {
+
+		if (usg_type == EV_ABS) {
+
+			int centered_value = value - 32768;
+			int mouse_value = 0;
+
+			switch (usg_code) {
+			case ABS_X:
+				mouse_value = centered_value / 3000;
+				__vmouse_movement(1, mouse_value);
+				break;
+			case ABS_Y:
+				mouse_value = centered_value / 3000;
+				__vmouse_movement(0, mouse_value);
+				break;
+			case ABS_RY:
+				mouse_value = -(centered_value / 16384);
+				__vmouse_wheel(mouse_value);
+				break;
+			}
+
+		} else if (usg_type == EV_KEY) {
+
+			switch (usg_code) {
+			case BTN_A:
+				__vmouse_leftclick(value);
+				break;
+			case BTN_B:
+				__vmouse_rightclick(value);
+				break;
+			}
+
+		}
+
+		// do not report GP events in mouse mode
+		return EV_STOP_PROCESSING;
+	}
+#endif
 
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
@@ -1124,8 +1012,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			}
 		}
 	}
-
-
 
 
 	/* TODO:
@@ -1196,7 +1082,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 sync_and_stop_processing:
 	input_sync(idev);
 	return EV_STOP_PROCESSING;
-
 }
 
 
@@ -1223,11 +1108,14 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	xdata->id = ida_simple_get(&xpadneo_device_id_allocator,
 			0, 0, GFP_KERNEL);
-
 	xdata->hdev = hdev;
-
+	xdata->mode_gp = true;
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	timer_setup(&xdata->timer, switch_mode, 0);
+#endif
 
 	switch (hdev->dev_rsize) {
 	case 307:
@@ -1248,7 +1136,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	ret = hid_parse(hdev);
 	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	/* Debug Output*/
@@ -1276,28 +1164,24 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	/* Call the device initialization routines */
 	ret = xpadneo_initDevice(hdev);
 	if (ret) {
 		hid_err(hdev, "device initialization failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	ret = xpadneo_initBatt(hdev);
 	if (ret) {
 		hid_err(hdev, "battery initialization failed\n");
-		goto return_error;
+		return ret;
 	}
-
 
 	/* Everything is fine */
 	return 0;
-
-return_error:
-	return ret;
 }
 
 
@@ -1309,6 +1193,10 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	del_timer_sync(&xdata->timer);
+#endif
 
 	hid_hw_stop(hdev);
 
@@ -1325,7 +1213,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 
 	/*
 	 * The ProductID is somehow related to the Firmware Version,
-	 * but it somehow changed back from 0x02FD (newer fw) to 0x02E0 (older)
+	 * but it also changed back from 0x02FD (newer fw) to 0x02E0 (older one)
 	 * and vice versa on one controller here.
 	 *
 	 * Unfortunately you cannot tell from product id how the gamepad really
@@ -1389,16 +1277,53 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
  *
  * Caution: do not use both! (module_hid_driver and hid_(un)register_driver)
  */
-
 static int __init xpadneo_initModule(void)
 {
-	pr_info("%s: hello there!\n", xpadneo_driver.name);
+	pr_info("%s: hello there (kernel %06X)!\n", xpadneo_driver.name, LINUX_VERSION_CODE);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
+	pr_info("%s: kernel version < 4.14.0, no mouse support!\n", xpadneo_driver.name);
+#endif
+
+	/* Init pointers to vmouse */
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	__vmouse_movement = symbol_get(vmouse_movement);
+	if (!__vmouse_movement)
+		use_vmouse = 0;
+
+	__vmouse_leftclick = symbol_get(vmouse_leftclick);
+	if (!__vmouse_leftclick)
+		use_vmouse = 0;
+
+	__vmouse_rightclick = symbol_get(vmouse_rightclick);
+	if (!__vmouse_rightclick)
+		use_vmouse = 0;
+
+	__vmouse_wheel = symbol_get(vmouse_wheel);
+	if (!vmouse_wheel)
+		use_vmouse = 0;
+
+	if (use_vmouse) {
+		pr_info("%s: vmouse support enabled!\n", xpadneo_driver.name);
+	} else {
+		pr_info("%s: vmouse support disabled!\n", xpadneo_driver.name);
+	}
+
+	#endif
 
 	return hid_register_driver(&xpadneo_driver);
 }
 
 static void __exit xpadneo_exitModule(void)
 {
+	/* we will not use vmouse anymore */
+	if (__vmouse_movement) symbol_put(vmouse_movement);
+	if (__vmouse_leftclick) symbol_put(vmouse_leftclick);
+	if (__vmouse_rightclick) symbol_put(vmouse_rightclick);
+	if (__vmouse_wheel) symbol_put(vmouse_wheel);
+
+
+
 	hid_unregister_driver(&xpadneo_driver);
 
 	ida_destroy(&xpadneo_device_id_allocator);
