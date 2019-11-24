@@ -1028,14 +1028,30 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	 * (probably browser game controller APIs) from treating our driver
 	 * unnecessarily with button and axis mapping fixups, and it seems
 	 * this is actually a firmware mode meant to Android usage only:
+	 *
+	 * Xbox One S:
 	 * 0x2E0 wireless Windows mode (non-Android mode)
 	 * 0x2EA USB Windows and Linux mode
 	 * 0x2FD wireless Linux mode (Android mode)
+	 *
+	 * Xbox Elite 2:
+	 * 0xB00 USB Windows and Linux mode
+	 * 0xB05 wireless Linux mode (Android mode)
 	 */
 	switch (xdata->idev->id.product) {
+#if 0
+	case 0x0B05:
+		/* FIXME What's the Windows ID of this controller? */
+		hid_info(hdev,
+			 "pretending XBE2 Windows wireless mode (changed PID from 0x%04X to 0x???)\n",
+			 (u16)xdata->idev->id.product);
+		xdata->idev->id.product = 0x02E0;
+		break;
+
+#endif
 	case 0x02FD:
 		hid_info(hdev,
-			 "pretending Windows wireless mode (changed PID from 0x%04X to 0x02E0)\n",
+			 "pretending XB1S Windows wireless mode (changed PID from 0x%04X to 0x02E0)\n",
 			 (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
@@ -1328,6 +1344,9 @@ static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
+
+	/* XBOX ONE Elite Series 2 */
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05)},
 
 	/* SENTINEL VALUE, indicates the end */
 	{}

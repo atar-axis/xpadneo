@@ -19,6 +19,6 @@
 #                                                                                                                               02E0        automatic
 
 ACTION=="add", \
-KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", \
+KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*|0005:045E:0B05.*", \
 SUBSYSTEM=="hid", \
 RUN:="/bin/sh -c 'echo xpadneo udev: $kernel > /dev/kmsg; modprobe hid_xpadneo; echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/microsoft/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind; echo xpadneo udev: ok > /dev/kmsg'"
