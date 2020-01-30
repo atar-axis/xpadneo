@@ -14,6 +14,7 @@
 #include <linux/slab.h>		/* kzalloc(), kfree(), ... */
 #include <linux/delay.h>	/* mdelay(), ... */
 #include "hid-ids.h"		/* VENDOR_ID... */
+#include <linux/version.h>  /* LINUX_VERSION_CODE, KERNEL_VERSION(a,b,c) */
 
 
 #define DEBUG
@@ -24,6 +25,19 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+int use_vmouse = 1;
+extern void vmouse_movement(int, int);
+extern void vmouse_leftclick(int);
+extern void vmouse_rightclick(int);
+extern void vmouse_wheel(int);
+void (*__vmouse_movement)(int, int);
+void (*__vmouse_leftclick)(int);
+void (*__vmouse_rightclick)(int);
+void (*__vmouse_wheel)(int);
+#endif
 
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
@@ -178,6 +192,14 @@ struct xpadneo_devdata {
 	/* report types */
 	enum report_type report_descriptor;
 	enum report_type report_behaviour;
+
+	/* pointer / gamepad mode */
+	bool mode_gp;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	/* timers */
+	struct timer_list timer;
+#endif
 
 	/* battery information */
 	struct power_supply_desc batt_desc;
@@ -1065,6 +1087,38 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+static void switch_mode(struct timer_list *t) {
+
+	struct xpadneo_devdata *xdata = from_timer(xdata, t, timer);
+	struct hid_device *hdev = xdata->hdev;
+	struct ff_report ff_pck;
+
+	xdata->mode_gp = !xdata->mode_gp;
+
+	/* TODO: outsource that */
+
+	ff_pck.ff = ff_clear;
+
+	if (!param_disable_ff) {
+		ff_pck.report_id = 0x03;
+		ff_pck.ff.magnitude_right = 0x80;
+		ff_pck.ff.magnitude_left  = 0x80;
+		ff_pck.ff.duration = 10;
+		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT | FF_ENABLE_LEFT;
+
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		mdelay(ff_pck.ff.duration * 10); // TODO: busy waiting?!
+	}
+
+	if (xdata->mode_gp) {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Gamepad\n");
+	} else {
+		hid_dbg_lvl(DBG_LVL_ALL, hdev, "mode switched to: Mouse\n");
+	}
+
+}
+#endif
 
 /*
  * Event Hook
@@ -1091,6 +1145,61 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	u16 usg_type = usage->type;
 	u16 usg_code = usage->code;
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+
+	// MODE SWITCH DETECTION
+
+	if (usg_type == EV_KEY && usg_code == BTN_MODE) {
+		if (value == 1) {
+			mod_timer(&xdata->timer, jiffies + msecs_to_jiffies(2000));
+		} else {
+			del_timer_sync(&xdata->timer);
+		}
+	}
+
+	// MOUSE MODE HANDLING
+
+	if (!(xdata->mode_gp) && use_vmouse) {
+
+		if (usg_type == EV_ABS) {
+
+			int centered_value = value - 32768;
+			int mouse_value = 0;
+
+			switch (usg_code) {
+			case ABS_X:
+				mouse_value = centered_value / 3000;
+				__vmouse_movement(1, mouse_value);
+				break;
+			case ABS_Y:
+				mouse_value = centered_value / 3000;
+				__vmouse_movement(0, mouse_value);
+				break;
+			case ABS_RY:
+				mouse_value = -(centered_value / 16384);
+				__vmouse_wheel(mouse_value);
+				break;
+			}
+
+		} else if (usg_type == EV_KEY) {
+
+			switch (usg_code) {
+			case BTN_A:
+				__vmouse_leftclick(value);
+				break;
+			case BTN_B:
+				__vmouse_rightclick(value);
+				break;
+			}
+
+		}
+
+		// do not report GP events in mouse mode
+		return EV_STOP_PROCESSING;
+	}
+#endif
 
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
@@ -1229,6 +1338,10 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	timer_setup(&xdata->timer, switch_mode, 0);
+#endif
+
 	switch (hdev->dev_rsize) {
 	case 307:
 		xdata->report_descriptor = WINDOWS;
@@ -1309,6 +1422,10 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	del_timer_sync(&xdata->timer);
+#endif
 
 	hid_hw_stop(hdev);
 
@@ -1394,11 +1511,47 @@ static int __init xpadneo_initModule(void)
 {
 	pr_info("%s: hello there!\n", xpadneo_driver.name);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
+	pr_info("%s: kernel version < 4.14.0, no mouse support!\n", xpadneo_driver.name);
+#endif
+
+	/* Init pointers to vmouse */
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+	__vmouse_movement = symbol_get(vmouse_movement);
+	if (!__vmouse_movement)
+		use_vmouse = 0;
+
+	__vmouse_leftclick = symbol_get(vmouse_leftclick);
+	if (!__vmouse_leftclick)
+		use_vmouse = 0;
+
+	__vmouse_rightclick = symbol_get(vmouse_rightclick);
+	if (!__vmouse_rightclick)
+		use_vmouse = 0;
+
+	__vmouse_wheel = symbol_get(vmouse_wheel);
+	if (!vmouse_wheel)
+		use_vmouse = 0;
+
+	if (use_vmouse) {
+		pr_info("%s: vmouse support enabled!\n", xpadneo_driver.name);
+	} else {
+		pr_info("%s: vmouse support disabled!\n", xpadneo_driver.name);
+	}
+
+	#endif
+
 	return hid_register_driver(&xpadneo_driver);
 }
 
 static void __exit xpadneo_exitModule(void)
 {
+	/* we will not use vmouse anymore */
+	if (__vmouse_movement) symbol_put(vmouse_movement);
+	if (__vmouse_leftclick) symbol_put(vmouse_leftclick);
+	if (__vmouse_rightclick) symbol_put(vmouse_rightclick);
+	if (__vmouse_wheel) symbol_put(vmouse_wheel);
+
 	hid_unregister_driver(&xpadneo_driver);
 
 	ida_destroy(&xpadneo_device_id_allocator);
