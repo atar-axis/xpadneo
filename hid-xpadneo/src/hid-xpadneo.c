@@ -1164,6 +1164,13 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	if (!(xdata->mode_gp) && use_vmouse) {
 
 		if (usg_type == EV_ABS) {
+			unsigned int deadband = (65536u / 100) * 5;
+			if (value < deadband) {
+				return EV_STOP_PROCESSING;
+			} else {
+				// Linear scaled deadband
+				value = (65536u * (value - deadband))/(65536u - deadband);
+			}
 
 			int centered_value = value - 32768;
 			int mouse_value = 0;
