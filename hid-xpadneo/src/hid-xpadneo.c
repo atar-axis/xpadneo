@@ -623,6 +623,7 @@ static u8 map_hid_to_input_windows(struct hid_usage *usage,
 			EV_KEY, BTN_THUMBR};
 			return MAP_STATIC;
 		}
+		return MAP_IGNORE;
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30:
@@ -658,6 +659,7 @@ static u8 map_hid_to_input_windows(struct hid_usage *usage,
 			EV_KEY, BTN_MODE};
 			return MAP_STATIC;
 		}
+		return MAP_IGNORE;
 	}
 
 	return MAP_IGNORE;
@@ -731,6 +733,7 @@ static u8 map_hid_to_input_linux(struct hid_usage *usage,
 			EV_KEY, BTN_THUMBR};
 			return MAP_STATIC;
 		}
+		return MAP_IGNORE;
 	case HID_UP_CONSUMER:
 		switch (hid_usage) {
 		case 0x223:
@@ -742,6 +745,7 @@ static u8 map_hid_to_input_linux(struct hid_usage *usage,
 			EV_KEY, BTN_SELECT};
 			return MAP_STATIC;
 		}
+		return MAP_IGNORE;
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30:
@@ -765,6 +769,7 @@ static u8 map_hid_to_input_linux(struct hid_usage *usage,
 			0, 0};
 			return MAP_AUTO;
 		}
+		return MAP_IGNORE;
 	case HID_UP_SIMULATION:
 		switch (hid_usage) {
 		case 0xC4:
@@ -776,6 +781,7 @@ static u8 map_hid_to_input_linux(struct hid_usage *usage,
 			EV_ABS, ABS_Z};
 			return MAP_STATIC;
 		}
+		return MAP_IGNORE;
 	}
 
 	return MAP_IGNORE;
