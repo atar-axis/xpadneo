@@ -21,4 +21,4 @@
 ACTION=="add", \
 KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*", \
 SUBSYSTEM=="hid", \
-RUN:="/bin/sh -c 'echo xpadneo udev: $kernel > /dev/kmsg; modprobe hid_xpadneo; echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/microsoft/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind; echo xpadneo udev: ok > /dev/kmsg'"
+RUN:="/bin/sh -c 'echo xpadneo udev: $kernel > /dev/kmsg; if [ -d /usr/sbin ]; then PATH=$PATH:/usr/sbin; fi; modprobe hid_xpadneo; echo $kernel > /sys/bus/hid/drivers/hid-generic/unbind; echo $kernel > /sys/bus/hid/drivers/microsoft/unbind; echo $kernel > /sys/bus/hid/drivers/xpadneo/bind; echo xpadneo udev: ok > /dev/kmsg'"
