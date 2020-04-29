@@ -87,7 +87,7 @@ MODULE_PARM_DESC(fake_old_pid, "(bool) Fake the product ID to 0x02E0, which is t
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
 	do { \
 		if (param_debug_level >= lvl) \
-			hid_printk(KERN_DEBUG, pr_fmt(fmt_hdev), \
+			hid_dbg(pr_fmt(fmt_hdev), \
 				pr_fmt(fmt_str), ##__VA_ARGS__); \
 	} while (0)
 #define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
