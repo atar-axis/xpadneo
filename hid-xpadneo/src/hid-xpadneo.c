@@ -377,37 +377,6 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	if (error)
 		return error;
 
-	/*
-	 * Set default values, otherwise tools which depend on the joystick
-	 * subsystem, report arbitrary values until the first real event
-	 * TODO: Is this really necessary?
-	 */
-	input_report_abs(idev, ABS_X, 0);
-	input_report_abs(idev, ABS_Y, 0);
-	input_report_abs(idev, ABS_Z, 0);
-	input_report_abs(idev, ABS_RX, 0);
-	input_report_abs(idev, ABS_RY, 0);
-	input_report_abs(idev, ABS_RZ, 0);
-	input_report_key(idev, BTN_A, 0);
-	input_report_key(idev, BTN_B, 0);
-	input_report_key(idev, BTN_X, 0);
-	input_report_key(idev, BTN_Y, 0);
-	input_report_key(idev, BTN_TR, 0);
-	input_report_key(idev, BTN_TL, 0);
-	input_report_key(idev, BTN_THUMBL, 0);
-	input_report_key(idev, BTN_THUMBR, 0);
-	input_report_key(idev, BTN_START, 0);
-	input_report_key(idev, BTN_MODE, 0);
-	input_report_key(idev, ABS_HAT0X, 0);
-	input_report_key(idev, ABS_HAT0Y, 0);
-	input_sync(idev);
-
-	/*
-	 * TODO: - do not hardcode codes and values but
-	 *         keep them in the mapping structures
-	 *       - maybe initDevice isn't the right place
-	 */
-
 	return 0;
 }
 
