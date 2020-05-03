@@ -1058,18 +1058,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	}
 
-	/*
-	 * The HID device descriptor defines a range from 0 to 65535 for all
-	 * absolute axis (like ABS_X), this is in contrary to what the linux
-	 * gamepad specification defines [–32.768; 32.767].
-	 * Therefore, we have to set the min, max, fuzz and flat values by hand:
-	 */
-	input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
-	input_set_abs_params(xdata->idev, ABS_Y, -32768, 32767, 255, 4095);
-
-	input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
-	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
-
 	if (param_combined_z_axis) {
 		/*
 		 * furthermore, we need to translate the incoming events to fit within
@@ -1109,21 +1097,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	if (usage->type == EV_ABS) {
 		switch (usage->code) {
-		case ABS_X:
-		case ABS_Y:
-		case ABS_RX:
-		case ABS_RY:
-			/*
-			 * we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
-			 * as already explained in xpadneo_input_configured() above
-			 * furthermore we need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-			 * is set
-			 */
-			hid_dbg_lvl(DBG_LVL_ALL, hdev,
-				    "shifted axis %02x, old value: %i, new value: %i\n",
-				    usage->code, value, value - 32768);
-			input_report_abs(idev, usage->code, value - 32768);
-			goto sync_and_stop_processing;
 		case ABS_Z:
 			/*
 			 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
