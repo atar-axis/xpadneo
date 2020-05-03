@@ -236,13 +236,15 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 			   struct ff_effect *effect)
 {
 	struct ff_report ff_pck;
-	u16 weak, strong, direction, max, max_damped;
+	u32 weak, strong, direction, max, max_damped, max_unscaled;
 	u8 mag_main_right, mag_main_left, mag_trigger_right, mag_trigger_left;
 	u8 ff_active;
 
-	const int fractions_milli[] =
-	    { 1000, 962, 854, 691, 500, 309, 146, 38, 0 };
-	const int proportions_idx_max = 8;
+	const int fractions_percent[] = {
+		100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96,
+		100
+	};
+	const int proportions_idx_max = 16;
 	u8 index_left, index_right;
 	int fraction_TL, fraction_TR;
 
@@ -271,25 +273,22 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		    strong, weak, direction);
 
 	/* calculate the physical magnitudes */
-	mag_main_right = (u8)((weak & 0xFF00) >> 8);	/* u16 to u8 */
-	mag_main_left = (u8)((strong & 0xFF00) >> 8);	/* u16 to u8 */
+	mag_main_right = (u8)((weak * 100) / 0xFFFF);	/* scale from 16 bit to 0..100 */
+	mag_main_left = (u8)((strong * 100) / 0xFFFF);	/* scale from 16 bit to 0..100 */
 
 	/*
 	 * get the proportions from a precalculated cosine table
 	 * calculation goes like:
-	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
-	 * fractions_milli(a) = (1000 + (cosine * 1000)) / 2
+	 * cosine(a) * 100 =  {100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96, 100}
+	 * fractions_percent(a) = round(50 + (cosine * 50))
 	 */
-
 	fraction_TL = 0;
 	fraction_TR = 0;
-
 	if (direction >= DIRECTION_LEFT && direction <= DIRECTION_RIGHT) {
-		index_left = (direction - DIRECTION_LEFT) >> 12;
+		index_left = (direction - DIRECTION_LEFT) >> 11;
 		index_right = proportions_idx_max - index_left;
-
-		fraction_TL = fractions_milli[index_left];
-		fraction_TR = fractions_milli[index_right];
+		fraction_TL = fractions_percent[index_left];
+		fraction_TR = fractions_percent[index_right];
 	}
 
 	/*
@@ -297,25 +296,24 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 * of the weak and strong main rumble
 	 */
 	max = mag_main_right > mag_main_left ? mag_main_right : mag_main_left;
+	max_unscaled = weak > strong ? weak : strong;
 
 	/*
 	 * the user can change the damping at runtime, hence check the
 	 * range
 	 */
 	if (param_trigger_rumble_damping > 0)
-		max_damped = max / param_trigger_rumble_damping;
+		max_damped = max_unscaled / param_trigger_rumble_damping;
 	else
-		max_damped = max;
+		max_damped = max_unscaled;
 
-	mag_trigger_left = (u8)((max_damped * fraction_TL) / 1000);
-	mag_trigger_right = (u8)((max_damped * fraction_TR) / 1000);
+	mag_trigger_left = (u8)((max_damped * fraction_TL) / 0xFFFF);
+	mag_trigger_right = (u8)((max_damped * fraction_TR) / 0xFFFF);
 
 	ff_active = FF_ENABLE_ALL;
-
 	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
 		ff_active &=
 		    ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
-
 	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
 		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
 
@@ -353,10 +351,10 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	/* 'HELLO' FROM THE OTHER SIDE */
 	if (!param_disable_ff) {
 		ff_pck.report_id = 0x03;
-		ff_pck.ff.magnitude_right = 0x80;
-		ff_pck.ff.magnitude_left = 0x40;
-		ff_pck.ff.magnitude_right_trigger = 0x20;
-		ff_pck.ff.magnitude_left_trigger = 0x20;
+		ff_pck.ff.magnitude_right = 40;
+		ff_pck.ff.magnitude_left = 20;
+		ff_pck.ff.magnitude_right_trigger = 10;
+		ff_pck.ff.magnitude_left_trigger = 10;
 		ff_pck.ff.duration = 33;
 
 		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
