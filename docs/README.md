@@ -22,8 +22,7 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 * Supports multiple Gamepads at the same time (not even supported in Windows)
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before
 * Working Select, Start, Mode buttons
-* Correct Axis Range (signed, important for e.g. RPCS3)
-* Supports Battery Level Indication (including the Play \`n Charge Kit)  
+* Supports Battery Level Indication (including the Play \`n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
 * Supports faking the Input Device Version in order to prevent SDL from trying to fix an unbroken mapping.
 * Easy Installation
