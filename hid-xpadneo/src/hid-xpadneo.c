@@ -137,13 +137,12 @@ struct ff_data {
 	u8 loop_count;
 } __packed;
 
+#define XPADNEO_XB1S_FF_REPORT 0x03
+
 struct ff_report {
 	u8 report_id;
 	struct ff_data ff;
 } __packed;
-
-/* static variables are zeroed => empty initialization struct */
-static const struct ff_data ff_clear;
 
 /*
  * Device Data
@@ -334,6 +333,32 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	return 0;
 }
 
+static void xpadneo_welcome_rumble(struct hid_device *hdev)
+{
+	struct ff_report ff_pck;
+
+	memset(&ff_pck.ff, 0, sizeof(ff_pck.ff));
+
+	ff_pck.report_id = XPADNEO_XB1S_FF_REPORT;
+	ff_pck.ff.magnitude_right = 40;
+	ff_pck.ff.magnitude_left = 20;
+	ff_pck.ff.magnitude_right_trigger = 10;
+	ff_pck.ff.magnitude_left_trigger = 10;
+	ff_pck.ff.duration = 33;
+
+	ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
+	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	mdelay(330);
+
+	ff_pck.ff.enable_actuators = FF_ENABLE_LEFT;
+	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	mdelay(330);
+
+	ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	mdelay(330);
+}
+
 /* Device (Gamepad) Initialization */
 static int xpadneo_initDevice(struct hid_device *hdev)
 {
@@ -342,34 +367,9 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	struct ff_report ff_pck;
-
-	/* TODO: outsource that */
-
-	ff_pck.ff = ff_clear;
-
 	/* 'HELLO' FROM THE OTHER SIDE */
-	if (!param_disable_ff) {
-		ff_pck.report_id = 0x03;
-		ff_pck.ff.magnitude_right = 40;
-		ff_pck.ff.magnitude_left = 20;
-		ff_pck.ff.magnitude_right_trigger = 10;
-		ff_pck.ff.magnitude_left_trigger = 10;
-		ff_pck.ff.duration = 33;
-
-		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		mdelay(330);
-
-		ff_pck.ff.enable_actuators = FF_ENABLE_LEFT;
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		mdelay(330);
-
-		ff_pck.ff.enable_actuators
-		    = FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		mdelay(330);
-	}
+	if (!param_disable_ff)
+		xpadneo_welcome_rumble(hdev);
 
 	/* Init Input System for Force Feedback (FF) */
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
