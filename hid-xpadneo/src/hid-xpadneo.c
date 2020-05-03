@@ -451,14 +451,6 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		.drv_data = xdata
 	};
 
-	/* Set up power supply */
-
-	/*
-	 * Set the battery capacity to 'full' until we get our first real
-	 * battery event. Prevents false "critical low battery" notifications
-	 */
-	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
-
 	/*
 	 * NOTE: hdev->uniq is meant to be the MAC address and hence
 	 *       it should be unique. Unfortunately, here it is not unique
@@ -470,7 +462,14 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
 
+	/* Set up power supply */
 	xdata->batt_desc.type = POWER_SUPPLY_TYPE_BATTERY;
+
+	/*
+	 * Set the battery capacity to 'full' until we get our first real
+	 * battery event. Prevents false "critical low battery" notifications
+	 */
+	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
 
 	/* Which properties of the battery are accessible? */
 	xdata->batt_desc.properties = battery_props;
