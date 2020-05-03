@@ -23,7 +23,7 @@ PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,fake-dev-version:,trigger-rumble-damping: -- "$@")
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,trigger-rumble-damping: -- "$@")
 
 
 
@@ -61,13 +61,6 @@ function check_param {
         if [[ "$value" -gt 256 ]] || [[ "$value" -lt 1 ]];
         then
             echo "$NAME: $key: Invalid value! Value must be between 1 and 256."
-            exit 1
-        fi
-        ;;
-    "fake_dev_version")
-        if [[ "$value" -gt 65535 ]] || [[ "$value" -lt 1 ]];
-        then
-            echo "$NAME: $key: Invalid value! Value must be between 1 and 65535."
             exit 1
         fi
         ;;
@@ -171,13 +164,6 @@ function parse_args {
 
       -r | --trigger-rumble-damping)
         key='trigger_rumble_damping'
-        value="${2#*=}"
-        set_param "$key" "$value"
-        shift 2
-        ;;
-
-      -v | --fake-dev-version)
-        key='fake_dev_version'
         value="${2#*=}"
         set_param "$key" "$value"
         shift 2

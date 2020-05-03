@@ -1,7 +1,11 @@
 ## SDL Mapping
 
-We fixed the following problem by faking the *input device version* to `0x1130` by default.
-If you want to go with the original one, please read the following:
+We fixed the following problem by pretending we are in Windows wireless mode
+by faking the *input device PID* to `0x02E0`. The original PID `0x02FD`
+triggeres several unwanted fixups at multiple layers, i.e. SDL or the HTML5
+game controller API. The following paragraphs document the originally
+wrong behaviour observed and we clearly don't want our fixed mappings to be
+"fixed" again by layers detected a seemingly wrong button mapping:
 
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings

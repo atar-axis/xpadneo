@@ -17,11 +17,8 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 v
 -r, --trigger-rumble-damping
 	Damp the strength of the trigger force feedback. [1 (none) to 256 (max)]
 
--v, --fake-dev-version
-	Fake the input device version to the given value. [1 to 65535]
-
 -z, --combined-z-axis
-	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in 
+	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in
 	flight simulators.  The left and right trigger will work against each other.  [y, n]
 
 
