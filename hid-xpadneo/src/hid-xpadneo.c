@@ -66,11 +66,6 @@ module_param_named(trigger_rumble_damping,
 MODULE_PARM_DESC(trigger_rumble_damping,
 		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
-static u16 param_fake_dev_version = 0x1130;
-module_param_named(fake_dev_version, param_fake_dev_version, ushort, 0644);
-MODULE_PARM_DESC(fake_dev_version,
-		 "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
-
 /*
  * Debug Printk
  *
@@ -1027,10 +1022,24 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
-	if (param_fake_dev_version) {
-		xdata->idev->id.version = (u16)param_fake_dev_version;
-		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
-			    param_fake_dev_version);
+	/*
+	 * Pretend that we are in Windows pairing mode as we are actually
+	 * exposing the Windows mapping. This prevents SDL and other layers
+	 * (probably browser game controller APIs) from treating our driver
+	 * unnecessarily with button and axis mapping fixups, and it seems
+	 * this is actually a firmware mode meant to Android usage only:
+	 * 0x2E0 wireless Windows mode (non-Android mode)
+	 * 0x2EA USB Windows and Linux mode
+	 * 0x2FD wireless Linux mode (Android mode)
+	 */
+	switch (xdata->idev->id.product) {
+	case 0x02FD:
+		hid_info(hdev,
+			 "pretending Windows wireless mode (changed PID from 0x%04X to 0x02E0)\n",
+			 (u16)xdata->idev->id.product);
+		xdata->idev->id.product = 0x02E0;
+		break;
+
 	}
 
 	/*
