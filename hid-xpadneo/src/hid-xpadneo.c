@@ -199,6 +199,10 @@ struct xpadneo_devdata {
 	struct work_struct ff_worker;
 	struct ff_data ff;
 	void *output_report_dmabuf;
+
+	/* buffer for batt_worker */
+	struct work_struct batt_worker;
+	u8 batt_status;
 };
 
 static void xpadneo_ff_worker(struct work_struct *work)
@@ -423,6 +427,62 @@ static int battery_get_property(struct power_supply *ps,
 	return 0;
 }
 
+#define XPADNEO_BATTERY_ONLINE(data)   ((data&0x80)>>7)
+#define XPADNEO_BATTERY_PRESENT(data)  ((data&0x0C)!=0x00)
+#define XPADNEO_BATTERY_CHARGING(data) ((data&0x10)>>4)
+#define XPADNEO_BATTERY_CAPACITY(data) (data&0x03)
+
+/*
+ * Battery Worker
+ *
+ * This function is called by the kernel worker thread.
+ */
+static void xpadneo_batt_worker(struct work_struct *work)
+{
+	struct xpadneo_devdata *xdata =
+	    container_of(work, struct xpadneo_devdata, batt_worker);
+
+	unsigned long flags;
+	u8 capacity_level, present, online, status;
+	u8 data = xdata->batt_status;
+
+	online = XPADNEO_BATTERY_ONLINE(data);
+	present = XPADNEO_BATTERY_PRESENT(data);
+
+	switch (XPADNEO_BATTERY_CAPACITY(data)) {
+	case 0x00:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+		break;
+	case 0x01:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+		break;
+	case 0x02:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+		break;
+	case 0x03:
+		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
+		break;
+	}
+
+	switch (XPADNEO_BATTERY_CHARGING(data)) {
+	case 0:
+		status = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;
+	case 1:
+		status = POWER_SUPPLY_STATUS_CHARGING;
+		break;
+	}
+
+	spin_lock_irqsave(&xdata->lock, flags);
+	xdata->ps_status = status;
+	xdata->ps_capacity_level = capacity_level;
+	xdata->ps_online = online;
+	xdata->ps_present = present;
+	spin_unlock_irqrestore(&xdata->lock, flags);
+
+	power_supply_changed(xdata->batt);
+}
+
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
 	int ret = 0;
@@ -448,6 +508,8 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		/* pass the xpadneo_data to the get_property function */
 		.drv_data = xdata
 	};
+
+	INIT_WORK(&xdata->batt_worker, xpadneo_batt_worker);
 
 	/*
 	 * NOTE: hdev->uniq is meant to be the MAC address and hence
@@ -773,6 +835,13 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 			       struct input_ev * map_to);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
+	switch (usage->hid) {
+	case HID_DC_BATTERYSTRENGTH:
+		hid_dbg_lvl(DBG_LVL_FEW, hdev,
+			    "USG: 0x%05X -> battery report\n", usage->hid);
+		return RET_MAP_AUTO;
+	}
+
 	switch (xdata->report_descriptor) {
 	case LINUX:
 		perform_mapping = map_hid_to_input_linux;
@@ -834,75 +903,12 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 	return rdesc;
 }
 
-static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
-				    int reportsize)
+static void process_battery_event(struct hid_device *hdev, __s32 value)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	unsigned long flags;
-	u8 capacity_level, present, online, status;
 
-	/*
-	 *  msb          ID 04          lsb
-	 * +---+---+---+---+---+---+---+---+
-	 * | O | R | E | C | M | M | L | L |
-	 * +---+---+---+---+---+---+---+---+
-	 *
-	 * O: Online
-	 * R: Reserved / Unused
-	 * E: Error (?) / Unknown
-	 * C: Charging, I mean really charging the battery (P 'n C)
-	 *              not (only) the power cord powering the controller
-	 * M M: Mode
-	 *   00: Powered by USB
-	 *   01: Powered by (disposable) batteries
-	 *   10: Powered by Play 'n Charge battery pack (only, no cable)
-	 * L L: Capacity Level
-	 *   00: (Super) Critical
-	 *   01: Low
-	 *   10: Medium
-	 *   11: Full
-	 */
-
-	/* I think "online" means whether the dev is online or shutting down */
-	online = (data[1] & 0x80) >> 7;
-
-	/* The _battery_ is only present if not powered by USB */
-	present = ((data[1] & 0x0C) != 0x00);
-
-	/* Capacity level, only valid as long as the battery is present */
-	switch (data[1] & 0x03) {
-	case 0x00:
-		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
-		break;
-	case 0x01:
-		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-		break;
-	case 0x02:
-		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-		break;
-	case 0x03:
-		capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
-		break;
-	}
-
-	/* Is the (Play 'n Charge) battery charging right now? */
-	switch ((data[1] & 0x10) >> 4) {
-	case 0:
-		status = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;
-	case 1:
-		status = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	}
-
-	spin_lock_irqsave(&xdata->lock, flags);
-	xdata->ps_status = status;
-	xdata->ps_capacity_level = capacity_level;
-	xdata->ps_online = online;
-	xdata->ps_present = present;
-	spin_unlock_irqrestore(&xdata->lock, flags);
-
-	power_supply_changed(xdata->batt);
+	xdata->batt_status = (u8)value;
+	schedule_work(&xdata->batt_worker);
 }
 
 static void
@@ -994,9 +1000,6 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	case 0x02:
 		check_report_behaviour(hdev, data, reportsize);
 		break;
-	case 04:
-		parse_raw_event_battery(hdev, data, reportsize);
-		return RAWEV_STOP_PROCESSING;
 	}
 
 	/* Continue processing */
@@ -1067,6 +1070,12 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
+
+	switch (usage->hid) {
+	case HID_DC_BATTERYSTRENGTH:
+		process_battery_event(hdev, value);
+		goto sync_and_stop_processing;
+	}
 
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
 		    "hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
@@ -1285,6 +1294,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	hid_hw_close(hdev);
 
+	cancel_work_sync(&xdata->batt_worker);
 	cancel_work_sync(&xdata->ff_worker);
 
 	/* Cleaning up here */
