@@ -912,22 +912,28 @@ check_report_behaviour(struct hid_device *hdev, u8 *data, int reportsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	/*
-	 * The length of the first input report with an ID of 0x01
-	 * reveals which report-type the controller is actually
-	 * sending (windows: 16, or linux: 17).
-	 */
 	if (xdata->report_behaviour == UNKNOWN) {
-		switch (reportsize) {
-		case 16:
-			xdata->report_behaviour = WINDOWS;
-			break;
-		case 17:
+		if (data[0] == 0x01) {
+			/*
+			 * The length of the first input report with an ID of 0x01
+			 * reveals which report-type the controller is actually
+			 * sending (windows: 16, or linux: 17).
+			 */
+			switch (reportsize) {
+			case 16:{
+					xdata->report_behaviour = WINDOWS;
+					break;
+				}
+			case 17:{
+					xdata->report_behaviour = LINUX;
+					break;
+				}
+			}
+		} else if (data[0] == 0x02) {
+			/* According to the descriptor, we can also assume Linux
+			 * behaviour if we see report ID 0x02
+			 */
 			xdata->report_behaviour = LINUX;
-			break;
-		default:
-			xdata->report_behaviour = UNKNOWN;
-			break;
 		}
 	}
 
@@ -986,7 +992,8 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
 
 	switch (report->id) {
-	case 01:
+	case 0x01:
+	case 0x02:
 		check_report_behaviour(hdev, data, reportsize);
 		break;
 	case 04:
@@ -1206,16 +1213,12 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	/* Unknown until first report with ID 01 arrives (see raw_event) */
 	xdata->report_behaviour = UNKNOWN;
-
 	switch (hdev->dev_rsize) {
 	case 307:
 		xdata->report_descriptor = WINDOWS;
 		break;
 	case 335:
 		xdata->report_descriptor = LINUX;
-		break;
-	default:
-		xdata->report_descriptor = UNKNOWN;
 		break;
 	}
 
