@@ -141,28 +141,6 @@ struct ff_report {
 	struct ff_data ff;
 } __packed;
 
-/*
- * Device Data
- *
- * We attach information to hdev, which is therefore nearly globally accessible
- * via hid_get_drvdata(hdev). It is attached to the hid_device via
- * hid_set_drvdata(hdev) at the probing function.
- */
-
-enum report_type {
-	UNKNOWN,
-	LINUX,
-	WINDOWS
-};
-
-// TODO: avoid data duplication
-
-const char *report_type_text[] = {
-	"unknown",
-	"linux/android",
-	"windows"
-};
-
 struct xpadneo_devdata {
 	/* mutual exclusion */
 	spinlock_t lock;
@@ -174,10 +152,6 @@ struct xpadneo_devdata {
 	struct hid_device *hdev;
 	struct input_dev *idev;
 	struct power_supply *batt;
-
-	/* report types */
-	enum report_type report_descriptor;
-	enum report_type report_behaviour;
 
 	/* battery information */
 	struct power_supply_desc batt_desc;
@@ -198,6 +172,49 @@ struct xpadneo_devdata {
 	/* buffer for batt_worker */
 	struct work_struct batt_worker;
 	u8 batt_status;
+};
+
+struct usage_map {
+	u32 usage;
+	enum {
+		MAP_IGNORE = -1,	/* Completely ignore this field */
+		MAP_AUTO,	/* Do not really map it, let hid-core decide */
+		MAP_STATIC	/* Map to the values given */
+	} behaviour;
+	struct {
+		u8 event_type;	/* input event (EV_KEY, EV_ABS, ...) */
+		u16 input_code;	/* input code (BTN_A, ABS_X, ...) */
+	} ev;
+};
+
+#define USAGE_MAP(u, b, e, i) \
+	{ .usage = (u), .behaviour = (b), .ev = { .event_type = (e), .input_code = (i) } }
+#define USAGE_IGN(u) USAGE_MAP(u, MAP_IGNORE, 0, 0)
+
+static const struct usage_map xpadneo_usage_maps[] = {
+	/* fixup buttons to Linux codes */
+	USAGE_MAP(0x90001, MAP_STATIC, EV_KEY, BTN_A),	/* A */
+	USAGE_MAP(0x90002, MAP_STATIC, EV_KEY, BTN_B),	/* B */
+	USAGE_MAP(0x90003, MAP_STATIC, EV_KEY, BTN_X),	/* X */
+	USAGE_MAP(0x90004, MAP_STATIC, EV_KEY, BTN_Y),	/* Y */
+	USAGE_MAP(0x90005, MAP_STATIC, EV_KEY, BTN_TL),	/* LB */
+	USAGE_MAP(0x90006, MAP_STATIC, EV_KEY, BTN_TR),	/* RB */
+	USAGE_MAP(0x90007, MAP_STATIC, EV_KEY, BTN_SELECT),	/* Back */
+	USAGE_MAP(0x90008, MAP_STATIC, EV_KEY, BTN_START),	/* Menu */
+	USAGE_MAP(0x90009, MAP_STATIC, EV_KEY, BTN_THUMBL),	/* LS */
+	USAGE_MAP(0x9000A, MAP_STATIC, EV_KEY, BTN_THUMBR),	/* RS */
+
+	/* fixup the Xbox logo button */
+	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),	/* Xbox */
+
+	/* fixup code "Sys Main Menu" from Windows report descriptor */
+	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),
+
+	/* fixup code "AC Home" from Linux report descriptor */
+	USAGE_MAP(0xC0223, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),
+
+	/* disable duplicate button */
+	USAGE_IGN(0xC0224),
 };
 
 static void xpadneo_ff_worker(struct work_struct *work)
@@ -560,340 +577,75 @@ err_free:
 	return ret;
 }
 
-enum mapping_behaviour {
-	MAP_IGNORE,		/* Completely ignore this field */
-	MAP_AUTO,		/* Do not really map it, let hid-core decide */
-	MAP_STATIC		/* Map to the values given */
-};
-
-struct input_ev {
-	/* Map to which input event (EV_KEY, EV_ABS, ...)? */
-	u8 event_type;
-	/* Map to which input code (BTN_A, ABS_X, ...)? */
-	u16 input_code;
-};
-
-static u8 map_hid_to_input_windows(struct hid_usage *usage,
-				   struct input_ev *map_to)
-{
-	/*
-	 * Windows report-descriptor (307 byte):
-	 *
-	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
-	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 33 09 34 15 00
-	 * 27 ff ff 00 00 95 02 75 10 81 02 c0 05 01 09 32 15 00 26 ff
-	 * 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 01 09
-	 * 35 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
-	 * 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04
-	 * 95 01 81 42 75 04 95 01 15 00 25 00 35 00 45 00 65 00 81 03
-	 * 05 09 19 01 29 0a 15 00 25 01 75 01 95 0a 81 02 15 00 25 00
-	 * 75 06 95 01 81 03 05 01 09 80 85 02 a1 00 09 85 15 00 25 01
-	 * 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 c0 05 0f 09
-	 * 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25
-	 * 00 75 04 95 01 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09
-	 * 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02 09 a7 15
-	 * 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff
-	 * 00 75 08 95 01 91 02 c0 85 04 05 06 09 20 15 00 26 ff 00 75
-	 * 08 95 01 81 02 c0 00
-	 */
-
-	unsigned int hid_usage = usage->hid & HID_USAGE;
-	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
-
-	switch (hid_usage_page) {
-	case HID_UP_BUTTON:
-		switch (hid_usage) {
-		case 0x01:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_A};
-			return MAP_STATIC;
-		case 0x02:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_B};
-			return MAP_STATIC;
-		case 0x03:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_X};
-			return MAP_STATIC;
-		case 0x04:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_Y};
-			return MAP_STATIC;
-		case 0x05:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_TL};
-			return MAP_STATIC;
-		case 0x06:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_TR};
-			return MAP_STATIC;
-		case 0x07:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_SELECT};
-			return MAP_STATIC;
-		case 0x08:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_START};
-			return MAP_STATIC;
-		case 0x09:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_THUMBL};
-			return MAP_STATIC;
-		case 0x0A:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_THUMBR};
-			return MAP_STATIC;
-		}
-		return MAP_IGNORE;
-	case HID_UP_GENDESK:
-		switch (hid_usage) {
-		case 0x30:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_X};
-			return MAP_STATIC;
-		case 0x31:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_Y};
-			return MAP_STATIC;
-		case 0x32:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_Z};
-			return MAP_STATIC;
-		case 0x33:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RX};
-			return MAP_STATIC;
-		case 0x34:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RY};
-			return MAP_STATIC;
-		case 0x35:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RZ};
-			return MAP_STATIC;
-		case 0x39:
-			*map_to = (struct input_ev) {
-			0, 0};
-			return MAP_AUTO;
-		case 0x85:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_MODE};
-			return MAP_STATIC;
-		}
-		return MAP_IGNORE;
-	}
-
-	return MAP_IGNORE;
-}
-
-static u8 map_hid_to_input_linux(struct hid_usage *usage,
-				 struct input_ev *map_to)
-{
-	/*
-	 * Linux report-descriptor (335 byte):
-	 *
-	 * 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
-	 * ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 32 09 35 15 00
-	 * 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff
-	 * 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09
-	 * c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
-	 * 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04
-	 * 95 01 81 42 75 04 95 01 15 00 25 00 35 00 45 00 65 00 81 03
-	 * 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
-	 * 75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81
-	 * 02 15 00 25 00 75 07 95 01 81 03 05 0c 09 01 85 02 a1 01 05
-	 * 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07
-	 * 95 01 81 03 c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75
-	 * 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03 09 70 15 00 25
-	 * 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75
-	 * 08 95 01 91 02 09 a7 15 00 26 ff 00 75 08 95 01 91 02 65 00
-	 * 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 85 04 05 06
-	 * 09 20 15 00 26 ff 00 75 08 95 01 81 02 c0 00
-	 */
-
-	unsigned int hid_usage = usage->hid & HID_USAGE;
-	unsigned int hid_usage_page = usage->hid & HID_USAGE_PAGE;
-
-	switch (hid_usage_page) {
-	case HID_UP_BUTTON:
-		switch (hid_usage) {
-		case 0x01:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_A};
-			return MAP_STATIC;
-		case 0x02:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_B};
-			return MAP_STATIC;
-		case 0x04:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_X};
-			return MAP_STATIC;
-		case 0x05:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_Y};
-			return MAP_STATIC;
-		case 0x07:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_TL};
-			return MAP_STATIC;
-		case 0x08:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_TR};
-			return MAP_STATIC;
-		case 0x0C:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_START};
-			return MAP_STATIC;
-		case 0x0E:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_THUMBL};
-			return MAP_STATIC;
-		case 0x0F:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_THUMBR};
-			return MAP_STATIC;
-		}
-		return MAP_IGNORE;
-	case HID_UP_CONSUMER:
-		switch (hid_usage) {
-		case 0x223:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_MODE};
-			return MAP_STATIC;
-		case 0x224:
-			*map_to = (struct input_ev) {
-			EV_KEY, BTN_SELECT};
-			return MAP_STATIC;
-		}
-		return MAP_IGNORE;
-	case HID_UP_GENDESK:
-		switch (hid_usage) {
-		case 0x30:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_X};
-			return MAP_STATIC;
-		case 0x31:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_Y};
-			return MAP_STATIC;
-		case 0x32:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RX};
-			return MAP_STATIC;
-		case 0x35:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RY};
-			return MAP_STATIC;
-		case 0x39:
-			*map_to = (struct input_ev) {
-			0, 0};
-			return MAP_AUTO;
-		}
-		return MAP_IGNORE;
-	case HID_UP_SIMULATION:
-		switch (hid_usage) {
-		case 0xC4:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_RZ};
-			return MAP_STATIC;
-		case 0xC5:
-			*map_to = (struct input_ev) {
-			EV_ABS, ABS_Z};
-			return MAP_STATIC;
-		}
-		return MAP_IGNORE;
-	}
-
-	return MAP_IGNORE;
-}
-
-/*
- * Input Mapping Hook
- *
- * Invoked at input registering before mapping an usage
- * (called once for every hid-usage).
- */
 static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 			   struct hid_field *field, struct hid_usage *usage,
 			   unsigned long **bit, int *max)
 {
-	/* Return values */
-	enum {
-		RET_MAP_IGNORE = -1,	/* completely ignore this input */
-		RET_MAP_AUTO,	/* let hid-core autodetect the mapping */
-		RET_MAP_STATIC	/* mapped by hand, no further processing */
-	};
+	int i = 0;
 
-	struct input_ev map_to;
-	u8 (*perform_mapping) (struct hid_usage * usage,
-			       struct input_ev * map_to);
-	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	for (i = 0; i < ARRAY_SIZE(xpadneo_usage_maps); i++) {
+		const struct usage_map *entry = &xpadneo_usage_maps[i];
 
-	switch (usage->hid) {
-	case HID_DC_BATTERYSTRENGTH:
-		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-			    "USG: 0x%05X -> battery report\n", usage->hid);
-		return RET_MAP_AUTO;
+		if (entry->usage == usage->hid) {
+			if (entry->behaviour == 1) {
+				hid_map_usage_clear(hi, usage, bit, max,
+						    entry->ev.event_type,
+						    entry->ev.input_code);
+			}
+			return entry->behaviour;
+		}
 	}
 
-	switch (xdata->report_descriptor) {
-	case LINUX:
-		perform_mapping = map_hid_to_input_linux;
-		break;
-	case WINDOWS:
-		perform_mapping = map_hid_to_input_windows;
-		break;
-	default:
-		return RET_MAP_AUTO;
-	}
-
-	switch (perform_mapping(usage, &map_to)) {
-	case MAP_AUTO:
-		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-			    "UP: 0x%04X, USG: 0x%04X -> automatically\n",
-			    usage->hid & HID_USAGE_PAGE,
-			    usage->hid & HID_USAGE);
-
-		return RET_MAP_AUTO;
-
-	case MAP_IGNORE:
-		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-			    "UP: 0x%04X, USG: 0x%04X -> ignored\n",
-			    usage->hid & HID_USAGE_PAGE,
-			    usage->hid & HID_USAGE);
-
-		return RET_MAP_IGNORE;
-
-	case MAP_STATIC:
-		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-			    "UP: 0x%04X, USG: 0x%04X -> EV: 0x%03X, INP: 0x%03X\n",
-			    usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE,
-			    map_to.event_type, map_to.input_code);
-
-		hid_map_usage_clear(hi, usage, bit, max,
-				    map_to.event_type, map_to.input_code);
-		return RET_MAP_STATIC;
-
-	}
-
-	/* Something went wrong, ignore this field */
-	return RET_MAP_IGNORE;
+	/* let HID handle this */
+	return 0;
 }
 
-/*
- * Report Descriptor Fixup Hook
- *
- * You can either modify the original report in place and just
- * return the original start address (rdesc) or you reserve a new
- * one and return a pointer to it. In the latter, you mostly have to
- * modify the rsize value too.
- */
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 				unsigned int *rsize)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT (DESCRIPTOR) FIXUP HOOK\n");
-	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descr: ", rdesc, *rsize);
+	/* fixup trailing NUL byte */
+	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
+		hid_notice(hdev, "fixing up report size\n");
+		*rsize -= 1;
+	}
+
+	/* fixup reported axes for Xbox One S */
+	if (*rsize >= 81) {
+		if (rdesc[34] == 0x09 && rdesc[35] == 0x32) {
+			hid_notice(hdev, "fixing up Rx axis\n");
+			rdesc[35] = 0x33;	/* Z --> Rx */
+		}
+		if (rdesc[36] == 0x09 && rdesc[37] == 0x35) {
+			hid_notice(hdev, "fixing up Ry axis\n");
+			rdesc[37] = 0x34;	/* Rz --> Ry */
+		}
+		if (rdesc[52] == 0x05 && rdesc[53] == 0x02 &&
+		    rdesc[54] == 0x09 && rdesc[55] == 0xC5) {
+			hid_notice(hdev, "fixing up Z axis\n");
+			rdesc[53] = 0x01;	/* Simulation -> Gendesk */
+			rdesc[55] = 0x32;	/* Brake -> Z */
+		}
+		if (rdesc[77] == 0x05 && rdesc[78] == 0x02 &&
+		    rdesc[79] == 0x09 && rdesc[80] == 0xC4) {
+			hid_notice(hdev, "fixing up Rz axis\n");
+			rdesc[78] = 0x01;	/* Simulation -> Gendesk */
+			rdesc[80] = 0x35;	/* Accelerator -> Rz */
+		}
+	}
+
+	/* fixup reported button count for Xbox controllers in Linux mode */
+	if (*rsize >= 164) {
+		/* 11 buttons instead of 10: properly remap the Xbox button */
+		if (rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
+		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
+		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
+		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
+			hid_notice(hdev, "fixing up button mapping\n");
+			rdesc[145] = 0x0B;	/* 15 buttons -> 11 buttons */
+			rdesc[153] = 0x0B;	/* 15 bits -> 11 bits buttons */
+			rdesc[163] = 0x05;	/* 1 bit -> 5 bits constants */
+		}
+	}
 
 	return rdesc;
 }
@@ -906,121 +658,40 @@ static void process_battery_event(struct hid_device *hdev, __s32 value)
 	schedule_work(&xdata->batt_worker);
 }
 
-static void
-check_report_behaviour(struct hid_device *hdev, u8 *data, int reportsize)
-{
-	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
-	if (xdata->report_behaviour == UNKNOWN) {
-		if (data[0] == 0x01) {
-			/*
-			 * The length of the first input report with an ID of 0x01
-			 * reveals which report-type the controller is actually
-			 * sending (windows: 16, or linux: 17).
-			 */
-			switch (reportsize) {
-			case 16:{
-					xdata->report_behaviour = WINDOWS;
-					break;
-				}
-			case 17:{
-					xdata->report_behaviour = LINUX;
-					break;
-				}
-			}
-		} else if (data[0] == 0x02) {
-			/* According to the descriptor, we can also assume Linux
-			 * behaviour if we see report ID 0x02
-			 */
-			xdata->report_behaviour = LINUX;
-		}
-	}
-
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %s, beh: %s\n",
-		    report_type_text[xdata->report_descriptor],
-		    report_type_text[xdata->report_behaviour]);
-
-	/*
-	 * TODO:
-	 * Maybe the best solution would be to replace the report descriptor
-	 * in case that the wrong reports are sent. Unfortunately we do not
-	 * know if the report descriptor is the right one until the first
-	 * report is sent to us. At this time, the report_fixup hook is
-	 * already over and the original descriptor is parsed into hdev
-	 * i.e. report_enum and collection.
-	 *
-	 * The next best solution would be to replace the report with
-	 * ID 0x01 with the right one in report_enum (and collection?).
-	 * I don't know yet how this would works, perhaps like this:
-	 * - create a new report struct
-	 * - fill it by hand
-	 * - add all neccessary fields (automatic way?)
-	 *
-	 * Another way to fix it is:
-	 * - Register another report with a _new_ ID by hand
-	 *   (unfortunately we cannot use the same id again)
-	 * - in raw_event: change the ID from 0x01 to the new one if
-	 *   necessary. leave it if not.
-	 *
-	 * What we currently do is:
-	 * We examine every report and fire the input events by hand.
-	 * That's not very generic.
-	 *
-	 */
-
-	// TODO:
-	// * remove old report using list operations
-	// * create new one like they do in hid_register_report
-	// * add it to output_reports->report_list and array
-}
-
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
-	/* Return Codes */
 	enum {
 		RAWEV_CONT_PROCESSING,	/* Let the hid-core autodetect the event */
 		RAWEV_STOP_PROCESSING	/* Stop further processing */
 	};
 
-	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
+	/* correct button mapping of Xbox controllers in Linux mode */
+	if (report->id == 1 && (reportsize == 17 || reportsize == 39)) {
+		u16 bits = 0;
 
-	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data,
-			 reportsize);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
-	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
-
-	switch (report->id) {
-	case 0x01:
-	case 0x02:
-		check_report_behaviour(hdev, data, reportsize);
-		break;
+		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
+		bits |= (data[14] & (BIT(3) | BIT(4))) >> 1;	/* X, Y */
+		bits |= (data[14] & (BIT(6) | BIT(7))) >> 2;	/* LB, RB */
+		bits |= (data[16] & BIT(0)) << 6;	/* Back */
+		bits |= (data[15] & BIT(3)) << 4;	/* Menu */
+		bits |= (data[15] & BIT(5)) << 3;	/* LS */
+		bits |= (data[15] & BIT(6)) << 3;	/* RS */
+		bits |= (data[15] & BIT(4)) << 6;	/* Xbox */
+		data[14] = (u8)((bits >> 0) & 0xFF);
+		data[15] = (u8)((bits >> 8) & 0xFF);
+		data[16] = 0;
 	}
 
-	/* Continue processing */
 	return RAWEV_CONT_PROCESSING;
 }
 
-static void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
-{
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK\n");
-}
-
-/*
- * Input Configured Hook
- *
- * We have to fix up the key-bitmap, because there is
- * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
- *
- */
 static int xpadneo_input_configured(struct hid_device *hdev,
 				    struct hid_input *hi)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	xdata->idev = hi->input;
-
-	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
 	/*
 	 * Pretend that we are in Windows pairing mode as we are actually
@@ -1075,7 +746,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			 struct hid_usage *usage, __s32 value)
 {
-	/* Return Codes */
 	enum {
 		EV_CONT_PROCESSING,	/* Let the hid-core autodetect the event */
 		EV_STOP_PROCESSING	/* Stop further processing */
@@ -1089,11 +759,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		process_battery_event(hdev, value);
 		goto sync_and_stop_processing;
 	}
-
-	hid_dbg_lvl(DBG_LVL_ALL, hdev,
-		    "hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
-		    (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
-		    usage->code, value);
 
 	if (usage->type == EV_ABS) {
 		switch (usage->code) {
@@ -1117,67 +782,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				goto combine_z_axes;
 			}
 			break;
-		}
-	}
-
-	/*
-	 * TODO:
-	 * This is a workaround for the wrong report (Windows report but
-	 * Linux descriptor). We would prefer to fixup the descriptor, but we
-	 * cannot fix it anymore at the time we recognize the wrong behaviour,
-	 * hence we will fire the input events by hand.
-	 */
-	if (xdata->report_behaviour == WINDOWS
-	    && xdata->report_descriptor == LINUX) {
-		/*
-		 * we fix all buttons by hand. You may think that we
-		 * could do that by using the windows_map too, but it is more
-		 * like an coincidence that this would work in this case:
-		 * It would only, because HID_UP_BUTTONS has no special names
-		 * for the HID_USAGE's, therefore the first button stays 0x01
-		 * on both reports (windows and linux) - it is a 1: 1 mapping.
-		 * But this is not true in general (i.e. for other USAGE_PAGES)
-		 */
-		if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
-			switch (usage->hid & HID_USAGE) {
-			case 0x01:
-				input_report_key(idev, BTN_A, value);
-				break;
-			case 0x02:
-				input_report_key(idev, BTN_B, value);
-				break;
-			case 0x03:
-				input_report_key(idev, BTN_X, value);
-				break;
-			case 0x04:
-				input_report_key(idev, BTN_Y, value);
-				break;
-			case 0x05:
-				input_report_key(idev, BTN_TL, value);
-				break;
-			case 0x06:
-				input_report_key(idev, BTN_TR, value);
-				break;
-			case 0x07:
-				input_report_key(idev, BTN_SELECT, value);
-				break;
-			case 0x08:
-				input_report_key(idev, BTN_START, value);
-				break;
-			case 0x09:
-				input_report_key(idev, BTN_THUMBL, value);
-				break;
-			case 0x0A:
-				input_report_key(idev, BTN_THUMBR, value);
-				break;
-			}
-
-			hid_dbg_lvl(DBG_LVL_ALL, hdev,
-				    "hid-upage: %02x, hid-usage: %02x fixed\n",
-				    (usage->hid & HID_USAGE_PAGE),
-				    (usage->hid & HID_USAGE));
-
-			goto sync_and_stop_processing;
 		}
 	}
 
@@ -1215,18 +819,6 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 				   0, 0, GFP_KERNEL);
 
 	xdata->hdev = hdev;
-
-	/* Unknown until first report with ID 01 arrives (see raw_event) */
-	xdata->report_behaviour = UNKNOWN;
-	switch (hdev->dev_rsize) {
-	case 307:
-		xdata->report_descriptor = WINDOWS;
-		break;
-	case 335:
-		xdata->report_descriptor = LINUX;
-		break;
-	}
-
 	hid_set_drvdata(hdev, xdata);
 
 	/* Parse the raw report (includes a call to report_fixup) */
@@ -1301,19 +893,7 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "Goodbye %s!\n", hdev->name);
 }
 
-/* Device ID Structure, define all supported devices here */
 static const struct hid_device_id xpadneo_devices[] = {
-	/*
-	 * The ProductID is somehow related to the Firmware Version,
-	 * but it somehow changed back from 0x02FD (newer fw) to 0x02E0 (older)
-	 * and vice versa on one controller here.
-	 *
-	 * Unfortunately you cannot tell from product id how the gamepad really
-	 * behaves on reports, since the newer firmware supports both mappings
-	 * (the one which is standard in linux and the old one, which is still
-	 * used in windows).
-	 */
-
 	/* XBOX ONE S / X */
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
@@ -1356,8 +936,6 @@ static struct hid_driver xpadneo_driver = {
 
 	/* If report in report_table, this hook is called */
 	.raw_event = xpadneo_raw_event,
-
-	.report = xpadneo_report
 };
 
 MODULE_DEVICE_TABLE(hid, xpadneo_devices);
