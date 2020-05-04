@@ -256,17 +256,6 @@ static void xpadneo_ff_worker(struct work_struct *work)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
 
-/*
- * Force Feedback Callback
- *
- * This function is called by the Input Subsystem.
- * The effect data is set in userspace and sent to the driver via ioctl.
- *
- * Q: where is drvdata set to hid_device?
- * A: hid_hw_start (called in probe)
- *    -> hid_connect -> hidinput_connect
- *    -> hidinput_allocate (sets drvdata to hid_device)
- */
 static int xpadneo_ff_play(struct input_dev *dev, void *data,
 			   struct ff_effect *effect)
 {
@@ -371,7 +360,6 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	mdelay(330);
 }
 
-/* Device (Gamepad) Initialization */
 static int xpadneo_initDevice(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -444,11 +432,6 @@ static int battery_get_property(struct power_supply *ps,
 #define XPADNEO_BATTERY_CHARGING(data) ((data&0x10)>>4)
 #define XPADNEO_BATTERY_CAPACITY(data) (data&0x03)
 
-/*
- * Battery Worker
- *
- * This function is called by the kernel worker thread.
- */
 static void xpadneo_batt_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata =
@@ -565,7 +548,7 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		hid_err(hdev, "Unable to register battery device\n");
 		goto err_free;
 	} else {
-		hid_dbg_lvl(DBG_LVL_SOME, hdev, "battery registered\n");
+		hid_info(hdev, "battery registered\n");
 	}
 
 	power_supply_powers(xdata->batt, &hdev->dev);
@@ -722,7 +705,8 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 #endif
 	case 0x02FD:
 		hid_info(hdev,
-			 "pretending XB1S Windows wireless mode (changed PID from 0x%04X to 0x02E0)\n",
+			 "pretending XB1S Windows wireless mode "
+			 "(changed PID from 0x%04X to 0x02E0)\n",
 			 (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
@@ -731,12 +715,10 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 
 	if (param_combined_z_axis) {
 		/*
-		 * furthermore, we need to translate the incoming events to fit within
+		 * We also need to translate the incoming events to fit within
 		 * the new range, we will do that in the xpadneo_event() hook.
 		 */
 		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
-
-		/* We remove the ABS_RZ event if param_combined_z_axis is enabled */
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
@@ -796,9 +778,8 @@ sync_and_stop_processing:
 	return EV_STOP_PROCESSING;
 }
 
-/* Device Probe and Remove Hook */
-static int xpadneo_probe_device(struct hid_device *hdev,
-				const struct hid_device_id *id)
+static int xpadneo_probe(struct hid_device *hdev,
+			 const struct hid_device_id *id)
 {
 	int ret;
 	struct xpadneo_devdata *xdata;
@@ -878,7 +859,15 @@ return_error:
 	return ret;
 }
 
-static void xpadneo_remove_device(struct hid_device *hdev)
+static void xpadneo_release_device_id(struct xpadneo_devdata *xdata)
+{
+	if (xdata->id >= 0) {
+		ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+		xdata->id = -1;
+	}
+}
+
+static void xpadneo_remove(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -887,10 +876,8 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	cancel_work_sync(&xdata->batt_worker);
 	cancel_work_sync(&xdata->ff_worker);
 
-	/* Cleaning up here */
-	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+	xpadneo_release_device_id(xdata);
 	hid_hw_stop(hdev);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "Goodbye %s!\n", hdev->name);
 }
 
 static const struct hid_device_id xpadneo_devices[] = {
@@ -905,70 +892,32 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{}
 };
 
-static struct hid_driver xpadneo_driver = {
-	/* The name of the driver */
-	.name = "xpadneo",
-
-	/* Which devices is this driver for */
-	.id_table = xpadneo_devices,
-
-	/*
-	 * Hooked as the input device is configured (before it is registered)
-	 * we need that because we do not configure the input-device ourself
-	 * but leave it up to hid_hw_start()
-	 */
-	.input_configured = xpadneo_input_configured,
-
-	/* Invoked on input registering before mapping an usage */
-	.input_mapping = xpadneo_mapping,
-
-	/* If usage in usage_table, this hook is called */
-	.event = xpadneo_event,
-
-	/* Called before report descriptor parsing (NULL means nop) */
-	.report_fixup = xpadneo_report_fixup,
-
-	/* Called when a new device is inserted */
-	.probe = xpadneo_probe_device,
-
-	/* Called when a device is removed */
-	.remove = xpadneo_remove_device,
-
-	/* If report in report_table, this hook is called */
-	.raw_event = xpadneo_raw_event,
-};
-
 MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 
-/*
- * Module Init and Exit
- *
- * We may replace init and remove by module_hid_driver(xpadneo_driver)
- * in future versions, as long as there is nothing special in these two
- * functions (but registering and unregistering the driver). Up to now it is
- * more useful for us to not "oversimplify" the whole driver-registering thing.
- *
- * Caution: do not use both! (module_hid_driver and hid_(un)register_driver)
- */
-static int __init xpadneo_initModule(void)
-{
-	pr_info("%s: hello there!\n", xpadneo_driver.name);
+static struct hid_driver xpadneo_driver = {
+	.name = "xpadneo",
+	.id_table = xpadneo_devices,
+	.input_mapping = xpadneo_mapping,
+	.input_configured = xpadneo_input_configured,
+	.probe = xpadneo_probe,
+	.remove = xpadneo_remove,
+	.report_fixup = xpadneo_report_fixup,
+	.raw_event = xpadneo_raw_event,
+	.event = xpadneo_event,
+};
 
+static int __init xpadneo_init(void)
+{
+	dbg_hid("xpadneo:%s\n", __func__);
 	return hid_register_driver(&xpadneo_driver);
 }
 
-static void __exit xpadneo_exitModule(void)
+static void __exit xpadneo_exit(void)
 {
+	dbg_hid("xpadneo:%s\n", __func__);
 	hid_unregister_driver(&xpadneo_driver);
-
 	ida_destroy(&xpadneo_device_id_allocator);
-
-	pr_info("%s: goodbye!\n", xpadneo_driver.name);
 }
 
-/*
- * Tell the driver system which functions to call at initialization and
- * removal of the module
- */
-module_init(xpadneo_initModule);
-module_exit(xpadneo_exitModule);
+module_init(xpadneo_init);
+module_exit(xpadneo_exit);
