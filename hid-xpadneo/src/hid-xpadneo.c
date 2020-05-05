@@ -167,6 +167,7 @@ struct xpadneo_devdata {
 	/* buffer for ff_worker */
 	struct work_struct ff_worker;
 	struct ff_data ff;
+	struct ff_data ff_shadow;
 	void *output_report_dmabuf;
 
 	/* buffer for batt_worker */
@@ -224,6 +225,12 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
+
+	/* generate no report when magnitudes are still the same */
+	if (memcmp(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff)) == 0)
+		return;
+	else
+		memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
 
 	memset(r, 0, sizeof(*r));
 
