@@ -1,12 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <linux/input.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <linux/input.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <sys/ioctl.h>
 #include <time.h>
-
+#include <unistd.h>
 
 
 enum {
@@ -18,14 +19,42 @@ enum {
     FF_DIR_EAST       = 0xC000
 };
 
+#define ioctl_sff(fd, effect) ioctl(fd, EVIOCSFF, effect)
+#define ioctl_rmff(fd, id)     ioctl(fd, EVIOCRMFF, id)
+
+#include<unistd.h>
+
+struct ff_effect effect = {
+    .id = -1, // set by ioctl
+    .type = FF_RUMBLE,
+    .replay.length = 50,
+    .replay.delay = 0,
+};
+
+int fd = -1;
+
+void signal_handler(int signo)
+{
+    switch (signo) {
+        case SIGINT: {
+            if (fd >= 0) {
+                if (effect.id >= 0)
+                    ioctl_rmff(fd, effect.id);
+                close(fd);
+            }
+            exit(0);
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
-    struct timespec req = {0};
-    req.tv_sec = 0;
-    req.tv_nsec = 330 * 1000000L;
+    if (signal(SIGINT, signal_handler) == SIG_ERR) {
+        perror("Error installing handler\n");
+        return 1;
+    }
 
     /* Read in arguments */
-
     if ((argc < 2 || argc > 3))
     {
         printf("./directional_rumble_rest <eventnumber> [<magnitude, 0 to 65535>]\n ");
@@ -37,71 +66,72 @@ int main(int argc, char *argv[])
 
 
     int magnitude = -1;
-
     if (argc == 3) {
         magnitude = atoi(argv[2]);
     }
-
     if (magnitude < 0 || magnitude > 65535)
         magnitude = 0xC000;
 
-
-
-    /* Start */
-
     printf("Directional Rumble Test\n");
 
-    int fd;
-    struct ff_effect effects[16];
-    struct input_event play;
-
-    /* prepare effects */
-    for (int i = 0; i < 16; i++) {
-        effects[i].type = FF_RUMBLE;
-        effects[i].id = -1; // set by ioctl
-        effects[i].direction = FF_DIR_SOUTH + i * 0x1000;
-        effects[i].u.rumble.strong_magnitude = magnitude;
-        effects[i].u.rumble.weak_magnitude = magnitude;
-        effects[i].replay.length = 330;
-        effects[i].replay.delay = 0;
-    }
-
-    printf("Press ENTER to upload Rumble effects\n");
-    getchar();
-
+    /* prepare the effect */
+    long int direction = FF_DIR_SOUTH;
+    effect.direction = direction;
+    effect.u.rumble.strong_magnitude = magnitude;
 
     /* uploading */
     fd = open(device, O_RDWR);
-    for (int i = 0; i < 16; i++) {
-        if (ioctl(fd, EVIOCSFF, &effects[i]) == -1) {
-            perror("Error while uploading\n");
-            return 1;
-        }
+    if (ioctl_sff(fd, &effect) == -1) {
+        perror("Error while uploading\n");
+        return 1;
     }
-
-
     printf("Press ENTER to play rumble effects\n");
     getchar();
 
-    for (int j = 0; j < 256; j++) {
-		int i = j % 16;
-        memset(&play, 0, sizeof(play));
-        play.type = EV_FF;
-        play.code = effects[i].id;
-        play.value = 1;
+    /* Start */
+    struct input_event play;
+    memset(&play, 0, sizeof(play));
+    play.type = EV_FF;
+    play.code = effect.id;
+    play.value = 1;
 
-        if (write(fd, (const void*) &play, sizeof(play)) == -1) {
-            perror("Error while playing\n");
+    for (int i = 0; i < 3000; i++) {
+        printf("direction: 0x%04lX\n", direction);
+
+        effect.direction = direction;
+        if (ioctl_sff(fd, &effect) == -1) {
+            perror("Error while uploading\n");
+            goto error_and_rm_effect;
             return 1;
-        } else {
-            printf("effect %2d, direction: %04x\n", i, effects[i].direction);
         }
 
-        nanosleep(&req, (struct timespec *)NULL);
+        play.value = 1;
+        if (write(fd, (const void*) &play, sizeof(play)) < 0) {
+            perror("Error while playing\n");
+            goto error_and_rm_effect;
+        }
+
+        direction = (direction + 1024) % 65536;
+
+        struct timespec req = {0};
+        req.tv_sec = 0;
+        req.tv_nsec = 50 * 1000000L;
+        while (nanosleep(&req, (struct timespec *)NULL) == -1) {
+            if (errno != EINTR) {
+                perror("End...\n");
+                goto error_and_rm_effect;
+            }
+        }
     }
 
+    printf("End...\n");
+
+    ioctl_rmff(fd, effect.id);
+    close(fd);
     return 0;
+
+error_and_rm_effect:
+    ioctl_rmff(fd, effect.id);
+    close(fd);
+    return 1;
 }
-
-
-

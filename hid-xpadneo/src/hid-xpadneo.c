@@ -60,9 +60,8 @@ MODULE_PARM_DESC(combined_z_axis,
 		 "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
 
 static u8 param_trigger_rumble_damping = 0;
-
-module_param_named(trigger_rumble_damping,
-		   param_trigger_rumble_damping, byte, 0644);
+module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
+		   0644);
 MODULE_PARM_DESC(trigger_rumble_damping,
 		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
@@ -266,21 +265,16 @@ static void xpadneo_ff_worker(struct work_struct *work)
 static int xpadneo_ff_play(struct input_dev *dev, void *data,
 			   struct ff_effect *effect)
 {
-	const int fractions_percent[] = {
-		100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96,
-		100
-	};
-	const int proportions_idx_max = 16;
-
 	enum {
-		DIRECTION_DOWN = 0x0000,
-		DIRECTION_LEFT = 0x4000,
-		DIRECTION_UP = 0x8000,
-		DIRECTION_RIGHT = 0xC000,
+		DIRECTION_DOWN = 0x0000UL,
+		DIRECTION_LEFT = 0x4000UL,
+		DIRECTION_UP = 0x8000UL,
+		DIRECTION_RIGHT = 0xC000UL,
+		QUARTER = DIRECTION_LEFT,
 	};
 
-	int fraction_TL, fraction_TR;
-	u32 weak, strong, direction, max_damped, max_unscaled;
+	int fraction_TL, fraction_TR, fraction_MAIN;
+	s32 weak, strong, direction, max_damped, max_unscaled;
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -293,33 +287,70 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	strong = effect->u.rumble.strong_magnitude;
 	direction = effect->direction;
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		    "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
-		    strong, weak, direction);
+	/*
+	 * scale the main rumble lineary within each half of the cirlce,
+	 * so we can completely turn off the main rumble while still doing
+	 * trigger rumble alone
+	 */
+	if (direction <= DIRECTION_UP) {
+		/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
+		fraction_MAIN =
+		    ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
+	} else {
+		/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
+		fraction_MAIN =
+		    ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
+	}
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_strong = (u8)((strong * 100) / U16_MAX);
-	xdata->ff.magnitude_weak = (u8)((weak * 100) / U16_MAX);
+	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
+	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
+
+	/*
+	 * scale the trigger rumble lineary within each quarter:
+	 *        _ _
+	 * LT = /     \
+	 * RT = _ / \ _
+	 *      1 2 3 4
+	 *
+	 * This gives us 4 different modes of operation (with smooth transitions)
+	 * to get a mostly somewhat independent control over each motor:
+	 *
+	 *                DOWN .. LEFT ..  UP  .. RGHT .. DOWN
+	 * left rumble  =   0% .. 100% .. 100% ..   0% ..   0%
+	 * right rumble =   0% ..   0% .. 100% .. 100% ..   0%
+	 * main rumble  = 100% ..  50% ..   0% ..  50% .. 100%
+	 *
+	 * For completely independent control, we'd need a sphere instead of a
+	 * circle but we only have one direction. We could decouple the
+	 * direction from the main rumble but that seems to be outside the spec
+	 * of the rumble protocol (direction without any magnitude should do
+	 * nothing).
+	 */
+	if (direction <= DIRECTION_LEFT) {
+		/* scale the left trigger between 0x0000..0x4000 (0%..100%) */
+		fraction_TL = (direction * 100) / QUARTER;
+		fraction_TR = 0;
+	} else if (direction <= DIRECTION_UP) {
+		/* scale the right trigger between 0x4000..0x8000 (0%..100%) */
+		fraction_TL = 100;
+		fraction_TR = ((direction - DIRECTION_LEFT) * 100) / QUARTER;
+	} else if (direction <= DIRECTION_RIGHT) {
+		/* scale the right trigger between 0x8000..0xC000 (100%..0%) */
+		fraction_TL = 100;
+		fraction_TR = ((DIRECTION_RIGHT - direction) * 100) / QUARTER;
+	} else {
+		/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
+		fraction_TL =
+		    100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
+		fraction_TR = 0;
+	}
 
 	/*
 	 * we want to keep the rumbling at the triggers below the maximum
 	 * of the weak and strong main rumble
 	 */
 	max_unscaled = weak > strong ? weak : strong;
-
-	/*
-	 * get the proportions from a precalculated cosine table
-	 * calculation goes like:
-	 * cosine(a) * 100 =  {100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96, 100}
-	 * fractions_percent(a) = round(50 + (cosine * 50))
-	 */
-	fraction_TL = fraction_TR = 0;
-	if (direction >= DIRECTION_LEFT && direction <= DIRECTION_RIGHT) {
-		u8 index_left = (direction - DIRECTION_LEFT) >> 11;
-		u8 index_right = proportions_idx_max - index_left;
-		fraction_TL = fractions_percent[index_left];
-		fraction_TR = fractions_percent[index_right];
-	}
 
 	/*
 	 * the user can change the damping at runtime, hence check the
