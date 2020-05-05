@@ -1,5 +1,6 @@
 *~
 .vscode/**
+/misc/examples/c_directional_rumble_test/direction_rumble_test
 docs/Gemfile.lock
 docs/_site/**
 hid-xpadneo/src/*.ko*
