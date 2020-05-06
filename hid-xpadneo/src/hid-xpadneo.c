@@ -118,22 +118,24 @@ static DEFINE_IDA(xpadneo_device_id_allocator);
  */
 
 enum {
-	FF_ENABLE_NONE = 0x00,
-	FF_ENABLE_RIGHT = 0x01,
-	FF_ENABLE_LEFT = 0x02,
-	FF_ENABLE_RIGHT_TRIGGER = 0x04,
-	FF_ENABLE_LEFT_TRIGGER = 0x08,
-	FF_ENABLE_ALL = 0x0F
+	FF_RUMBLE_NONE = 0x00,
+	FF_RUMBLE_WEAK = 0x01,
+	FF_RUMBLE_STRONG = 0x02,
+	FF_RUMBLE_MAIN = FF_RUMBLE_WEAK | FF_RUMBLE_STRONG,
+	FF_RUMBLE_RIGHT = 0x04,
+	FF_RUMBLE_LEFT = 0x08,
+	FF_RUMBLE_TRIGGERS = FF_RUMBLE_LEFT | FF_RUMBLE_RIGHT,
+	FF_RUMBLE_ALL = 0x0F
 };
 
 struct ff_data {
-	u8 enable_actuators;
-	u8 magnitude_left_trigger;
-	u8 magnitude_right_trigger;
+	u8 enable;
 	u8 magnitude_left;
 	u8 magnitude_right;
-	u8 duration;
-	u8 start_delay;
+	u8 magnitude_strong;
+	u8 magnitude_weak;
+	u8 pulse_sustain_10ms;
+	u8 pulse_release_10ms;
 	u8 loop_count;
 } __packed;
 
@@ -192,32 +194,50 @@ struct xpadneo_devdata {
 	/* axis states */
 	s32 last_abs_z;
 	s32 last_abs_rz;
+
+	/* buffer for ff_worker */
+	struct work_struct ff_worker;
+	struct ff_data ff;
+	void *output_report_dmabuf;
 };
 
-static void create_ff_pck(struct ff_report *pck, u8 id, u8 en_act,
-			  u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
-			  u8 start_delay)
+static void xpadneo_ff_worker(struct work_struct *work)
 {
+	struct xpadneo_devdata *xdata =
+	    container_of(work, struct xpadneo_devdata, ff_worker);
+	struct hid_device *hdev = xdata->hdev;
+	struct ff_report *r = xdata->output_report_dmabuf;
+	int ret;
 
-	pck->report_id = id;
+	memset(r, 0, sizeof(*r));
 
-	pck->ff.enable_actuators = en_act;
-	pck->ff.magnitude_left_trigger = mag_lt;
-	pck->ff.magnitude_right_trigger = mag_rt;
-	pck->ff.magnitude_left = mag_l;
-	pck->ff.magnitude_right = mag_r;
-	pck->ff.duration = 0xFF;
-	pck->ff.start_delay = start_delay;
-	pck->ff.loop_count = 0xFF;
+	r->report_id = XPADNEO_XB1S_FF_REPORT;
+
+	/* the user can disable some rumble motors */
+	r->ff.enable = FF_RUMBLE_ALL;
+	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
+		r->ff.enable &= ~FF_RUMBLE_TRIGGERS;
+	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
+		r->ff.enable &= ~FF_RUMBLE_MAIN;
 
 	/*
-	 * It is up to the Input-Subsystem to start and stop effects as needed.
-	 * All WE need to do is to play the effect at least 32767 ms long.
-	 * Take a look here:
-	 * https://stackoverflow.com/questions/48034091/
-	 * We therefore simply play the effect as long as possible, which is
-	 * 2, 55s * 255 = 650, 25s ~ = 10min
+	 * ff-memless has a time resolution of 50ms but we pulse the motors
+	 * as long as possible
 	 */
+	r->ff.pulse_sustain_10ms = U8_MAX;
+	r->ff.loop_count = U8_MAX;
+
+	/* trigger motors */
+	r->ff.magnitude_left = xdata->ff.magnitude_left;
+	r->ff.magnitude_right = xdata->ff.magnitude_right;
+
+	/* main motors */
+	r->ff.magnitude_strong = xdata->ff.magnitude_strong;
+	r->ff.magnitude_weak = xdata->ff.magnitude_weak;
+
+	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
+	if (ret < 0)
+		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
 
 /*
@@ -234,18 +254,11 @@ static void create_ff_pck(struct ff_report *pck, u8 id, u8 en_act,
 static int xpadneo_ff_play(struct input_dev *dev, void *data,
 			   struct ff_effect *effect)
 {
-	struct ff_report ff_pck;
-	u32 weak, strong, direction, max, max_damped, max_unscaled;
-	u8 mag_main_right, mag_main_left, mag_trigger_right, mag_trigger_left;
-	u8 ff_active;
-
 	const int fractions_percent[] = {
 		100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96,
 		100
 	};
 	const int proportions_idx_max = 16;
-	u8 index_left, index_right;
-	int fraction_TL, fraction_TR;
 
 	enum {
 		DIRECTION_DOWN = 0x0000,
@@ -254,10 +267,11 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		DIRECTION_RIGHT = 0xC000,
 	};
 
-	struct hid_device *hdev = input_get_drvdata(dev);
+	int fraction_TL, fraction_TR;
+	u32 weak, strong, direction, max_damped, max_unscaled;
 
-	if (param_disable_ff == PARAM_DISABLE_FF_ALL)
-		return 0;
+	struct hid_device *hdev = input_get_drvdata(dev);
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	if (effect->type != FF_RUMBLE)
 		return 0;
@@ -271,9 +285,15 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		    "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
 		    strong, weak, direction);
 
-	/* calculate the physical magnitudes */
-	mag_main_right = (u8)((weak * 100) / 0xFFFF);	/* scale from 16 bit to 0..100 */
-	mag_main_left = (u8)((strong * 100) / 0xFFFF);	/* scale from 16 bit to 0..100 */
+	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+	xdata->ff.magnitude_strong = (u8)((strong * 100) / U16_MAX);
+	xdata->ff.magnitude_weak = (u8)((weak * 100) / U16_MAX);
+
+	/*
+	 * we want to keep the rumbling at the triggers below the maximum
+	 * of the weak and strong main rumble
+	 */
+	max_unscaled = weak > strong ? weak : strong;
 
 	/*
 	 * get the proportions from a precalculated cosine table
@@ -281,21 +301,13 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 * cosine(a) * 100 =  {100, 96, 85, 69, 50, 31, 15, 4, 0, 4, 15, 31, 50, 69, 85, 96, 100}
 	 * fractions_percent(a) = round(50 + (cosine * 50))
 	 */
-	fraction_TL = 0;
-	fraction_TR = 0;
+	fraction_TL = fraction_TR = 0;
 	if (direction >= DIRECTION_LEFT && direction <= DIRECTION_RIGHT) {
-		index_left = (direction - DIRECTION_LEFT) >> 11;
-		index_right = proportions_idx_max - index_left;
+		u8 index_left = (direction - DIRECTION_LEFT) >> 11;
+		u8 index_right = proportions_idx_max - index_left;
 		fraction_TL = fractions_percent[index_left];
 		fraction_TR = fractions_percent[index_right];
 	}
-
-	/*
-	 * we want to keep the rumbling at the triggers below the maximum
-	 * of the weak and strong main rumble
-	 */
-	max = mag_main_right > mag_main_left ? mag_main_right : mag_main_left;
-	max_unscaled = weak > strong ? weak : strong;
 
 	/*
 	 * the user can change the damping at runtime, hence check the
@@ -306,30 +318,12 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	else
 		max_damped = max_unscaled;
 
-	mag_trigger_left = (u8)((max_damped * fraction_TL) / 0xFFFF);
-	mag_trigger_right = (u8)((max_damped * fraction_TR) / 0xFFFF);
+	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+	xdata->ff.magnitude_left = (u8)((max_damped * fraction_TL) / U16_MAX);
+	xdata->ff.magnitude_right = (u8)((max_damped * fraction_TR) / U16_MAX);
 
-	ff_active = FF_ENABLE_ALL;
-	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
-		ff_active &=
-		    ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
-	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
-		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
-
-	create_ff_pck(&ff_pck, 0x03,
-		      ff_active,
-		      mag_trigger_left, mag_trigger_right,
-		      mag_main_left, mag_main_right, 0);
-
-	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		    "active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
-		    ff_active,
-		    max, fraction_TL, fraction_TR,
-		    ff_pck.ff.magnitude_left_trigger,
-		    ff_pck.ff.magnitude_right_trigger);
-
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-
+	/* schedule writing a rumble report to the controller */
+	schedule_work(&xdata->ff_worker);
 	return 0;
 }
 
@@ -340,21 +334,23 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	memset(&ff_pck.ff, 0, sizeof(ff_pck.ff));
 
 	ff_pck.report_id = XPADNEO_XB1S_FF_REPORT;
-	ff_pck.ff.magnitude_right = 40;
-	ff_pck.ff.magnitude_left = 20;
-	ff_pck.ff.magnitude_right_trigger = 10;
-	ff_pck.ff.magnitude_left_trigger = 10;
-	ff_pck.ff.duration = 33;
+	ff_pck.ff.magnitude_weak = 40;
+	ff_pck.ff.magnitude_strong = 20;
+	ff_pck.ff.magnitude_right = 10;
+	ff_pck.ff.magnitude_left = 10;
+	ff_pck.ff.pulse_sustain_10ms = 5;
+	ff_pck.ff.pulse_release_10ms = 5;
+	ff_pck.ff.loop_count = 3;
 
-	ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
+	ff_pck.ff.enable = FF_RUMBLE_WEAK;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(330);
 
-	ff_pck.ff.enable_actuators = FF_ENABLE_LEFT;
+	ff_pck.ff.enable = FF_RUMBLE_STRONG;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(330);
 
-	ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+	ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(330);
 }
@@ -362,10 +358,16 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 /* Device (Gamepad) Initialization */
 static int xpadneo_initDevice(struct hid_device *hdev)
 {
-	int error;
-
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
+
+	INIT_WORK(&xdata->ff_worker, xpadneo_ff_worker);
+	xdata->output_report_dmabuf = devm_kzalloc(&hdev->dev,
+						   sizeof(struct
+							  ff_report),
+						   GFP_KERNEL);
+	if (xdata->output_report_dmabuf == NULL)
+		return -ENOMEM;
 
 	/* 'HELLO' FROM THE OTHER SIDE */
 	if (!param_disable_ff)
@@ -373,11 +375,7 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 
 	/* Init Input System for Force Feedback (FF) */
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
-	error = input_ff_create_memless(idev, NULL, xpadneo_ff_play);
-	if (error)
-		return error;
-
-	return 0;
+	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
 }
 
 /* Callback function which return the available properties to userspace */
@@ -1286,6 +1284,8 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	hid_hw_close(hdev);
+
+	cancel_work_sync(&xdata->ff_worker);
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
