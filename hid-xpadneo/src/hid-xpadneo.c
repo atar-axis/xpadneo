@@ -15,20 +15,19 @@
 #include <linux/delay.h>	/* mdelay(), ... */
 #include "hid-ids.h"		/* VENDOR_ID... */
 
-
 #define DEBUG
-
 
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
-MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
+MODULE_DESCRIPTION
+    ("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
-
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
 
-/* NOTE:
+/*
+ * NOTE:
  * In general it is not guaranteed that a short variable is no more than
  * 16 bit long in C, it depends on the computer architecure. But as a kernel
  * module parameter it is, since <params.c> does use kstrtou16 for shorts
@@ -37,13 +36,17 @@ MODULE_VERSION(DRV_VER);
 
 #ifdef DEBUG
 static u8 param_debug_level;
+
 module_param_named(debug_level, param_debug_level, byte, 0644);
-MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
+MODULE_PARM_DESC(debug_level,
+		 "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
 static u8 param_disable_ff;
+
 module_param_named(disable_ff, param_disable_ff, byte, 0644);
-MODULE_PARM_DESC(disable_ff, "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
+MODULE_PARM_DESC(disable_ff,
+		 "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
 
 #define PARAM_DISABLE_FF_NONE    0
 #define PARAM_DISABLE_FF_MAIN    1
@@ -51,17 +54,22 @@ MODULE_PARM_DESC(disable_ff, "(u8) Disable FF: 0 (all enabled), 1 (disable main)
 #define PARAM_DISABLE_FF_ALL     3
 
 static bool param_combined_z_axis;
-module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
-MODULE_PARM_DESC(combined_z_axis, "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
 
-static u8 param_trigger_rumble_damping = 4;
-module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
-MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
+module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
+MODULE_PARM_DESC(combined_z_axis,
+		 "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
+
+static u8 param_trigger_rumble_damping = 0;
+
+module_param_named(trigger_rumble_damping,
+		   param_trigger_rumble_damping, byte, 0644);
+MODULE_PARM_DESC(trigger_rumble_damping,
+		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
 static u16 param_fake_dev_version = 0x1130;
 module_param_named(fake_dev_version, param_fake_dev_version, ushort, 0644);
-MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
-
+MODULE_PARM_DESC(fake_dev_version,
+		 "(u16) Fake device version # to hide from SDL's mappings. 0x0001-0xFFFF: fake version, others: keep original");
 
 /*
  * Debug Printk
@@ -76,7 +84,6 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
 #define DBG_LVL_FEW  1
 #define DBG_LVL_SOME 2
 #define DBG_LVL_ALL  3
-
 
 #ifdef DEBUG
 #define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
@@ -98,7 +105,6 @@ MODULE_PARM_DESC(fake_dev_version, "(u16) Fake device version # to hide from SDL
 		no_printk(KERN_DEBUG pr_fmt(fmt_prefix))
 #endif
 
-
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
 /*
@@ -112,12 +118,12 @@ static DEFINE_IDA(xpadneo_device_id_allocator);
  */
 
 enum {
-	FF_ENABLE_NONE          = 0x00,
-	FF_ENABLE_RIGHT         = 0x01,
-	FF_ENABLE_LEFT          = 0x02,
+	FF_ENABLE_NONE = 0x00,
+	FF_ENABLE_RIGHT = 0x01,
+	FF_ENABLE_LEFT = 0x02,
 	FF_ENABLE_RIGHT_TRIGGER = 0x04,
-	FF_ENABLE_LEFT_TRIGGER  = 0x08,
-	FF_ENABLE_ALL           = 0x0F
+	FF_ENABLE_LEFT_TRIGGER = 0x08,
+	FF_ENABLE_ALL = 0x0F
 };
 
 struct ff_data {
@@ -138,7 +144,6 @@ struct ff_report {
 
 /* static variables are zeroed => empty initialization struct */
 static const struct ff_data ff_clear;
-
 
 /*
  * Device Data
@@ -161,7 +166,6 @@ const char *report_type_text[] = {
 	"linux/android",
 	"windows"
 };
-
 
 struct xpadneo_devdata {
 	/* mutual exclusion */
@@ -191,10 +195,10 @@ struct xpadneo_devdata {
 	s32 last_abs_rz;
 };
 
-
-void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
-	u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
-	u8 start_delay) {
+static void create_ff_pck(struct ff_report *pck, u8 id, u8 en_act,
+			  u8 mag_lt, u8 mag_rt, u8 mag_l, u8 mag_r,
+			  u8 start_delay)
+{
 
 	pck->report_id = id;
 
@@ -207,7 +211,8 @@ void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
 	pck->ff.start_delay = start_delay;
 	pck->ff.loop_count = 0xFF;
 
-	/* It is up to the Input-Subsystem to start and stop effects as needed.
+	/*
+	 * It is up to the Input-Subsystem to start and stop effects as needed.
 	 * All WE need to do is to play the effect at least 32767 ms long.
 	 * Take a look here:
 	 * https://stackoverflow.com/questions/48034091/
@@ -221,36 +226,32 @@ void create_ff_pck (struct ff_report *pck, u8 id, u8 en_act,
  *
  * This function is called by the Input Subsystem.
  * The effect data is set in userspace and sent to the driver via ioctl.
+ *
+ * Q: where is drvdata set to hid_device?
+ * A: hid_hw_start (called in probe)
+ *    -> hid_connect -> hidinput_connect
+ *    -> hidinput_allocate (sets drvdata to hid_device)
  */
-
 static int xpadneo_ff_play(struct input_dev *dev, void *data,
-	struct ff_effect *effect)
+			   struct ff_effect *effect)
 {
-	/* Q: where is drvdata set to hid_device?
-	 * A: hid_hw_start (called in probe)
-	 *    -> hid_connect -> hidinput_connect
-	 *    -> hidinput_allocate (sets drvdata to hid_device)
-	 */
-
 	struct ff_report ff_pck;
 	u16 weak, strong, direction, max, max_damped;
 	u8 mag_main_right, mag_main_left, mag_trigger_right, mag_trigger_left;
 	u8 ff_active;
 
-	const int fractions_milli[]
-		= {1000, 962, 854, 691, 500, 309, 146, 38, 0};
+	const int fractions_milli[] =
+	    { 1000, 962, 854, 691, 500, 309, 146, 38, 0 };
 	const int proportions_idx_max = 8;
 	u8 index_left, index_right;
 	int fraction_TL, fraction_TR;
-	u8 trigger_rumble_damping_nonzero;
 
 	enum {
-		DIRECTION_DOWN  = 0x0000,
-		DIRECTION_LEFT  = 0x4000,
-		DIRECTION_UP    = 0x8000,
+		DIRECTION_DOWN = 0x0000,
+		DIRECTION_LEFT = 0x4000,
+		DIRECTION_UP = 0x8000,
 		DIRECTION_RIGHT = 0xC000,
 	};
-
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 
@@ -261,19 +262,20 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		return 0;
 
 	/* copy data from effect structure at the very beginning */
-	weak      = effect->u.rumble.weak_magnitude;
-	strong    = effect->u.rumble.strong_magnitude;
+	weak = effect->u.rumble.weak_magnitude;
+	strong = effect->u.rumble.strong_magnitude;
 	direction = effect->direction;
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
-		strong, weak, direction);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev,
+		    "playing effect: strong: %#04x, weak: %#04x, direction: %#04x\n",
+		    strong, weak, direction);
 
 	/* calculate the physical magnitudes */
-	mag_main_right = (u8)((weak & 0xFF00) >> 8);   /* u16 to u8 */
-	mag_main_left  = (u8)((strong & 0xFF00) >> 8); /* u16 to u8 */
+	mag_main_right = (u8)((weak & 0xFF00) >> 8);	/* u16 to u8 */
+	mag_main_left = (u8)((strong & 0xFF00) >> 8);	/* u16 to u8 */
 
-
-	/* get the proportions from a precalculated cosine table
+	/*
+	 * get the proportions from a precalculated cosine table
 	 * calculation goes like:
 	 * cosine(a) * 1000 =  {1000, 924, 707, 383, 0, -383, -707, -924, -1000}
 	 * fractions_milli(a) = (1000 + (cosine * 1000)) / 2
@@ -290,62 +292,57 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		fraction_TR = fractions_milli[index_right];
 	}
 
-	/* we want to keep the rumbling at the triggers below the maximum
-	* of the weak and strong main rumble
-	*/
+	/*
+	 * we want to keep the rumbling at the triggers below the maximum
+	 * of the weak and strong main rumble
+	 */
 	max = mag_main_right > mag_main_left ? mag_main_right : mag_main_left;
 
-	/* the user can change the damping at runtime, hence check the range */
-	trigger_rumble_damping_nonzero
-		= param_trigger_rumble_damping == 0 ? 1 : param_trigger_rumble_damping;
-
-	max_damped = max / trigger_rumble_damping_nonzero;
+	/*
+	 * the user can change the damping at runtime, hence check the
+	 * range
+	 */
+	if (param_trigger_rumble_damping > 0)
+		max_damped = max / param_trigger_rumble_damping;
+	else
+		max_damped = max;
 
 	mag_trigger_left = (u8)((max_damped * fraction_TL) / 1000);
 	mag_trigger_right = (u8)((max_damped * fraction_TR) / 1000);
 
-
 	ff_active = FF_ENABLE_ALL;
 
 	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
-		ff_active &= ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
+		ff_active &=
+		    ~(FF_ENABLE_LEFT_TRIGGER | FF_ENABLE_RIGHT_TRIGGER);
 
 	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
 		ff_active &= ~(FF_ENABLE_LEFT | FF_ENABLE_RIGHT);
 
-
-	create_ff_pck(
-		&ff_pck, 0x03,
-		ff_active,
-		mag_trigger_left, mag_trigger_right,
-		mag_main_left, mag_main_right,
-		0);
-
+	create_ff_pck(&ff_pck, 0x03,
+		      ff_active,
+		      mag_trigger_left, mag_trigger_right,
+		      mag_main_left, mag_main_right, 0);
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
-		ff_active,
-		max, fraction_TL, fraction_TR,
-		ff_pck.ff.magnitude_left_trigger,
-		ff_pck.ff.magnitude_right_trigger);
+		    "active: %#04x, max: %#04x, prop_left: %#04x, prop_right: %#04x, left trigger: %#04x, right: %#04x\n",
+		    ff_active,
+		    max, fraction_TL, fraction_TR,
+		    ff_pck.ff.magnitude_left_trigger,
+		    ff_pck.ff.magnitude_right_trigger);
 
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 
 	return 0;
 }
 
-
-/*
- * Device (Gamepad) Initialization
- */
-
+/* Device (Gamepad) Initialization */
 static int xpadneo_initDevice(struct hid_device *hdev)
 {
 	int error;
 
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
-
 
 	struct ff_report ff_pck;
 
@@ -357,9 +354,9 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	if (!param_disable_ff) {
 		ff_pck.report_id = 0x03;
 		ff_pck.ff.magnitude_right = 0x80;
-		ff_pck.ff.magnitude_left  = 0x40;
+		ff_pck.ff.magnitude_left = 0x40;
 		ff_pck.ff.magnitude_right_trigger = 0x20;
-		ff_pck.ff.magnitude_left_trigger  = 0x20;
+		ff_pck.ff.magnitude_left_trigger = 0x20;
 		ff_pck.ff.duration = 33;
 
 		ff_pck.ff.enable_actuators = FF_ENABLE_RIGHT;
@@ -371,11 +368,10 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 		mdelay(330);
 
 		ff_pck.ff.enable_actuators
-			= FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
+		    = FF_ENABLE_RIGHT_TRIGGER | FF_ENABLE_LEFT_TRIGGER;
 		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		mdelay(330);
 	}
-
 
 	/* Init Input System for Force Feedback (FF) */
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
@@ -383,33 +379,33 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	if (error)
 		return error;
 
-
 	/*
 	 * Set default values, otherwise tools which depend on the joystick
 	 * subsystem, report arbitrary values until the first real event
 	 * TODO: Is this really necessary?
 	 */
-	input_report_abs(idev, ABS_X,      0);
-	input_report_abs(idev, ABS_Y,      0);
-	input_report_abs(idev, ABS_Z,      0);
-	input_report_abs(idev, ABS_RX,     0);
-	input_report_abs(idev, ABS_RY,     0);
-	input_report_abs(idev, ABS_RZ,     0);
-	input_report_key(idev, BTN_A,      0);
-	input_report_key(idev, BTN_B,      0);
-	input_report_key(idev, BTN_X,      0);
-	input_report_key(idev, BTN_Y,      0);
-	input_report_key(idev, BTN_TR,     0);
-	input_report_key(idev, BTN_TL,     0);
+	input_report_abs(idev, ABS_X, 0);
+	input_report_abs(idev, ABS_Y, 0);
+	input_report_abs(idev, ABS_Z, 0);
+	input_report_abs(idev, ABS_RX, 0);
+	input_report_abs(idev, ABS_RY, 0);
+	input_report_abs(idev, ABS_RZ, 0);
+	input_report_key(idev, BTN_A, 0);
+	input_report_key(idev, BTN_B, 0);
+	input_report_key(idev, BTN_X, 0);
+	input_report_key(idev, BTN_Y, 0);
+	input_report_key(idev, BTN_TR, 0);
+	input_report_key(idev, BTN_TL, 0);
 	input_report_key(idev, BTN_THUMBL, 0);
 	input_report_key(idev, BTN_THUMBR, 0);
-	input_report_key(idev, BTN_START,  0);
-	input_report_key(idev, BTN_MODE,   0);
-	input_report_key(idev, ABS_HAT0X,  0);
-	input_report_key(idev, ABS_HAT0Y,  0);
+	input_report_key(idev, BTN_START, 0);
+	input_report_key(idev, BTN_MODE, 0);
+	input_report_key(idev, ABS_HAT0X, 0);
+	input_report_key(idev, ABS_HAT0Y, 0);
 	input_sync(idev);
 
-	/* TODO: - do not hardcode codes and values but
+	/*
+	 * TODO: - do not hardcode codes and values but
 	 *         keep them in the mapping structures
 	 *       - maybe initDevice isn't the right place
 	 */
@@ -417,10 +413,10 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	return 0;
 }
 
-
 /* Callback function which return the available properties to userspace */
 static int battery_get_property(struct power_supply *ps,
-	enum power_supply_property property, union power_supply_propval *val)
+				enum power_supply_property property,
+				union power_supply_propval *val)
 {
 	struct xpadneo_devdata *xdata = power_supply_get_drvdata(ps);
 	unsigned long flags;
@@ -428,9 +424,9 @@ static int battery_get_property(struct power_supply *ps,
 
 	spin_lock_irqsave(&xdata->lock, flags);
 	capacity_level = xdata->ps_capacity_level;
-	present        = xdata->ps_present;
-	online         = xdata->ps_online;
-	status         = xdata->ps_status;
+	present = xdata->ps_present;
+	online = xdata->ps_online;
+	status = xdata->ps_status;
 	spin_unlock_irqrestore(&xdata->lock, flags);
 
 	switch (property) {
@@ -462,7 +458,6 @@ static int battery_get_property(struct power_supply *ps,
 	return 0;
 }
 
-
 static int xpadneo_initBatt(struct hid_device *hdev)
 {
 	int ret = 0;
@@ -484,28 +479,27 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 		POWER_SUPPLY_PROP_ONLINE
 	};
 
-
 	struct power_supply_config ps_config = {
 		/* pass the xpadneo_data to the get_property function */
 		.drv_data = xdata
 	};
 
-
 	/* Set up power supply */
 
-	/* Set the battery capacity to 'full' until we get our first real
+	/*
+	 * Set the battery capacity to 'full' until we get our first real
 	 * battery event. Prevents false "critical low battery" notifications
 	 */
 	xdata->ps_capacity_level = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
 
-	/* NOTE: hdev->uniq is meant to be the MAC address and hence
+	/*
+	 * NOTE: hdev->uniq is meant to be the MAC address and hence
 	 *       it should be unique. Unfortunately, here it is not unique
 	 *       neither is it the bluetooth MAC address.
 	 *       As a solution we add an unique id for every gamepad.
 	 */
-
 	xdata->batt_desc.name = kasprintf(GFP_KERNEL, "xpadneo_batt_%pMR_%i",
-				hdev->uniq, xdata->id);
+					  hdev->uniq, xdata->id);
 	if (!xdata->batt_desc.name)
 		return -ENOMEM;
 
@@ -522,13 +516,12 @@ static int xpadneo_initBatt(struct hid_device *hdev)
 	 */
 	xdata->batt_desc.get_property = battery_get_property;
 
-
 	/* Advanced power management emulation */
 	xdata->batt_desc.use_for_apm = 0;
 
 	/* Register power supply for our gamepad device */
 	xdata->batt = devm_power_supply_register(&hdev->dev,
-						&xdata->batt_desc, &ps_config);
+						 &xdata->batt_desc, &ps_config);
 	if (IS_ERR(xdata->batt)) {
 		ret = PTR_ERR(xdata->batt);
 		hid_err(hdev, "Unable to register battery device\n");
@@ -546,11 +539,10 @@ err_free:
 	return ret;
 }
 
-
 enum mapping_behaviour {
-	MAP_IGNORE, /* Completely ignore this field */
-	MAP_AUTO,   /* Do not really map it, let hid-core decide */
-	MAP_STATIC  /* Map to the values given */
+	MAP_IGNORE,		/* Completely ignore this field */
+	MAP_AUTO,		/* Do not really map it, let hid-core decide */
+	MAP_STATIC		/* Map to the values given */
 };
 
 struct input_ev {
@@ -560,9 +552,9 @@ struct input_ev {
 	u16 input_code;
 };
 
-u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
+static u8 map_hid_to_input_windows(struct hid_usage *usage,
+				   struct input_ev *map_to)
 {
-
 	/*
 	 * Windows report-descriptor (307 byte):
 	 *
@@ -591,61 +583,79 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
 		case 0x01:
-			*map_to = (struct input_ev){EV_KEY, BTN_A};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_A};
 			return MAP_STATIC;
 		case 0x02:
-			*map_to = (struct input_ev){EV_KEY, BTN_B};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_B};
 			return MAP_STATIC;
 		case 0x03:
-			*map_to = (struct input_ev){EV_KEY, BTN_X};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_X};
 			return MAP_STATIC;
 		case 0x04:
-			*map_to = (struct input_ev){EV_KEY, BTN_Y};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_Y};
 			return MAP_STATIC;
 		case 0x05:
-			*map_to = (struct input_ev){EV_KEY, BTN_TL};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_TL};
 			return MAP_STATIC;
 		case 0x06:
-			*map_to = (struct input_ev){EV_KEY, BTN_TR};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_TR};
 			return MAP_STATIC;
 		case 0x07:
-			*map_to = (struct input_ev){EV_KEY, BTN_SELECT};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_SELECT};
 			return MAP_STATIC;
 		case 0x08:
-			*map_to = (struct input_ev){EV_KEY, BTN_START};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_START};
 			return MAP_STATIC;
 		case 0x09:
-			*map_to = (struct input_ev){EV_KEY, BTN_THUMBL};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_THUMBL};
 			return MAP_STATIC;
 		case 0x0A:
-			*map_to = (struct input_ev){EV_KEY, BTN_THUMBR};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_THUMBR};
 			return MAP_STATIC;
 		}
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30:
-			*map_to = (struct input_ev){EV_ABS, ABS_X};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_X};
 			return MAP_STATIC;
 		case 0x31:
-			*map_to = (struct input_ev){EV_ABS, ABS_Y};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_Y};
 			return MAP_STATIC;
 		case 0x32:
-			*map_to = (struct input_ev){EV_ABS, ABS_Z};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_Z};
 			return MAP_STATIC;
 		case 0x33:
-			*map_to = (struct input_ev){EV_ABS, ABS_RX};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RX};
 			return MAP_STATIC;
 		case 0x34:
-			*map_to = (struct input_ev){EV_ABS, ABS_RY};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RY};
 			return MAP_STATIC;
 		case 0x35:
-			*map_to = (struct input_ev){EV_ABS, ABS_RZ};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RZ};
 			return MAP_STATIC;
 		case 0x39:
-			*map_to = (struct input_ev){0, 0};
+			*map_to = (struct input_ev) {
+			0, 0};
 			return MAP_AUTO;
 		case 0x85:
-			*map_to = (struct input_ev){EV_KEY, BTN_MODE};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_MODE};
 			return MAP_STATIC;
 		}
 	}
@@ -653,9 +663,9 @@ u8 map_hid_to_input_windows(struct hid_usage *usage, struct input_ev *map_to)
 	return MAP_IGNORE;
 }
 
-u8 map_hid_to_input_linux(struct hid_usage *usage, struct input_ev *map_to)
+static u8 map_hid_to_input_linux(struct hid_usage *usage,
+				 struct input_ev *map_to)
 {
-
 	/*
 	 * Linux report-descriptor (335 byte):
 	 *
@@ -685,67 +695,85 @@ u8 map_hid_to_input_linux(struct hid_usage *usage, struct input_ev *map_to)
 	case HID_UP_BUTTON:
 		switch (hid_usage) {
 		case 0x01:
-			*map_to = (struct input_ev){EV_KEY, BTN_A};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_A};
 			return MAP_STATIC;
 		case 0x02:
-			*map_to = (struct input_ev){EV_KEY, BTN_B};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_B};
 			return MAP_STATIC;
 		case 0x04:
-			*map_to = (struct input_ev){EV_KEY, BTN_X};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_X};
 			return MAP_STATIC;
 		case 0x05:
-			*map_to = (struct input_ev){EV_KEY, BTN_Y};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_Y};
 			return MAP_STATIC;
 		case 0x07:
-			*map_to = (struct input_ev){EV_KEY, BTN_TL};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_TL};
 			return MAP_STATIC;
 		case 0x08:
-			*map_to = (struct input_ev){EV_KEY, BTN_TR};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_TR};
 			return MAP_STATIC;
 		case 0x0C:
-			*map_to = (struct input_ev){EV_KEY, BTN_START};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_START};
 			return MAP_STATIC;
 		case 0x0E:
-			*map_to = (struct input_ev){EV_KEY, BTN_THUMBL};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_THUMBL};
 			return MAP_STATIC;
 		case 0x0F:
-			*map_to = (struct input_ev){EV_KEY, BTN_THUMBR};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_THUMBR};
 			return MAP_STATIC;
 		}
 	case HID_UP_CONSUMER:
 		switch (hid_usage) {
 		case 0x223:
-			*map_to = (struct input_ev){EV_KEY, BTN_MODE};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_MODE};
 			return MAP_STATIC;
 		case 0x224:
-			*map_to = (struct input_ev){EV_KEY, BTN_SELECT};
+			*map_to = (struct input_ev) {
+			EV_KEY, BTN_SELECT};
 			return MAP_STATIC;
 		}
 	case HID_UP_GENDESK:
 		switch (hid_usage) {
 		case 0x30:
-			*map_to = (struct input_ev){EV_ABS, ABS_X};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_X};
 			return MAP_STATIC;
 		case 0x31:
-			*map_to = (struct input_ev){EV_ABS, ABS_Y};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_Y};
 			return MAP_STATIC;
 		case 0x32:
-			*map_to = (struct input_ev){EV_ABS, ABS_RX};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RX};
 			return MAP_STATIC;
 		case 0x35:
-			*map_to = (struct input_ev){EV_ABS, ABS_RY};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RY};
 			return MAP_STATIC;
 		case 0x39:
-			*map_to = (struct input_ev){0, 0};
+			*map_to = (struct input_ev) {
+			0, 0};
 			return MAP_AUTO;
 		}
 	case HID_UP_SIMULATION:
 		switch (hid_usage) {
 		case 0xC4:
-			*map_to = (struct input_ev){EV_ABS, ABS_RZ};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_RZ};
 			return MAP_STATIC;
 		case 0xC5:
-			*map_to = (struct input_ev){EV_ABS, ABS_Z};
+			*map_to = (struct input_ev) {
+			EV_ABS, ABS_Z};
 			return MAP_STATIC;
 		}
 	}
@@ -753,29 +781,27 @@ u8 map_hid_to_input_linux(struct hid_usage *usage, struct input_ev *map_to)
 	return MAP_IGNORE;
 }
 
-
 /*
  * Input Mapping Hook
  *
  * Invoked at input registering before mapping an usage
  * (called once for every hid-usage).
  */
-
 static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 			   struct hid_field *field, struct hid_usage *usage,
 			   unsigned long **bit, int *max)
 {
 	/* Return values */
 	enum {
-		RET_MAP_IGNORE = -1,   /* completely ignore this input */
-		RET_MAP_AUTO,        /* let hid-core autodetect the mapping */
-		RET_MAP_STATIC       /* mapped by hand, no further processing */
+		RET_MAP_IGNORE = -1,	/* completely ignore this input */
+		RET_MAP_AUTO,	/* let hid-core autodetect the mapping */
+		RET_MAP_STATIC	/* mapped by hand, no further processing */
 	};
 
 	struct input_ev map_to;
-	u8 (*perform_mapping)(struct hid_usage *usage, struct input_ev *map_to);
+	u8 (*perform_mapping) (struct hid_usage * usage,
+			       struct input_ev * map_to);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 
 	switch (xdata->report_descriptor) {
 	case LINUX:
@@ -788,30 +814,31 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 		return RET_MAP_AUTO;
 	}
 
-
 	switch (perform_mapping(usage, &map_to)) {
 	case MAP_AUTO:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"UP: 0x%04X, USG: 0x%04X -> automatically\n",
-		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
+			    "UP: 0x%04X, USG: 0x%04X -> automatically\n",
+			    usage->hid & HID_USAGE_PAGE,
+			    usage->hid & HID_USAGE);
 
 		return RET_MAP_AUTO;
 
 	case MAP_IGNORE:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"UP: 0x%04X, USG: 0x%04X -> ignored\n",
-		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE);
+			    "UP: 0x%04X, USG: 0x%04X -> ignored\n",
+			    usage->hid & HID_USAGE_PAGE,
+			    usage->hid & HID_USAGE);
 
 		return RET_MAP_IGNORE;
 
 	case MAP_STATIC:
 		hid_dbg_lvl(DBG_LVL_FEW, hdev,
-		"UP: 0x%04X, USG: 0x%04X -> EV: 0x%03X, INP: 0x%03X\n",
-		usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE,
-		map_to.event_type, map_to.input_code);
+			    "UP: 0x%04X, USG: 0x%04X -> EV: 0x%03X, INP: 0x%03X\n",
+			    usage->hid & HID_USAGE_PAGE, usage->hid & HID_USAGE,
+			    map_to.event_type, map_to.input_code);
 
 		hid_map_usage_clear(hi, usage, bit, max,
-					map_to.event_type, map_to.input_code);
+				    map_to.event_type, map_to.input_code);
 		return RET_MAP_STATIC;
 
 	}
@@ -819,7 +846,6 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
 	/* Something went wrong, ignore this field */
 	return RET_MAP_IGNORE;
 }
-
 
 /*
  * Report Descriptor Fixup Hook
@@ -829,16 +855,14 @@ static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
  * one and return a pointer to it. In the latter, you mostly have to
  * modify the rsize value too.
  */
-
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
 				unsigned int *rsize)
 {
-	hid_dbg_lvl(DBG_LVL_SOME, hdev,	"REPORT (DESCRIPTOR) FIXUP HOOK\n");
+	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT (DESCRIPTOR) FIXUP HOOK\n");
 	dbg_hex_dump_lvl(DBG_LVL_FEW, "xpadneo: report-descr: ", rdesc, *rsize);
 
 	return rdesc;
 }
-
 
 static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 				    int reportsize)
@@ -847,8 +871,8 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	unsigned long flags;
 	u8 capacity_level, present, online, status;
 
-
-	/*  msb          ID 04          lsb
+	/*
+	 *  msb          ID 04          lsb
 	 * +---+---+---+---+---+---+---+---+
 	 * | O | R | E | C | M | M | L | L |
 	 * +---+---+---+---+---+---+---+---+
@@ -868,7 +892,6 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	 *   10: Medium
 	 *   11: Full
 	 */
-
 
 	/* I think "online" means whether the dev is online or shutting down */
 	online = (data[1] & 0x80) >> 7;
@@ -912,8 +935,8 @@ static void parse_raw_event_battery(struct hid_device *hdev, u8 *data,
 	power_supply_changed(xdata->batt);
 }
 
-static void check_report_behaviour(struct hid_device *hdev, u8 *data,
-				   int reportsize)
+static void
+check_report_behaviour(struct hid_device *hdev, u8 *data, int reportsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -937,10 +960,11 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	}
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "desc: %s, beh: %s\n",
-		report_type_text[xdata->report_descriptor],
-		report_type_text[xdata->report_behaviour]);
+		    report_type_text[xdata->report_descriptor],
+		    report_type_text[xdata->report_behaviour]);
 
-	/* TODO:
+	/*
+	 * TODO:
 	 * Maybe the best solution would be to replace the report descriptor
 	 * in case that the wrong reports are sent. Unfortunately we do not
 	 * know if the report descriptor is the right one until the first
@@ -967,33 +991,27 @@ static void check_report_behaviour(struct hid_device *hdev, u8 *data,
 	 *
 	 */
 
-
 	// TODO:
 	// * remove old report using list operations
 	// * create new one like they do in hid_register_report
 	// * add it to output_reports->report_list and array
-
 }
 
-/*
- * HID Raw Event Hook
- */
-
-int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
-		      u8 *data, int reportsize)
+static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
+			     u8 *data, int reportsize)
 {
 	/* Return Codes */
 	enum {
-		RAWEV_CONT_PROCESSING, /* Let the hid-core autodetect the event */
-		RAWEV_STOP_PROCESSING  /* Stop further processing */
+		RAWEV_CONT_PROCESSING,	/* Let the hid-core autodetect the event */
+		RAWEV_STOP_PROCESSING	/* Stop further processing */
 	};
 
 	//hid_dbg_lvl(DBG_LVL_SOME, hdev, "RAW EVENT HOOK\n");
 
-	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data, reportsize);
+	dbg_hex_dump_lvl(DBG_LVL_SOME, "xpadneo: raw_event: ", data,
+			 reportsize);
 	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "report->size: %d\n", (report->size)/8);
 	//hid_dbg_lvl(DBG_LVL_ALL, hdev, "data size (wo id): %d\n", reportsize-1);
-
 
 	switch (report->id) {
 	case 01:
@@ -1008,12 +1026,10 @@ int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	return RAWEV_CONT_PROCESSING;
 }
 
-
-void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
+static void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 {
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "REPORT HOOK\n");
 }
-
 
 /*
  * Input Configured Hook
@@ -1022,122 +1038,113 @@ void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
  * no DPAD_UP, _RIGHT, _DOWN, _LEFT on the device by default
  *
  */
-
 static int xpadneo_input_configured(struct hid_device *hdev,
 				    struct hid_input *hi)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	/* set a pointer to the logical input device at the device structure */
 	xdata->idev = hi->input;
 
 	hid_dbg_lvl(DBG_LVL_SOME, hdev, "INPUT CONFIGURED HOOK\n");
 
 	if (param_fake_dev_version) {
-		xdata->idev->id.version = (u16) param_fake_dev_version;
+		xdata->idev->id.version = (u16)param_fake_dev_version;
 		hid_dbg_lvl(DBG_LVL_FEW, hdev, "Fake device version: 0x%04X\n",
-			param_fake_dev_version);
+			    param_fake_dev_version);
 	}
 
-
-	// The HID device descriptor defines a range from 0 to 65535 for all
-	// absolute axis (like ABS_X), this is in contrary to what the linux
-	// gamepad specification defines [–32.768; 32.767].
-	// Therefore, we have to set the min, max, fuzz and flat values by hand:
-
+	/*
+	 * The HID device descriptor defines a range from 0 to 65535 for all
+	 * absolute axis (like ABS_X), this is in contrary to what the linux
+	 * gamepad specification defines [–32.768; 32.767].
+	 * Therefore, we have to set the min, max, fuzz and flat values by hand:
+	 */
 	input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
 	input_set_abs_params(xdata->idev, ABS_Y, -32768, 32767, 255, 4095);
 
 	input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
 	input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
 
-	if (param_combined_z_axis)
+	if (param_combined_z_axis) {
+		/*
+		 * furthermore, we need to translate the incoming events to fit within
+		 * the new range, we will do that in the xpadneo_event() hook.
+		 */
 		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
 
-	// furthermore, we need to translate the incoming events to fit within
-	// the new range, we will do that in the xpadneo_event() hook.
-
-	// We remove the ABS_RZ event if param_combined_z_axis is enabled
-	if (param_combined_z_axis) {
+		/* We remove the ABS_RZ event if param_combined_z_axis is enabled */
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
 	return 0;
 }
 
-
-/*
- * Event Hook
- *
- * This hook is called whenever an event occurs that is listed on
- * xpadneo_driver.usage_table (which is NULL in our case, therefore it is
- * invoked on every event).
- *
- * Before we can send additional input events, we have to enable
- * the corresponding keys in xpadneo_input_configured.
- */
-
-int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
-		  struct hid_usage *usage, __s32 value)
+static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
+			 struct hid_usage *usage, __s32 value)
 {
 	/* Return Codes */
 	enum {
-		EV_CONT_PROCESSING, /* Let the hid-core autodetect the event */
-		EV_STOP_PROCESSING  /* Stop further processing */
+		EV_CONT_PROCESSING,	/* Let the hid-core autodetect the event */
+		EV_STOP_PROCESSING	/* Stop further processing */
 	};
 
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	u16 usg_type = usage->type;
-	u16 usg_code = usage->code;
-
-
 	hid_dbg_lvl(DBG_LVL_ALL, hdev,
-		"hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
-		(usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
-		usage->code, value);
+		    "hid-up: %02x, hid-usg: %02x, input-code: %02x, value: %02x\n",
+		    (usage->hid & HID_USAGE_PAGE), (usage->hid & HID_USAGE),
+		    usage->code, value);
 
-
-	// we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
-	// as already explained in xpadneo_input_configured() above
-	// furthermore we need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-	// is set
-
-	if (usg_type == EV_ABS) {
-		if (usg_code == ABS_X || usg_code == ABS_Y
-				|| usg_code == ABS_RX || usg_code == ABS_RY) {
-			hid_dbg_lvl(DBG_LVL_ALL, hdev, "shifted axis %02x, old value: %i, new value: %i\n", usg_code, value, value - 32768);
-			input_report_abs(idev, usg_code, value - 32768);
+	if (usage->type == EV_ABS) {
+		switch (usage->code) {
+		case ABS_X:
+		case ABS_Y:
+		case ABS_RX:
+		case ABS_RY:
+			/*
+			 * we have to shift the range of the analogues sticks (ABS_X/Y/RX/RY)
+			 * as already explained in xpadneo_input_configured() above
+			 * furthermore we need to combine ABS_Z and ABS_RZ if param_combined_z_axis
+			 * is set
+			 */
+			hid_dbg_lvl(DBG_LVL_ALL, hdev,
+				    "shifted axis %02x, old value: %i, new value: %i\n",
+				    usage->code, value, value - 32768);
+			input_report_abs(idev, usage->code, value - 32768);
 			goto sync_and_stop_processing;
-		}
-
-		if (param_combined_z_axis) {
-			if (usg_code == ABS_Z || usg_code == ABS_RZ) {
-				if (usg_code == ABS_Z)
-					xdata->last_abs_z = value;
-				if (usg_code == ABS_RZ)
-					xdata->last_abs_rz = value;
-
-				input_report_abs(idev, ABS_Z, 0 - xdata->last_abs_z + xdata->last_abs_rz);
-				goto sync_and_stop_processing;
+		case ABS_Z:
+			/*
+			 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
+			 * is set, so remember the current value
+			 */
+			if (param_combined_z_axis) {
+				xdata->last_abs_z = value;
+				goto combine_z_axes;
 			}
+			break;
+		case ABS_RZ:
+			/*
+			 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
+			 * is set, so remember the current value
+			 */
+			if (param_combined_z_axis) {
+				xdata->last_abs_rz = value;
+				goto combine_z_axes;
+			}
+			break;
 		}
 	}
 
-
-
-
-	/* TODO:
+	/*
+	 * TODO:
 	 * This is a workaround for the wrong report (Windows report but
 	 * Linux descriptor). We would prefer to fixup the descriptor, but we
 	 * cannot fix it anymore at the time we recognize the wrong behaviour,
 	 * hence we will fire the input events by hand.
 	 */
-
 	if (xdata->report_behaviour == WINDOWS
-					&& xdata->report_descriptor == LINUX) {
-
+	    && xdata->report_descriptor == LINUX) {
 		/*
 		 * we fix all buttons by hand. You may think that we
 		 * could do that by using the windows_map too, but it is more
@@ -1147,7 +1154,6 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		 * on both reports (windows and linux) - it is a 1: 1 mapping.
 		 * But this is not true in general (i.e. for other USAGE_PAGES)
 		 */
-
 		if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
 			switch (usage->hid & HID_USAGE) {
 			case 0x01:
@@ -1183,9 +1189,9 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			}
 
 			hid_dbg_lvl(DBG_LVL_ALL, hdev,
-				"hid-upage: %02x, hid-usage: %02x fixed\n",
-				(usage->hid & HID_USAGE_PAGE),
-				(usage->hid & HID_USAGE));
+				    "hid-upage: %02x, hid-usage: %02x fixed\n",
+				    (usage->hid & HID_USAGE_PAGE),
+				    (usage->hid & HID_USAGE));
 
 			goto sync_and_stop_processing;
 		}
@@ -1193,15 +1199,16 @@ int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 
 	return EV_CONT_PROCESSING;
 
+combine_z_axes:
+	input_report_abs(idev, ABS_Z,
+			 0 - xdata->last_abs_z + xdata->last_abs_rz);
+
 sync_and_stop_processing:
 	input_sync(idev);
 	return EV_STOP_PROCESSING;
-
 }
 
-
 /* Device Probe and Remove Hook */
-
 static int xpadneo_probe_device(struct hid_device *hdev,
 				const struct hid_device_id *id)
 {
@@ -1209,7 +1216,6 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	struct xpadneo_devdata *xdata;
 
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "probing device: %s\n", hdev->name);
-
 
 	/*
 	 * Create a per-device data structure which is "nearly globally" accessible
@@ -1222,7 +1228,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 		return -ENOMEM;
 
 	xdata->id = ida_simple_get(&xpadneo_device_id_allocator,
-			0, 0, GFP_KERNEL);
+				   0, 0, GFP_KERNEL);
 
 	xdata->hdev = hdev;
 
@@ -1243,7 +1249,6 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 
 	hid_set_drvdata(hdev, xdata);
 
-
 	/* Parse the raw report (includes a call to report_fixup) */
 	ret = hid_parse(hdev);
 	if (ret) {
@@ -1251,7 +1256,7 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 		goto return_error;
 	}
 
-	/* Debug Output*/
+	/* Debug Output */
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "driver:\n");
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* version: %s\n", DRV_VER);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
@@ -1265,9 +1270,11 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* country: %u\n", hdev->country);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* driverdata: %lu\n", id->driver_data);
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* serial: %pMR\n", hdev->uniq);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* physical location: %pMR\n", hdev->phys);
+	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* physical location: %pMR\n",
+		    hdev->phys);
 
-	/* We start our hardware without FF, we will add it afterwards by hand
+	/*
+	 * We start our hardware without FF, we will add it afterwards by hand
 	 * HID_CONNECT_DEFAULT = (HID_CONNECT_HIDINPUT | HID_CONNECT_HIDRAW
 	 *                        | HID_CONNECT_HIDDEV | HID_CONNECT_FF)
 	 * Our Input Device is created automatically since we defined
@@ -1292,14 +1299,12 @@ static int xpadneo_probe_device(struct hid_device *hdev,
 		goto return_error;
 	}
 
-
 	/* Everything is fine */
 	return 0;
 
 return_error:
 	return ret;
 }
-
 
 static void xpadneo_remove_device(struct hid_device *hdev)
 {
@@ -1309,20 +1314,12 @@ static void xpadneo_remove_device(struct hid_device *hdev)
 
 	/* Cleaning up here */
 	ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
-
 	hid_hw_stop(hdev);
-
 	hid_dbg_lvl(DBG_LVL_FEW, hdev, "Goodbye %s!\n", hdev->name);
 }
 
-
-
-/*
- * Device ID Structure, define all supported devices here
- */
-
+/* Device ID Structure, define all supported devices here */
 static const struct hid_device_id xpadneo_devices[] = {
-
 	/*
 	 * The ProductID is somehow related to the Firmware Version,
 	 * but it somehow changed back from 0x02FD (newer fw) to 0x02E0 (older)
@@ -1335,10 +1332,11 @@ static const struct hid_device_id xpadneo_devices[] = {
 	 */
 
 	/* XBOX ONE S / X */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
-	/* SENTINEL VALUE, indicates the end*/
-	{ }
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
+
+	/* SENTINEL VALUE, indicates the end */
+	{}
 };
 
 static struct hid_driver xpadneo_driver = {
@@ -1348,7 +1346,8 @@ static struct hid_driver xpadneo_driver = {
 	/* Which devices is this driver for */
 	.id_table = xpadneo_devices,
 
-	/* Hooked as the input device is configured (before it is registered)
+	/*
+	 * Hooked as the input device is configured (before it is registered)
 	 * we need that because we do not configure the input-device ourself
 	 * but leave it up to hid_hw_start()
 	 */
@@ -1377,8 +1376,6 @@ static struct hid_driver xpadneo_driver = {
 
 MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 
-
-
 /*
  * Module Init and Exit
  *
@@ -1389,7 +1386,6 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
  *
  * Caution: do not use both! (module_hid_driver and hid_(un)register_driver)
  */
-
 static int __init xpadneo_initModule(void)
 {
 	pr_info("%s: hello there!\n", xpadneo_driver.name);
@@ -1412,4 +1408,3 @@ static void __exit xpadneo_exitModule(void)
  */
 module_init(xpadneo_initModule);
 module_exit(xpadneo_exitModule);
-
