@@ -741,6 +741,13 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 		break;
 
 #endif
+	case 0x02E0:
+		hid_info(hdev,
+			 "pretending XB1S Linux firmware version "
+			 "(changed version from 0x%08X to 0x00000903)\n",
+			 xdata->idev->id.version);
+		xdata->idev->id.version = 0x00000903;
+		break;
 	case 0x02FD:
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
