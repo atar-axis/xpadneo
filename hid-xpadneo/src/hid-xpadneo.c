@@ -65,51 +65,7 @@ module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
 MODULE_PARM_DESC(trigger_rumble_damping,
 		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
 
-/*
- * Debug Printk
- *
- * Prints a debug message to kernel (dmesg)
- * only if both is true, this is a DEBUG version and the
- * param_debug_level-parameter is equal or higher than the level
- * specified in hid_dbg_lvl
- */
-
-#define DBG_LVL_NONE 0
-#define DBG_LVL_FEW  1
-#define DBG_LVL_SOME 2
-#define DBG_LVL_ALL  3
-
-#ifdef DEBUG
-#define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
-	do { \
-		if (param_debug_level >= lvl) \
-			hid_dbg(pr_fmt(fmt_hdev), \
-				pr_fmt(fmt_str), ##__VA_ARGS__); \
-	} while (0)
-#define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
-	do { \
-		if (param_debug_level >= lvl) \
-			print_hex_dump(KERN_DEBUG, pr_fmt(fmt_prefix), \
-				DUMP_PREFIX_NONE, 32, 1, data, size, false); \
-	} while (0)
-#else
-#define hid_dbg_lvl(lvl, fmt_hdev, fmt_str, ...) \
-		no_printk(KERN_DEBUG pr_fmt(fmt_str), ##__VA_ARGS__)
-#define dbg_hex_dump_lvl(lvl, fmt_prefix, data, size) \
-		no_printk(KERN_DEBUG pr_fmt(fmt_prefix))
-#endif
-
 static DEFINE_IDA(xpadneo_device_id_allocator);
-
-/*
- * FF Output Report
- *
- * This is the structure for the rumble output report. For more information
- * about this structure please take a look in the hid-report description.
- * Please notice that the structs are __packed, therefore there is no "padding"
- * between the elements (they behave more like an array).
- *
- */
 
 enum {
 	FF_RUMBLE_NONE = 0x00,
@@ -390,7 +346,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	mdelay(330);
 }
 
-static int xpadneo_initDevice(struct hid_device *hdev)
+static int xpadneo_init_ff(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
@@ -403,11 +359,9 @@ static int xpadneo_initDevice(struct hid_device *hdev)
 	if (xdata->output_report_dmabuf == NULL)
 		return -ENOMEM;
 
-	/* 'HELLO' FROM THE OTHER SIDE */
 	if (!param_disable_ff)
 		xpadneo_welcome_rumble(hdev);
 
-	/* Init Input System for Force Feedback (FF) */
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
 	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
 }
@@ -809,14 +763,6 @@ static int xpadneo_probe(struct hid_device *hdev,
 	int ret;
 	struct xpadneo_devdata *xdata;
 
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "probing device: %s\n", hdev->name);
-
-	/*
-	 * Create a per-device data structure which is "nearly globally" accessible
-	 * through hid_get_drvdata. The structure is freed automatically
-	 * as soon as hdev->dev (the device) is removed, since we use the devm_
-	 * derivate.
-	 */
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
 	if (xdata == NULL)
 		return -ENOMEM;
@@ -827,51 +773,22 @@ static int xpadneo_probe(struct hid_device *hdev,
 	xdata->hdev = hdev;
 	hid_set_drvdata(hdev, xdata);
 
-	/* Parse the raw report (includes a call to report_fixup) */
 	ret = hid_parse(hdev);
 	if (ret) {
-		hid_err(hdev, "parse failed\n");
+		hid_err(hdev, "parse failed");
 		goto return_error;
 	}
 
-	/* Debug Output */
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "driver:\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* version: %s\n", DRV_VER);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "hdev:\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rdesc: (unfixed, see above)\n");
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* raw rsize: %u\n", hdev->dev_rsize);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* bus: 0x%04X\n", hdev->bus);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* report group: %u\n", hdev->group);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* vendor: 0x%08X\n", hdev->vendor);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* version: 0x%08X\n", hdev->version);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* product: 0x%08X\n", hdev->product);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* country: %u\n", hdev->country);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* driverdata: %lu\n", id->driver_data);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* serial: %pMR\n", hdev->uniq);
-	hid_dbg_lvl(DBG_LVL_FEW, hdev, "* physical location: %pMR\n",
-		    hdev->phys);
-
-	/*
-	 * We start our hardware without FF, we will add it afterwards by hand
-	 * HID_CONNECT_DEFAULT = (HID_CONNECT_HIDINPUT | HID_CONNECT_HIDRAW
-	 *                        | HID_CONNECT_HIDDEV | HID_CONNECT_FF)
-	 * Our Input Device is created automatically since we defined
-	 * HID_CONNECT_HIDINPUT as one of the flags.
-	 */
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
 		goto return_error;
 	}
 
-	/* Call the device initialization routines */
-	ret = xpadneo_initDevice(hdev);
-	if (ret) {
-		hid_err(hdev, "device initialization failed\n");
-		goto return_error;
-	}
+	ret = xpadneo_init_ff(hdev);
+	if (ret)
+		hid_err(hdev, "could not initialize ff, continuing anyway\n");
 
-	/* Everything is fine */
 	return 0;
 
 return_error:
