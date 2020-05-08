@@ -756,7 +756,7 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 		 * We also need to translate the incoming events to fit within
 		 * the new range, we will do that in the xpadneo_event() hook.
 		 */
-		input_set_abs_params(xdata->idev, ABS_Z, -1024, 1023, 3, 63);
+		input_set_abs_params(xdata->idev, ABS_Z, -1023, 1023, 3, 63);
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
 	}
 
@@ -780,36 +780,25 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		goto sync_and_stop_processing;
 	}
 
-	if (usage->type == EV_ABS) {
+	/*
+	 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
+	 * is set, so remember the current value
+	 */
+	if (param_combined_z_axis && (usage->type == EV_ABS)) {
 		switch (usage->code) {
 		case ABS_Z:
-			/*
-			 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-			 * is set, so remember the current value
-			 */
-			if (param_combined_z_axis) {
-				xdata->last_abs_z = value;
-				goto combine_z_axes;
-			}
-			break;
+			xdata->last_abs_z = value;
+			goto combine_z_axes;
 		case ABS_RZ:
-			/*
-			 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-			 * is set, so remember the current value
-			 */
-			if (param_combined_z_axis) {
-				xdata->last_abs_rz = value;
-				goto combine_z_axes;
-			}
-			break;
+			xdata->last_abs_rz = value;
+			goto combine_z_axes;
 		}
 	}
 
 	return EV_CONT_PROCESSING;
 
 combine_z_axes:
-	input_report_abs(idev, ABS_Z,
-			 0 - xdata->last_abs_z + xdata->last_abs_rz);
+	input_report_abs(idev, ABS_Z, xdata->last_abs_rz - xdata->last_abs_z);
 
 sync_and_stop_processing:
 	input_sync(idev);
