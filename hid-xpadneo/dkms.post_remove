@@ -1,5 +1,8 @@
 #!/bin/sh
+
+ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
+
 echo "Removing Modules Hooks and Configurations"
-rm -f /etc/modprobe.d/99-xpadneo-bluetooth.conf
+[ -L "${ERTM_OVERRIDE}" ] || rm -f "${ERTM_OVERRIDE}"
 rm -f /etc/udev/rules.d/99-xpadneo.rules
 rm -f /etc/udev/rules.d/xpadneo.sh
