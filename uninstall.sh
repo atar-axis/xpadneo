@@ -1,20 +1,16 @@
 #!/bin/bash
 
-if [[ $EUID != 0 ]]; then
-  echo "ERROR: You most probably need superuser privileges to uninstall modules, please run me via sudo!"
-  exit -3
-fi
-
+# shellcheck disable=SC1090
+source "$(dirname "$0")/lib/installer.sh"
 
 echo "* unloading current driver module"
 modprobe -r hid_xpadneo
 
 echo "* looking for registered instances"
-VERSIONS=($(dkms status 2>/dev/null | sed -E -n 's/hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*/\1/ p' | sort -u))
-echo "found ${#VERSIONS[@]} registered instance(s) on your system"
+echo "found ${#INSTALLED[@]} registered instance(s) on your system"
 
 
-for instance in "${VERSIONS[@]}"
+for instance in "${INSTALLED[@]}"
 do
     echo "* $instance"
 
