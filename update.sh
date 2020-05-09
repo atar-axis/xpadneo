@@ -1,13 +1,10 @@
 #!/bin/bash
 
-if [[ $EUID != 0 ]]; then
-  echo "ERROR: You most probably need superuser privileges to update modules, please run me via sudo!"
-  exit -3
-fi
+# shellcheck disable=SC1090
+source "$(dirname "$0")/lib/installer.sh"
 
-LATEST=$(wget --quiet --output-document=/dev/stdout "https://raw.githubusercontent.com/atar-axis/xpadneo/master/VERSION" | sed -E 's/.*"([0-9]*.[0-9]*.[0-9]*)".*/\1/')
-INSTALLED=$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')
-VERSION=$(cat VERSION)
+LATEST=$(get_upstream_version_latest)
+VERSION=$(<VERSION)
 IS_GIT=$(git rev-parse --is-inside-work-tree 2>/dev/null)
 
 

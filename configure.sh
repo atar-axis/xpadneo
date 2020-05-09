@@ -1,23 +1,15 @@
 #!/bin/bash
 # Written by CodeCanna, refined by atar-axis
 
+# shellcheck disable=SC1090
+source "$(dirname "$0")/lib/installer.sh"
+
 set -o posix
 
 NAME="$0"
 
-# Check if ran as root
-if [[ "$EUID" -ne 0 ]];
-then
-  echo "$NAME: This script must be ran as root!"
-  exit 1
-fi
-
-
-
 # Define Variables
 VERSION="$(cat ./VERSION)"
-INSTALLED_VERSION="$(dkms status 2>/dev/null | sed -nE 's/^hid-xpadneo, ([0-9]+.[0-9]+.[0-9]+).*installed/\1/p')"
-
 MODULE="/sys/module/hid_xpadneo/"
 PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
@@ -34,7 +26,7 @@ function display_help {
 
 ## Print Version ##
 function display_version {
-  echo "$NAME: Installed xpadneo version: $INSTALLED_VERSION"
+  echo "$NAME: Installed xpadneo version: $INSTALLED"
 }
 
 ## Parameter Validation ##
@@ -196,18 +188,18 @@ function parse_args {
 PARAMETERS=( "$@" )
 
 # Check if xpadneo is installed
-if [[ -z "$INSTALLED_VERSION" ]];
+if [[ -z "$INSTALLED" ]];
 then
     echo "$NAME: Installation not found. Did you run ./install.sh?"
     exit 1
 fi
 
 # Check if the correct version is installed
-if [[ "$VERSION" != "$INSTALLED_VERSION" ]];
+if [[ "$VERSION" != "$INSTALLED" ]];
 then
     echo "$NAME: Your version of xpadneo seems to be out of date."
     echo "$NAME: Please run ./update.sh from the git directory to update to the latest version."
-    echo "$NAME: Installed version is $INSTALLED_VERSION, but this script is for version $VERSION"
+    echo "$NAME: Installed version is $INSTALLED, but this script is for version $VERSION"
     exit 2
 fi
 
