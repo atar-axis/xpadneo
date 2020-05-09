@@ -1,3 +1,9 @@
+*~
 .vscode/**
+/misc/examples/c_directional_rumble_test/direction_rumble_test
 docs/Gemfile.lock
 docs/_site/**
+hid-xpadneo/src/*.ko*
+hid-xpadneo/src/*.mod*
+hid-xpadneo/src/*.o*
+hid-xpadneo/src/*.symvers

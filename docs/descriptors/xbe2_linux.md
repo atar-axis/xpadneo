@@ -1,0 +1,621 @@
+# USB Descriptor for Xbox Elite 2 Wireless (Linux mode)
+
+Hex dump of the controller descriptor:
+```
+# xxd -c20 -g1 /sys/module/hid_xpadneo/drivers/hid:xpadneo/0005:045E:0B05.0002/report_descriptor
+
+05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
+ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 32 09 35 15 00
+27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff
+03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09
+c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
+81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04
+95 01 81 42 75 04 95 01 15 00 25 00 35 00 45 00 65 00 81 03
+05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+75 01 95 01 81 03 05 0c 0a 24 02 15 00 25 01 95 01 75 01 81
+02 15 00 25 00 75 07 95 01 81 03 05 0c 09 01 a1 01 0a 81 00
+15 00 26 ff 00 95 01 75 04 81 02 15 00 25 00 95 01 75 04 81
+03 0a 84 00 15 00 26 ff 00 95 01 75 04 81 02 15 00 25 00 95
+01 75 04 81 03 0a 85 00 15 00 26 ff 00 95 01 75 08 81 02 0a
+99 00 15 00 26 ff 00 95 01 75 04 81 02 15 00 25 00 95 01 75
+04 81 03 0a 9e 00 15 00 26 ff 00 95 01 75 08 81 02 0a a1 00
+15 00 26 ff 00 95 01 75 08 81 02 0a a2 00 15 00 26 ff 00 95
+01 75 08 81 02 0a a3 00 15 00 26 ff 00 95 01 75 08 81 02 0a
+a4 00 15 00 26 ff 00 95 01 75 08 81 02 0a b9 00 15 00 26 ff
+00 95 01 75 08 81 02 0a ba 00 15 00 26 ff 00 95 01 75 08 81
+02 0a bb 00 15 00 26 ff 00 95 01 75 08 81 02 0a be 00 15 00
+26 ff 00 95 01 75 08 81 02 0a c0 00 15 00 26 ff 00 95 01 75
+08 81 02 0a c1 00 15 00 26 ff 00 95 01 75 08 81 02 0a c2 00
+15 00 26 ff 00 95 01 75 08 81 02 0a c3 00 15 00 26 ff 00 95
+01 75 08 81 02 0a c4 00 15 00 26 ff 00 95 01 75 08 81 02 0a
+c5 00 15 00 26 ff 00 95 01 75 08 81 02 0a c6 00 15 00 26 ff
+00 95 01 75 08 81 02 0a c7 00 15 00 26 ff 00 95 01 75 08 81
+02 0a c8 00 15 00 26 ff 00 95 01 75 08 81 02 c0 05 0c 09 01
+85 02 a1 01 05 0c 0a 23 02 15 00 25 01 95 01 75 01 81 02 15
+00 25 00 75 07 95 01 81 03 c0 05 0f 09 21 85 03 a1 02 09 97
+15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91 03
+09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15
+00 26 ff 00 75 08 95 01 91 02 09 a7 15 00 26 ff 00 75 08 95
+01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02
+c0 05 06 09 20 85 04 15 00 26 ff 00 75 08 95 01 81 02 06 00
+ff 09 01 a1 02 85 06 09 01 15 00 25 64 75 08 95 01 b1 02 09
+02 15 00 25 64 75 08 95 01 b1 02 09 03 15 00 26 ff 00 75 08
+95 01 b1 02 09 04 26 ff 00 75 08 95 3c b2 02 01 c0 06 00 ff
+09 02 a1 02 85 07 09 05 15 00 25 64 75 08 95 01 b1 02 09 06
+15 00 25 64 75 08 95 01 b1 02 09 07 15 00 25 64 75 08 95 01
+b1 02 c0 06 00 ff 09 03 a1 02 85 08 09 08 15 00 25 64 75 08
+95 01 b1 02 09 09 15 00 25 64 75 08 95 01 b1 02 09 0a 15 00
+26 ff 00 75 08 95 01 b1 02 c0 06 00 ff 09 04 a1 01 85 09 09
+0b 15 00 25 64 75 08 95 01 b1 02 09 0c 15 00 25 64 75 08 95
+01 b1 02 09 0d 15 00 25 64 75 08 95 01 b1 02 09 0e 15 00 26
+ff 00 75 08 95 01 b1 02 09 0f 26 ff 00 75 08 95 3c b2 02 01
+c0 06 00 ff 09 05 a1 01 85 0a 09 10 15 00 27 ff ff ff 7f 75
+20 95 01 81 02 09 11 15 00 27 ff ff ff 7f 75 20 95 01 81 02
+09 12 15 00 26 ff 00 75 08 95 02 81 02 09 13 15 00 26 ff 00
+75 08 95 01 81 02 c0 06 00 ff 09 06 a1 02 85 0b 09 14 15 00
+25 64 75 08 95 01 b1 02 c0 c0 05 01 09 06 a1 01 85 05 05 07
+19 e0 29 e7 15 00 25 01 75 01 95 08 81 02 95 01 75 08 81 03
+95 06 75 08 15 00 25 65 05 07 19 00 29 65 81 00 c0 00
+```
+
+Parsed descriptor:
+(via https://eleccelerator.com/usbdescreqparser/)
+````
+0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+0x09, 0x05,        // Usage (Game Pad)
+0xA1, 0x01,        // Collection (Application)
+0x85, 0x01,        //   Report ID (1)
+0x09, 0x01,        //   Usage (Pointer)
+0xA1, 0x00,        //   Collection (Physical)
+0x09, 0x30,        //     Usage (X)
+0x09, 0x31,        //     Usage (Y)
+0x15, 0x00,        //     Logical Minimum (0)
+0x27, 0xFF, 0xFF, 0x00, 0x00,  //     Logical Maximum (65534)
+0x95, 0x02,        //     Report Count (2)
+0x75, 0x10,        //     Report Size (16)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x09, 0x01,        //   Usage (Pointer)
+0xA1, 0x00,        //   Collection (Physical)
+0x09, 0x32,        //     Usage (Z)
+0x09, 0x35,        //     Usage (Rz)
+0x15, 0x00,        //     Logical Minimum (0)
+0x27, 0xFF, 0xFF, 0x00, 0x00,  //     Logical Maximum (65534)
+0x95, 0x02,        //     Report Count (2)
+0x75, 0x10,        //     Report Size (16)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x02,        //   Usage Page (Sim Ctrls)
+0x09, 0xC5,        //   Usage (Brake)
+0x15, 0x00,        //   Logical Minimum (0)
+0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
+0x95, 0x01,        //   Report Count (1)
+0x75, 0x0A,        //   Report Size (10)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x00,        //   Logical Maximum (0)
+0x75, 0x06,        //   Report Size (6)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x02,        //   Usage Page (Sim Ctrls)
+0x09, 0xC4,        //   Usage (Accelerator)
+0x15, 0x00,        //   Logical Minimum (0)
+0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
+0x95, 0x01,        //   Report Count (1)
+0x75, 0x0A,        //   Report Size (10)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x00,        //   Logical Maximum (0)
+0x75, 0x06,        //   Report Size (6)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
+0x09, 0x39,        //   Usage (Hat switch)
+0x15, 0x01,        //   Logical Minimum (1)
+0x25, 0x08,        //   Logical Maximum (8)
+0x35, 0x00,        //   Physical Minimum (0)
+0x46, 0x3B, 0x01,  //   Physical Maximum (315)
+0x66, 0x14, 0x00,  //   Unit (System: English Rotation, Length: Centimeter)
+0x75, 0x04,        //   Report Size (4)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
+0x75, 0x04,        //   Report Size (4)
+0x95, 0x01,        //   Report Count (1)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x00,        //   Logical Maximum (0)
+0x35, 0x00,        //   Physical Minimum (0)
+0x45, 0x00,        //   Physical Maximum (0)
+0x65, 0x00,        //   Unit (None)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x09,        //   Usage Page (Button)
+0x19, 0x01,        //   Usage Minimum (0x01)
+0x29, 0x0F,        //   Usage Maximum (0x0F)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x01,        //   Logical Maximum (1)
+0x75, 0x01,        //   Report Size (1)
+0x95, 0x0F,        //   Report Count (15)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x00,        //   Logical Maximum (0)
+0x75, 0x01,        //   Report Size (1)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x0C,        //   Usage Page (Consumer)
+0x0A, 0x24, 0x02,  //   Usage (AC Back)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x01,        //   Logical Maximum (1)
+0x95, 0x01,        //   Report Count (1)
+0x75, 0x01,        //   Report Size (1)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x00,        //   Logical Maximum (0)
+0x75, 0x07,        //   Report Size (7)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x0C,        //   Usage Page (Consumer)
+0x09, 0x01,        //   Usage (Consumer Control)
+0xA1, 0x01,        //   Collection (Application)
+0x0A, 0x81, 0x00,  //     Usage (Assign Selection)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x00,        //     Logical Maximum (0)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0x84, 0x00,  //     Usage (Enter Channel)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x00,        //     Logical Maximum (0)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0x85, 0x00,  //     Usage (Order Movie)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0x99, 0x00,  //     Usage (Media Select Security)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x00,        //     Logical Maximum (0)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x04,        //     Report Size (4)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0x9E, 0x00,  //     Usage (Media Select SAP)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xA1, 0x00,  //     Usage (Once)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xA2, 0x00,  //     Usage (Daily)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xA3, 0x00,  //     Usage (Weekly)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xA4, 0x00,  //     Usage (Monthly)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xB9, 0x00,  //     Usage (Random Play)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xBA, 0x00,  //     Usage (Select Disc)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xBB, 0x00,  //     Usage (Enter Disc)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xBE, 0x00,  //     Usage (Track Normal)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC0, 0x00,  //     Usage (Frame Forward)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC1, 0x00,  //     Usage (Frame Back)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC2, 0x00,  //     Usage (Mark)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC3, 0x00,  //     Usage (Clear Mark)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC4, 0x00,  //     Usage (Repeat From Mark)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC5, 0x00,  //     Usage (Return To Mark)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC6, 0x00,  //     Usage (Search Mark Forward)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC7, 0x00,  //     Usage (Search Mark Backwards)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x0A, 0xC8, 0x00,  //     Usage (Counter Reset)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x08,        //     Report Size (8)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0C,        //   Usage Page (Consumer)
+0x09, 0x01,        //   Usage (Consumer Control)
+0x85, 0x02,        //   Report ID (2)
+0xA1, 0x01,        //   Collection (Application)
+0x05, 0x0C,        //     Usage Page (Consumer)
+0x0A, 0x23, 0x02,  //     Usage (AC Home)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x95, 0x01,        //     Report Count (1)
+0x75, 0x01,        //     Report Size (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x00,        //     Logical Maximum (0)
+0x75, 0x07,        //     Report Size (7)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0F,        //   Usage Page (PID Page)
+0x09, 0x21,        //   Usage (0x21)
+0x85, 0x03,        //   Report ID (3)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x97,        //     Usage (0x97)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x04,        //     Report Size (4)
+0x95, 0x01,        //     Report Count (1)
+0x91, 0x02,        //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x00,        //     Logical Maximum (0)
+0x75, 0x04,        //     Report Size (4)
+0x95, 0x01,        //     Report Count (1)
+0x91, 0x03,        //     Output (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x70,        //     Usage (0x70)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x04,        //     Report Count (4)
+0x91, 0x02,        //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x50,        //     Usage (0x50)
+0x66, 0x01, 0x10,  //     Unit (System: SI Linear, Time: Seconds)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x91, 0x02,        //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0xA7,        //     Usage (0xA7)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x91, 0x02,        //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x65, 0x00,        //     Unit (None)
+0x55, 0x00,        //     Unit Exponent (0)
+0x09, 0x7C,        //     Usage (0x7C)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x91, 0x02,        //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0xC0,              //   End Collection
+0x05, 0x06,        //   Usage Page (Generic Dev Ctrls)
+0x09, 0x20,        //   Usage (Battery Strength)
+0x85, 0x04,        //   Report ID (4)
+0x15, 0x00,        //   Logical Minimum (0)
+0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+0x75, 0x08,        //   Report Size (8)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x01,        //   Usage (0x01)
+0xA1, 0x02,        //   Collection (Logical)
+0x85, 0x06,        //     Report ID (6)
+0x09, 0x01,        //     Usage (0x01)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x02,        //     Usage (0x02)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x03,        //     Usage (0x03)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x04,        //     Usage (0x04)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x3C,        //     Report Count (60)
+0xB2, 0x02, 0x01,  //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile,Buffered Bytes)
+0xC0,              //   End Collection
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x02,        //   Usage (0x02)
+0xA1, 0x02,        //   Collection (Logical)
+0x85, 0x07,        //     Report ID (7)
+0x09, 0x05,        //     Usage (0x05)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x06,        //     Usage (0x06)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x07,        //     Usage (0x07)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0xC0,              //   End Collection
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x03,        //   Usage (0x03)
+0xA1, 0x02,        //   Collection (Logical)
+0x85, 0x08,        //     Report ID (8)
+0x09, 0x08,        //     Usage (0x08)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x09,        //     Usage (0x09)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x0A,        //     Usage (0x0A)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0xC0,              //   End Collection
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x04,        //   Usage (0x04)
+0xA1, 0x01,        //   Collection (Application)
+0x85, 0x09,        //     Report ID (9)
+0x09, 0x0B,        //     Usage (0x0B)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x0C,        //     Usage (0x0C)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x0D,        //     Usage (0x0D)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x0E,        //     Usage (0x0E)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0x09, 0x0F,        //     Usage (0x0F)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x3C,        //     Report Count (60)
+0xB2, 0x02, 0x01,  //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile,Buffered Bytes)
+0xC0,              //   End Collection
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x05,        //   Usage (0x05)
+0xA1, 0x01,        //   Collection (Application)
+0x85, 0x0A,        //     Report ID (10)
+0x09, 0x10,        //     Usage (0x10)
+0x15, 0x00,        //     Logical Minimum (0)
+0x27, 0xFF, 0xFF, 0xFF, 0x7F,  //     Logical Maximum (2147483646)
+0x75, 0x20,        //     Report Size (32)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x11,        //     Usage (0x11)
+0x15, 0x00,        //     Logical Minimum (0)
+0x27, 0xFF, 0xFF, 0xFF, 0x7F,  //     Logical Maximum (2147483646)
+0x75, 0x20,        //     Report Size (32)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x12,        //     Usage (0x12)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x13,        //     Usage (0x13)
+0x15, 0x00,        //     Logical Minimum (0)
+0x26, 0xFF, 0x00,  //     Logical Maximum (255)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+0x09, 0x06,        //   Usage (0x06)
+0xA1, 0x02,        //   Collection (Logical)
+0x85, 0x0B,        //     Report ID (11)
+0x09, 0x14,        //     Usage (0x14)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x64,        //     Logical Maximum (100)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0xB1, 0x02,        //     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+0xC0,              //   End Collection
+0xC0,              // End Collection
+0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+0x09, 0x06,        // Usage (Keyboard)
+0xA1, 0x01,        // Collection (Application)
+0x85, 0x05,        //   Report ID (5)
+0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
+0x19, 0xE0,        //   Usage Minimum (0xE0)
+0x29, 0xE7,        //   Usage Maximum (0xE7)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x01,        //   Logical Maximum (1)
+0x75, 0x01,        //   Report Size (1)
+0x95, 0x08,        //   Report Count (8)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x01,        //   Report Count (1)
+0x75, 0x08,        //   Report Size (8)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //   Report Count (6)
+0x75, 0x08,        //   Report Size (8)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x65,        //   Logical Maximum (101)
+0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
+0x19, 0x00,        //   Usage Minimum (0x00)
+0x29, 0x65,        //   Usage Maximum (0x65)
+0x81, 0x00,        //   Input (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              // End Collection
+0x00,              // Unknown (bTag: 0x00, bType: 0x00)
+
+// 1038 bytes
+
+// best guess: USB HID Report Descriptor
+```
+
+Converted to tables of report IDs:
+```
+Bit | 0       | 8     | 16    | 24    | 32    | 40    | 48    | 56    | 64 | 72 | 80   | 88 | 96    | 104 | 112     | 120     | 128       | 136       | 144      | 152       | 160 | 168 | 176 | 184 |          ........          | 248 | 256 | 264 | 272 | EOF
+Byt | 0       | 1     | 2     | 3     | 4     | 5     | 6     | 7     | 8  | 9  | 10   | 11 | 12    | 13  | 14      | 15      | 16        | 17        | 18       | 19        | 20  | 21  | 22  | 23  |                            | 34  | 35  | 36  | 37  |
+ID  |         |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |     Media Control items    |     |     |     |     |
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+01  | X               : Y             | Z             : Rz            | Brake   | Accel     | Dpad  | Buttons       | AC Back | Asg. Sel. | Ent. Chn. | Ord.Mov. | Me.S.Sel. | MSSAP, O, D, W, M, RP, SD, ED, TN, FrF, FrB, M, CM, RFM, RTM, SMF, SMB, CR |
+Rng | 0-65534         :               | 0-65534       :               | 0-1023  | 0-1023    | 0-1   | 0-1           | 0-1     | 0-255 ??? | 0-255 ??? | 0-255    | 0-255 ??? | 0-255                                                                      |
+Sz  | 16              : 16            | 16            : 16            | 10+(6)  | 10+(6)    | 4+(4) | 15+(1)        | 1+(7)   | 4+(4)     | 4+(4)     | 8        | 4+(4)     | 8   : 8   :  8  : 8   : ...                    ... : 8   : 8   : 8   : 8   | 304 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+02  | AC Home |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-1     |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 1+(7)   |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 8 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+03  | 0x97    | 0x70 (Motors)         | 0x50  | 0xA7  | 0x7C  |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-1     | 0-100                 | 0-255 | 0-255 | 0-255 |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 4+(4)   | 8     : 8     : 8     : 8     | 8     | 8     | 8     |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 64 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+04  | Bat     |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-255   |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 8       |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 8 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+05  | Keypad* |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-1     |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 8       |       |       |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 8 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+06  | 0x01    | 0x02  | 0x03  | 0x04                                                                                                                                                                                                                    ...
+Rng | 0-100   | 0-100 | 0-255 | 0-255 : 0-255 : ...   :       :       :    :    :      :    :       :     :         :         :           :           :          :           :     :     :     :     :  :  :  :  :  :  :  :  :  : :     :     :     :   ...
+Sz  | 8       | 8     | 8     | 480 = 60x 8 ...                                                                                                                                                                                                         ... 504 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+07  | 0x05    | 0x06  | 0x07  |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-100   | 0-100 | 0-100 |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 8       | 8     | 8     |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 24 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+08  | 0x08    | 0x09  | 0x0A  |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-100   | 0-100 | 0-255 |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 8       | 8     | 8     |       |       |       |       |       |    |    |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 24 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+09  | 0x0B    | 0x0C  | 0x0D  | 0x0E  | 0x0F                                                                                                                                                                                                            ...
+Rng | 0-100   | 0-100 | 0-100 | 0-255 | 0-255 : ...   :       :       :    :    :      :    :       :     :         :         :           :           :          :           :     :     :     :     :  :  :  :  :  :  :  :  :  : :     :     :     :   ...
+Sz  | 8       | 8     | 8     | 8     | 480 = 60x 8 ...                                                                                                                                                                                                 ... 512 Bits
+----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------
+0A  | 0x10                            | 0x11                          | 0x12    | 0x13 |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Rng | 0-2147483646                    | 0-2147483646                  | 0-255   |      |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     |
+Sz  | 32                              | 32                            | 8  : 8  | 8    |    |       |     |         |         |           |           |          |           |     |     |     |     |  |  |  |  |  |  |  |  |  | |     |     |     |     | 78 Bits
+
+Keypad* Codes xE0 - 0xE7
+```
+
+Button bitmap:
+```
+BTN_A       0000 0001 .000 0000   01 00   Bit 1
+BTN_B       0000 0010 .000 0000   02 00   Bit 2
+
+BTN_X       0000 1000 .000 0000   08 00   Bit 4
+BTN_Y       0001 0000 .000 0000   10 00   Bit 5
+
+BTN_TL      0100 0000 .000 0000   40 00   Bit 7
+BTN_TR      1000 0000 .000 0000   80 00   Bit 8
+
+BTN_SELECT                                         AC Back (left)
+BTN_START   0000 0000 .000 1000   00 08   Bit 12   (right)
+BTN_HOME    0000 0000 .001 0000   00 10   Bit 13   AC Home (Xbox button, center)
+
+BTN_THUMBL  0000 0000 .010 0000   00 20   Bit 14
+BTN_THUMBR  0000 0000 .100 0000   00 40   Bit 15
+```
