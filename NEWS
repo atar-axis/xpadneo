@@ -1,3 +1,16 @@
+Changes since v0.7 up to v0.7.1
+
+Fixes a bug preventing proper installation and uninstallation
+using DKMS.
+
+Headlines:
+
+  * installer: Parse DKMS version info correctly
+
+Kai Krakow (1):
+      installer: Parse DKMS version info correctly
+
+
 Changes since v0.6 up to v0.7
 
 Major code overhaul and redesign. It optimizes the controller
