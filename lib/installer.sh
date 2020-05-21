@@ -11,7 +11,7 @@ DKMS_BIN=$(type -p dkms)
 : ${DKMS_BIN:?Please install dkms to continue}
 
 get_dkms_versions_installed() {
-	${DKMS_BIN} status | awk -F', ' -e'$1 == "hid-xpadneo" { print $2 }' | sort -nu
+	${DKMS_BIN} status | awk -F', ' -- '$1 == "hid-xpadneo" { print $2 }' | sort -nu
 }
 
 get_upstream_version_latest() {
