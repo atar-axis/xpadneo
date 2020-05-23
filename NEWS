@@ -1,3 +1,13 @@
+Changes since v0.7.1 up to v0.7.2
+
+Headlines:
+
+  * installer: Use awk in non-GNU mode
+
+Kai Krakow (1):
+      installer: Use awk in non-GNU mode
+
+
 Changes since v0.7 up to v0.7.1
 
 Fixes a bug preventing proper installation and uninstallation
