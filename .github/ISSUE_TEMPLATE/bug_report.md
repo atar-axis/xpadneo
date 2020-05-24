@@ -17,11 +17,17 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots or animated gifs to help explain your problem.
 
 **System information**
-Please enable debugging output <https://atar-axis.github.io/xpadneo/index.html#debugging>
-and add at least the following outputs
--   `uname -a`
--   `dmesg`
--   `sudo find "/sys/kernel/debug/hid/" -name "0005:045E:*" -exec sh -c 'echo "{}" && head -1 "{}/rdesc" | tee /dev/tty | cksum && echo' \;`
+Please add at least the following outputs
+  - `uname -a`
+  - `xxd -c20 -g1 /sys/module/hid_xpadneo/drivers/hid:xpadneo/0005:045E:*/report_descriptor`
+
+Also follow these steps to create addition information about your Bluetooth dongle and connection:
+  - Disconnect the controller
+  - Run `sudo btmon | tee xpadneo-btmon.txt` and connect the controller
+  - Run `dmesg | egrep -i 'hid|input|xpadneo' | tee xpadneo-dmesg.txt`
+  - Run `lsusb` and pick the device number of your dongle
+  - Run `lsusb -v -s## | tee xpadneo-lsusb.txt` where `##` is the device number picked in the previous step
+  - Post the resulting files
 
 **Additional context**  
 Add any other context about the problem here.
