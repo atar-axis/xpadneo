@@ -777,13 +777,13 @@ static int xpadneo_probe(struct hid_device *hdev,
 	ret = hid_parse(hdev);
 	if (ret) {
 		hid_err(hdev, "parse failed");
-		goto return_error;
+		return ret;
 	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		goto return_error;
+		return ret;
 	}
 
 	ret = xpadneo_init_ff(hdev);
@@ -791,9 +791,6 @@ static int xpadneo_probe(struct hid_device *hdev,
 		hid_err(hdev, "could not initialize ff, continuing anyway\n");
 
 	return 0;
-
-return_error:
-	return ret;
 }
 
 static void xpadneo_release_device_id(struct xpadneo_devdata *xdata)
