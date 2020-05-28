@@ -402,9 +402,9 @@ static int xpadneo_get_battery_property(struct power_supply *psy,
 		    || xdata->psy_desc.type == POWER_SUPPLY_TYPE_UNKNOWN)
 			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
 		else if (XPADNEO_BATTERY_MODE(flags)
-			 || XPADNEO_BATTERY_CHARGING(flags)) {
+			 || XPADNEO_BATTERY_CHARGING(flags))
 			val->intval = capacity_level_map[level];
-		} else
+		else
 			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
 		break;
 
@@ -608,9 +608,10 @@ static void xpadneo_update_battery(struct xpadneo_devdata *xdata, u8 value)
 		break;
 	default:
 		xdata->psy_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;
+		break;
 	}
 
-	if (XPADNEO_BATTERY_CHARGING(value) || XPADNEO_BATTERY_PRESENT(value))
+	if (XPADNEO_BATTERY_CHARGING(value) || XPADNEO_BATTERY_PRESENT(value)) {
 		switch (XPADNEO_BATTERY_CAPACITY_LEVEL(value)) {
 		case 0:
 			xdata->battery_capacity = 5;
@@ -625,6 +626,7 @@ static void xpadneo_update_battery(struct xpadneo_devdata *xdata, u8 value)
 			xdata->battery_capacity = 99;
 			break;
 		}
+	}
 
 	power_supply_changed(xdata->battery);
 }
@@ -708,7 +710,6 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 			 (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
-
 	}
 
 	if (param_combined_z_axis) {
