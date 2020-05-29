@@ -599,11 +599,11 @@ static void xpadneo_update_battery(struct xpadneo_devdata *xdata, u8 value)
 {
 	xdata->battery_flags = value;
 	switch (XPADNEO_BATTERY_MODE(value)) {
-	case 0x00:
+	case 0:
 		xdata->psy_desc.type = POWER_SUPPLY_TYPE_USB;
 		break;
-	case 0x01:
-	case 0x10:
+	case 1:
+	case 2:
 		xdata->psy_desc.type = POWER_SUPPLY_TYPE_BATTERY;
 		break;
 	default:
