@@ -57,13 +57,15 @@ static bool param_combined_z_axis;
 
 module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
 MODULE_PARM_DESC(combined_z_axis,
-		 "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
+		 "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine.");
 
 static u8 param_trigger_rumble_damping = 0;
+
 module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
 		   0644);
 MODULE_PARM_DESC(trigger_rumble_damping,
-		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
+		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
+
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
