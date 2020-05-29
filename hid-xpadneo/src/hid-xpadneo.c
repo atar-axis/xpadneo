@@ -36,17 +36,18 @@ MODULE_VERSION(DRV_VER);
 
 #ifdef DEBUG
 static u8 param_debug_level;
-
 module_param_named(debug_level, param_debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level,
-		 "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
+		 "(u8) Debug information level: "
+		 "0 (none) to 3+ (most verbose).");
 #endif
 
 static u8 param_disable_ff;
-
 module_param_named(disable_ff, param_disable_ff, byte, 0644);
 MODULE_PARM_DESC(disable_ff,
-		 "(u8) Disable FF: 0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
+		 "(u8) Disable FF: "
+		 "0 (all enabled), 1 (disable main), "
+		 "2 (disable triggers), 3 (disable all).");
 
 #define PARAM_DISABLE_FF_NONE    0
 #define PARAM_DISABLE_FF_MAIN    1
@@ -54,16 +55,16 @@ MODULE_PARM_DESC(disable_ff,
 #define PARAM_DISABLE_FF_ALL     3
 
 static bool param_combined_z_axis;
-
 module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
 MODULE_PARM_DESC(combined_z_axis,
-		 "(bool) Combine the triggers to form a single axis. 1: combine, 0: do not combine");
+		 "(bool) Combine the triggers to form a single axis. "
+		 "1: combine, 0: do not combine.");
 
 static u8 param_trigger_rumble_damping = 0;
 module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
 		   0644);
 MODULE_PARM_DESC(trigger_rumble_damping,
-		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max)");
+		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
