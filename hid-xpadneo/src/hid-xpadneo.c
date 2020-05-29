@@ -66,6 +66,11 @@ module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
 MODULE_PARM_DESC(trigger_rumble_damping,
 		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
 
+static bool param_ff_connect_notify = 1;
+module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
+MODULE_PARM_DESC(ff_connect_notify,
+		 "(bool) Connection notification using force feedback. 1: enable, 0: disable.");
+
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
 enum {
@@ -360,7 +365,7 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	if (xdata->output_report_dmabuf == NULL)
 		return -ENOMEM;
 
-	if (!param_disable_ff)
+	if (!param_disable_ff && param_ff_connect_notify)
 		xpadneo_welcome_rumble(hdev);
 
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
