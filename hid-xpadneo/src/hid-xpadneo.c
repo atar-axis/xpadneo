@@ -66,7 +66,7 @@ module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
 MODULE_PARM_DESC(trigger_rumble_damping,
 		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
 
-static bool param_ff_connect_notify;
+static bool param_ff_connect_notify = 1;
 
 module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
 MODULE_PARM_DESC(ff_connect_notify,
