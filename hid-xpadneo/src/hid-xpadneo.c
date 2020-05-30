@@ -523,9 +523,9 @@ err_free_name:
 	return ret;
 }
 
-static int xpadneo_mapping(struct hid_device *hdev, struct hid_input *hi,
-			   struct hid_field *field, struct hid_usage *usage,
-			   unsigned long **bit, int *max)
+static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
+				 struct hid_field *field, struct hid_usage *usage,
+				 unsigned long **bit, int *max)
 {
 	int i = 0;
 
@@ -836,7 +836,7 @@ MODULE_DEVICE_TABLE(hid, xpadneo_devices);
 static struct hid_driver xpadneo_driver = {
 	.name = "xpadneo",
 	.id_table = xpadneo_devices,
-	.input_mapping = xpadneo_mapping,
+	.input_mapping = xpadneo_input_mapping,
 	.input_configured = xpadneo_input_configured,
 	.probe = xpadneo_probe,
 	.remove = xpadneo_remove,
