@@ -20,8 +20,7 @@
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
-MODULE_DESCRIPTION
-    ("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
+MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
 
 /* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
@@ -37,17 +36,14 @@ MODULE_VERSION(DRV_VER);
 #ifdef DEBUG
 static u8 param_debug_level;
 module_param_named(debug_level, param_debug_level, byte, 0644);
-MODULE_PARM_DESC(debug_level,
-		 "(u8) Debug information level: "
-		 "0 (none) to 3+ (most verbose).");
+MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
 static u8 param_disable_ff;
 module_param_named(disable_ff, param_disable_ff, byte, 0644);
 MODULE_PARM_DESC(disable_ff,
 		 "(u8) Disable FF: "
-		 "0 (all enabled), 1 (disable main), "
-		 "2 (disable triggers), 3 (disable all).");
+		 "0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
 
 #define PARAM_DISABLE_FF_NONE    0
 #define PARAM_DISABLE_FF_MAIN    1
@@ -61,10 +57,8 @@ MODULE_PARM_DESC(combined_z_axis,
 		 "1: combine, 0: do not combine.");
 
 static u8 param_trigger_rumble_damping = 0;
-module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte,
-		   0644);
-MODULE_PARM_DESC(trigger_rumble_damping,
-		 "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
+module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
+MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
 
 static bool param_ff_connect_notify = 1;
 module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
@@ -173,8 +167,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 static void xpadneo_ff_worker(struct work_struct *work)
 {
-	struct xpadneo_devdata *xdata =
-	    container_of(work, struct xpadneo_devdata, ff_worker);
+	struct xpadneo_devdata *xdata = container_of(work, struct xpadneo_devdata, ff_worker);
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
@@ -216,8 +209,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
 
-static int xpadneo_ff_play(struct input_dev *dev, void *data,
-			   struct ff_effect *effect)
+static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
 	enum {
 		DIRECTION_DOWN = 0x0000UL,
@@ -248,12 +240,10 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	 */
 	if (direction <= DIRECTION_UP) {
 		/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
-		fraction_MAIN =
-		    ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
+		fraction_MAIN = ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
 	} else {
 		/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
-		fraction_MAIN =
-		    ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
+		fraction_MAIN = ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
 	}
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
@@ -295,8 +285,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		fraction_TR = ((DIRECTION_RIGHT - direction) * 100) / QUARTER;
 	} else {
 		/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
-		fraction_TL =
-		    100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
+		fraction_TL = 100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
 		fraction_TR = 0;
 	}
 
@@ -359,9 +348,7 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 
 	INIT_WORK(&xdata->ff_worker, xpadneo_ff_worker);
 	xdata->output_report_dmabuf = devm_kzalloc(&hdev->dev,
-						   sizeof(struct
-							  ff_report),
-						   GFP_KERNEL);
+						   sizeof(struct ff_report), GFP_KERNEL);
 	if (xdata->output_report_dmabuf == NULL)
 		return -ENOMEM;
 
@@ -433,8 +420,7 @@ static int xpadneo_get_battery_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_STATUS:
 		if (xdata->psy_desc.type == POWER_SUPPLY_TYPE_UNKNOWN)
 			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-		else if (!charging
-			 && XPADNEO_BATTERY_CAPACITY_LEVEL(flags) == 3)
+		else if (!charging && XPADNEO_BATTERY_CAPACITY_LEVEL(flags) == 3)
 			val->intval = POWER_SUPPLY_STATUS_FULL;
 		else if (charging)
 			val->intval = POWER_SUPPLY_STATUS_CHARGING;
@@ -451,8 +437,7 @@ static int xpadneo_get_battery_property(struct power_supply *psy,
 	return 0;
 }
 
-static int xpadneo_setup_battery(struct hid_device *hdev,
-				 struct hid_field *field)
+static int xpadneo_setup_battery(struct hid_device *hdev, struct hid_field *field)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct power_supply_config ps_config = {
@@ -478,8 +463,7 @@ static int xpadneo_setup_battery(struct hid_device *hdev,
 
 	xdata->psy_desc.name =
 	    kasprintf(GFP_KERNEL, "xpadneo-%s-battery",
-		      strnlen(hdev->uniq,
-			      1) ? hdev->uniq : dev_name(&hdev->dev));
+		      strnlen(hdev->uniq, 1) ? hdev->uniq : dev_name(&hdev->dev));
 	if (!xdata->psy_desc.name)
 		return -ENOMEM;
 
@@ -501,9 +485,7 @@ static int xpadneo_setup_battery(struct hid_device *hdev,
 	 * register power supply via device manager (thus it will
 	 * auto-release on detach)
 	 */
-	xdata->battery =
-	    devm_power_supply_register(&hdev->dev, &xdata->psy_desc,
-				       &ps_config);
+	xdata->battery = devm_power_supply_register(&hdev->dev, &xdata->psy_desc, &ps_config);
 	if (IS_ERR(xdata->battery)) {
 		ret = PTR_ERR(xdata->battery);
 		hid_err(hdev, "battery registration failed\n");
@@ -541,8 +523,7 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 		if (entry->usage == usage->hid) {
 			if (entry->behaviour == 1) {
 				hid_map_usage_clear(hi, usage, bit, max,
-						    entry->ev.event_type,
-						    entry->ev.input_code);
+						    entry->ev.event_type, entry->ev.input_code);
 			}
 			return entry->behaviour;
 		}
@@ -552,8 +533,7 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 	return 0;
 }
 
-static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc,
-				unsigned int *rsize)
+static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
 {
 	/* fixup trailing NUL byte */
 	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
@@ -669,8 +649,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	return 0;
 }
 
-static int xpadneo_input_configured(struct hid_device *hdev,
-				    struct hid_input *hi)
+static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *hi)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -706,15 +685,13 @@ static int xpadneo_input_configured(struct hid_device *hdev,
 	case 0x02E0:
 		hid_info(hdev,
 			 "pretending XB1S Linux firmware version "
-			 "(changed version from 0x%08X to 0x00000903)\n",
-			 xdata->idev->id.version);
+			 "(changed version from 0x%08X to 0x00000903)\n", xdata->idev->id.version);
 		xdata->idev->id.version = 0x00000903;
 		break;
 	case 0x02FD:
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x02E0)\n",
-			 (u16)xdata->idev->id.product);
+			 "(changed PID from 0x%04X to 0x02E0)\n", (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
 	}
@@ -765,8 +742,7 @@ combine_z_axes:
 	return EV_STOP_PROCESSING;
 }
 
-static int xpadneo_probe(struct hid_device *hdev,
-			 const struct hid_device_id *id)
+static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	int ret;
 	struct xpadneo_devdata *xdata;
@@ -775,8 +751,7 @@ static int xpadneo_probe(struct hid_device *hdev,
 	if (xdata == NULL)
 		return -ENOMEM;
 
-	xdata->id = ida_simple_get(&xpadneo_device_id_allocator,
-				   0, 0, GFP_KERNEL);
+	xdata->id = ida_simple_get(&xpadneo_device_id_allocator, 0, 0, GFP_KERNEL);
 
 	xdata->hdev = hdev;
 	hid_set_drvdata(hdev, xdata);
