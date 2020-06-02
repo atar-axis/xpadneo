@@ -8,5 +8,5 @@ clean modules modules_install:
 
 reinstall: modules
 	sudo make modules_install
-	sudo rmmod hid-xpadneo
+	sudo rmmod hid-xpadneo || true
 	sudo modprobe hid-xpadneo
