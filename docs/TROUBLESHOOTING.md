@@ -20,7 +20,15 @@ Secure Boot may be enabled on your computer. On most Linux distribution, running
 Instructions for both of these options are available [here](https://atar-axis.github.io/xpadneo/#working-with-secure-boot).
 Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar-axis.github.io/xpadneo/#debugging).
 
-
 ### Gamepad is connected but did not rumble
 
-If the Gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded.
+If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
+or the gamepad is quirky and doesn't fully support the protocol.
+
+### Gamepad has quirks (i.e., wrong rumble behavior)
+
+You may want to try serveral combinations of quirk flags added to the module paramters.
+See [Configuration](https://atar-axis.github.io/xpadneo/#configuration) and `modinfo hid-xpadneo`
+for more information. You may also want to use the hidraw testing utility which bypasses the
+driver and let's you try different combination of parameters. The utility is located at
+`misc/examples/c_hidraw`.

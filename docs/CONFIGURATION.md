@@ -18,6 +18,14 @@ files in `/sys/module/hid_xpadneo/parameters`:
 * `combined_z_axis` (default `n`)
   * Combine the triggers (`ABS_Z` and `ABS_RZ`) to form a single axis `ABS_Z` which is used e.g. in flight simulators
   * The left and right trigger will work against each other.
+* `quirks` (default empty)
+  * Let's you adjust the quirk mode of your controller
+  * Comma separated list of `address:flags` pairs
+  * Specify your controller MAC address in the format `11:22:33:44:55:66`
+  * Specify the flags as sum of the following:
+    * `1` if your controller does not support pulse parameters (i.e., 8BitDo controllers)
+    * `2` if your controller does not support trigger rumble (most clones in compat-mode)
+    * `4` if your controller does not support individual motor programming (i.e., 8BitDo controllers)
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
   
