@@ -63,6 +63,22 @@ module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
 MODULE_PARM_DESC(ff_connect_notify,
 		 "(bool) Connection notification using force feedback. 1: enable, 0: disable.");
 
+#define XPADNEO_QUIRK_NO_PULSE          1
+#define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
+#define XPADNEO_QUIRK_NO_MOTOR_MASK     4
+
+static struct {
+	char *args[17];
+	unsigned int nargs;
+} param_quirks;
+module_param_array_named(quirks, param_quirks.args, charp, &param_quirks.nargs, 0644);
+MODULE_PARM_DESC(quriks,
+		 "(string) Override device quirks, specify as: \"MAC1:quirks1[,...16]\""
+		 ", MAC format = 11:22:33:44:55:66"
+		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
+		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
+		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK));
+
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
 enum {
@@ -103,6 +119,9 @@ struct xpadneo_devdata {
 	struct input_dev *idev;
 	struct power_supply *battery;
 
+	/* quirk flags */
+	u16 quirks;
+
 	/* battery information */
 	struct power_supply_desc psy_desc;
 	u8 battery_report_id;
@@ -118,6 +137,18 @@ struct xpadneo_devdata {
 	struct ff_data ff;
 	struct ff_data ff_shadow;
 	void *output_report_dmabuf;
+};
+
+struct quirk {
+	char *name_match;
+	u16 name_len;
+	u16 flags;
+};
+
+#define DEVICE_NAME_QUIRK(n, f) \
+	{ .name_match = (n), .name_len = sizeof(n) - 1, .flags = (f) }
+
+static const struct quirk xpadneo_quirks[] = {
 };
 
 struct usage_map {
@@ -179,22 +210,48 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	memset(r, 0, sizeof(*r));
 
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
+
 	r->ff.enable = FF_RUMBLE_ALL;
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE))
+		r->ff.enable &= ~FF_RUMBLE_TRIGGERS;
 
-	/*
-	 * ff-memless has a time resolution of 50ms but we pulse the motors
-	 * as long as possible
+	/* if pulse is not supported, we do not have to care about explicitly
+	 * stopping the effect, the kernel will do this for us as part of its
+	 * ff-memless emulation
 	 */
-	r->ff.pulse_sustain_10ms = U8_MAX;
-	r->ff.loop_count = U8_MAX;
+	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0)) {
+		/*
+		 * ff-memless has a time resolution of 50ms but we pulse the motors
+		 * as long as possible
+		 */
+		r->ff.pulse_sustain_10ms = U8_MAX;
+		r->ff.loop_count = U8_MAX;
+	}
 
-	/* trigger motors */
-	r->ff.magnitude_left = xdata->ff.magnitude_left;
-	r->ff.magnitude_right = xdata->ff.magnitude_right;
+	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE) == 0)) {
+		/* trigger motors */
+		r->ff.magnitude_left = xdata->ff.magnitude_left;
+		r->ff.magnitude_right = xdata->ff.magnitude_right;
+	}
 
 	/* main motors */
 	r->ff.magnitude_strong = xdata->ff.magnitude_strong;
 	r->ff.magnitude_weak = xdata->ff.magnitude_weak;
+
+	/*
+	 * if we cannot mask motors from the command, we need to explicitly
+	 * set the strength to 0
+	 */
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)) {
+		if (likely((r->ff.enable & FF_RUMBLE_STRONG) == 0))
+			r->ff.magnitude_strong = 0;
+		if (likely((r->ff.enable & FF_RUMBLE_WEAK) == 0))
+			r->ff.magnitude_weak = 0;
+		if (unlikely((r->ff.enable & FF_RUMBLE_LEFT) == 0))
+			r->ff.magnitude_left = 0;
+		if (unlikely((r->ff.enable & FF_RUMBLE_RIGHT) == 0))
+			r->ff.magnitude_right = 0;
+	}
 
 	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
@@ -321,31 +378,87 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 
 static void xpadneo_welcome_rumble(struct hid_device *hdev)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct ff_report ff_pck;
 
 	memset(&ff_pck.ff, 0, sizeof(ff_pck.ff));
 
 	ff_pck.report_id = XPADNEO_XB1S_FF_REPORT;
-	ff_pck.ff.magnitude_weak = 40;
-	ff_pck.ff.magnitude_strong = 20;
-	ff_pck.ff.magnitude_right = 10;
-	ff_pck.ff.magnitude_left = 10;
-	ff_pck.ff.pulse_sustain_10ms = 5;
-	ff_pck.ff.pulse_release_10ms = 5;
-	ff_pck.ff.loop_count = 3;
+	if ((xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) == 0) {
+		ff_pck.ff.magnitude_weak = 40;
+		ff_pck.ff.magnitude_strong = 20;
+		ff_pck.ff.magnitude_right = 10;
+		ff_pck.ff.magnitude_left = 10;
+	}
 
-	ff_pck.ff.enable = FF_RUMBLE_WEAK;
+	if ((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0) {
+		ff_pck.ff.pulse_sustain_10ms = 5;
+		ff_pck.ff.pulse_release_10ms = 5;
+		ff_pck.ff.loop_count = 3;
+	}
+
+	/*
+	 * TODO Think about a way of dry'ing the following blocks in a way
+	 * that doesn't compromise the testing nature of this
+	 */
+
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+		ff_pck.ff.magnitude_weak = 40;
+	else
+		ff_pck.ff.enable = FF_RUMBLE_WEAK;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-	mdelay(330);
-
-	ff_pck.ff.enable = FF_RUMBLE_STRONG;
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-	mdelay(330);
-
-	if (likely(param_trigger_rumble_mode < PARAM_TRIGGER_RUMBLE_DISABLE)) {
-		ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
+	mdelay(300);
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+		ff_pck.ff.magnitude_weak = 0;
+	else
+		ff_pck.ff.enable = 0;
+	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
+		u8 save = ff_pck.ff.magnitude_weak;
 		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		mdelay(330);
+		ff_pck.ff.magnitude_weak = save;
+	}
+	mdelay(30);
+
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+		ff_pck.ff.magnitude_strong = 20;
+	else
+		ff_pck.ff.enable = FF_RUMBLE_STRONG;
+	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+	mdelay(300);
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+		ff_pck.ff.magnitude_strong = 0;
+	else
+		ff_pck.ff.enable = 0;
+	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
+		u8 save = ff_pck.ff.magnitude_strong;
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		ff_pck.ff.magnitude_strong = save;
+	}
+	mdelay(30);
+
+	if ((xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE) == 0) {
+		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
+			ff_pck.ff.magnitude_left = 10;
+			ff_pck.ff.magnitude_right = 10;
+		} else {
+			ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
+		}
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		mdelay(300);
+		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
+			ff_pck.ff.magnitude_left = 0;
+			ff_pck.ff.magnitude_right = 0;
+		} else {
+			ff_pck.ff.enable = 0;
+		}
+		if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
+			u8 lsave = ff_pck.ff.magnitude_left;
+			u8 rsave = ff_pck.ff.magnitude_right;
+			hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+			ff_pck.ff.magnitude_left = lsave;
+			ff_pck.ff.magnitude_right = rsave;
+		}
+		mdelay(30);
 	}
 }
 
@@ -359,6 +472,9 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 						   sizeof(struct ff_report), GFP_KERNEL);
 	if (xdata->output_report_dmabuf == NULL)
 		return -ENOMEM;
+
+	if (param_trigger_rumble_mode == PARAM_TRIGGER_RUMBLE_DISABLE)
+		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
 
 	if (param_ff_connect_notify)
 		xpadneo_welcome_rumble(hdev);
@@ -753,6 +869,44 @@ combine_z_axes:
 	return EV_STOP_PROCESSING;
 }
 
+static int xpadneo_init_hw(struct hid_device *hdev)
+{
+	int i;
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	xdata->quirks = 0;
+	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
+		const struct quirk *q = &xpadneo_quirks[i];
+		if (strncmp(q->name_match, xdata->idev->name, q->name_len) == 0)
+			xdata->quirks |= q->flags;
+	}
+
+	kernel_param_lock(THIS_MODULE);
+	for (i = 0; i < param_quirks.nargs; i++) {
+		int offset = strnlen(xdata->idev->uniq, 18);
+		if ((strncasecmp(xdata->idev->uniq, param_quirks.args[i], offset) == 0)
+		    && (param_quirks.args[i][offset] == ':')) {
+			char *quirks_arg = &param_quirks.args[i][offset + 1];
+			u16 quirks = 0;
+			int ret = kstrtou16(quirks_arg, 0, &quirks);
+			if (ret) {
+				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
+				return ret;
+			} else {
+				hid_info(hdev, "quirks override: %s\n", xdata->idev->uniq);
+				xdata->quirks = quirks;
+			}
+			break;
+		}
+	}
+	kernel_param_unlock(THIS_MODULE);
+
+	if (xdata->quirks > 0)
+		hid_info(hdev, "controller quirks: 0x%04x\n", xdata->quirks);
+
+	return 0;
+}
+
 static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	int ret;
@@ -776,6 +930,13 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
+		return ret;
+	}
+
+	ret = xpadneo_init_hw(hdev);
+	if (ret) {
+		hid_err(hdev, "hw init failed: %d\n", ret);
+		hid_hw_stop(hdev);
 		return ret;
 	}
 
