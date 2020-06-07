@@ -775,7 +775,7 @@ static int xpadneo_probe(struct hid_device *hdev,
 
 	ret = hid_parse(hdev);
 	if (ret) {
-		hid_err(hdev, "parse failed");
+		hid_err(hdev, "parse failed\n");
 		goto return_error;
 	}
 
