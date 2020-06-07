@@ -149,6 +149,9 @@ struct quirk {
 	{ .name_match = (n), .name_len = sizeof(n) - 1, .flags = (f) }
 
 static const struct quirk xpadneo_quirks[] = {
+	DEVICE_NAME_QUIRK("8BitDo SN30 Pro+",
+			  XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
+			  XPADNEO_QUIRK_NO_MOTOR_MASK),
 };
 
 struct usage_map {
