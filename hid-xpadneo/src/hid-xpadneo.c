@@ -507,8 +507,7 @@ err_free_name:
 
 static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 				 struct hid_field *field,
-				 struct hid_usage *usage, unsigned long **bit,
-				 int *max)
+				 struct hid_usage *usage, unsigned long **bit, int *max)
 {
 	int i = 0;
 
