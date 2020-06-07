@@ -39,22 +39,20 @@ module_param_named(debug_level, param_debug_level, byte, 0644);
 MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
 #endif
 
-static u8 param_disable_ff;
-module_param_named(disable_ff, param_disable_ff, byte, 0644);
-MODULE_PARM_DESC(disable_ff,
-		 "(u8) Disable FF: "
-		 "0 (all enabled), 1 (disable main), 2 (disable triggers), 3 (disable all).");
-
-#define PARAM_DISABLE_FF_NONE    0
-#define PARAM_DISABLE_FF_MAIN    1
-#define PARAM_DISABLE_FF_TRIGGER 2
-#define PARAM_DISABLE_FF_ALL     3
-
 static bool param_combined_z_axis;
 module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
 MODULE_PARM_DESC(combined_z_axis,
 		 "(bool) Combine the triggers to form a single axis. "
 		 "1: combine, 0: do not combine.");
+
+#define PARAM_TRIGGER_RUMBLE_PRESSURE    0
+#define PARAM_TRIGGER_RUMBLE_DIRECTIONAL 1
+#define PARAM_TRIGGER_RUMBLE_DISABLE     2
+
+static u8 param_trigger_rumble_mode = 0;
+module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
+MODULE_PARM_DESC(trigger_rumble_mode,
+		 "(u8) Trigger rumble mode. 0: pressure, 1: directional, 2: disable.");
 
 static u8 param_trigger_rumble_damping = 0;
 module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
@@ -181,13 +179,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	memset(r, 0, sizeof(*r));
 
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
-
-	/* the user can disable some rumble motors */
 	r->ff.enable = FF_RUMBLE_ALL;
-	if (param_disable_ff & PARAM_DISABLE_FF_TRIGGER)
-		r->ff.enable &= ~FF_RUMBLE_TRIGGERS;
-	if (param_disable_ff & PARAM_DISABLE_FF_MAIN)
-		r->ff.enable &= ~FF_RUMBLE_MAIN;
 
 	/*
 	 * ff-memless has a time resolution of 50ms but we pulse the motors
@@ -231,19 +223,72 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	/* copy data from effect structure at the very beginning */
 	weak = effect->u.rumble.weak_magnitude;
 	strong = effect->u.rumble.strong_magnitude;
-	direction = effect->direction;
 
-	/*
-	 * scale the main rumble lineary within each half of the cirlce,
-	 * so we can completely turn off the main rumble while still doing
-	 * trigger rumble alone
-	 */
-	if (direction <= DIRECTION_UP) {
-		/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
-		fraction_MAIN = ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
-	} else {
-		/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
-		fraction_MAIN = ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
+	switch (param_trigger_rumble_mode) {
+	case PARAM_TRIGGER_RUMBLE_DIRECTIONAL:
+		/*
+		 * scale the main rumble lineary within each half of the cirlce,
+		 * so we can completely turn off the main rumble while still doing
+		 * trigger rumble alone
+		 */
+		direction = effect->direction;
+		if (direction <= DIRECTION_UP) {
+			/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
+			fraction_MAIN = ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
+		} else {
+			/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
+			fraction_MAIN = ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
+		}
+
+		/*
+		 * scale the trigger rumble lineary within each quarter:
+		 *        _ _
+		 * LT = /     \
+		 * RT = _ / \ _
+		 *      1 2 3 4
+		 *
+		 * This gives us 4 different modes of operation (with smooth transitions)
+		 * to get a mostly somewhat independent control over each motor:
+		 *
+		 *                DOWN .. LEFT ..  UP  .. RGHT .. DOWN
+		 * left rumble  =   0% .. 100% .. 100% ..   0% ..   0%
+		 * right rumble =   0% ..   0% .. 100% .. 100% ..   0%
+		 * main rumble  = 100% ..  50% ..   0% ..  50% .. 100%
+		 *
+		 * For completely independent control, we'd need a sphere instead of a
+		 * circle but we only have one direction. We could decouple the
+		 * direction from the main rumble but that seems to be outside the spec
+		 * of the rumble protocol (direction without any magnitude should do
+		 * nothing).
+		 */
+		if (direction <= DIRECTION_LEFT) {
+			/* scale the left trigger between 0x0000..0x4000 (0%..100%) */
+			fraction_TL = (direction * 100) / QUARTER;
+			fraction_TR = 0;
+		} else if (direction <= DIRECTION_UP) {
+			/* scale the right trigger between 0x4000..0x8000 (0%..100%) */
+			fraction_TL = 100;
+			fraction_TR = ((direction - DIRECTION_LEFT) * 100) / QUARTER;
+		} else if (direction <= DIRECTION_RIGHT) {
+			/* scale the right trigger between 0x8000..0xC000 (100%..0%) */
+			fraction_TL = 100;
+			fraction_TR = ((DIRECTION_RIGHT - direction) * 100) / QUARTER;
+		} else {
+			/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
+			fraction_TL = 100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
+			fraction_TR = 0;
+		}
+		break;
+	case PARAM_TRIGGER_RUMBLE_PRESSURE:
+		fraction_MAIN = 100;
+		fraction_TL = max(0, xdata->last_abs_z * 100 / 1023);
+		fraction_TR = max(0, xdata->last_abs_rz * 100 / 1023);
+		break;
+	default:
+		fraction_MAIN = 100;
+		fraction_TL = 0;
+		fraction_TR = 0;
+		break;
 	}
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
@@ -251,55 +296,16 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
 
 	/*
-	 * scale the trigger rumble lineary within each quarter:
-	 *        _ _
-	 * LT = /     \
-	 * RT = _ / \ _
-	 *      1 2 3 4
-	 *
-	 * This gives us 4 different modes of operation (with smooth transitions)
-	 * to get a mostly somewhat independent control over each motor:
-	 *
-	 *                DOWN .. LEFT ..  UP  .. RGHT .. DOWN
-	 * left rumble  =   0% .. 100% .. 100% ..   0% ..   0%
-	 * right rumble =   0% ..   0% .. 100% .. 100% ..   0%
-	 * main rumble  = 100% ..  50% ..   0% ..  50% .. 100%
-	 *
-	 * For completely independent control, we'd need a sphere instead of a
-	 * circle but we only have one direction. We could decouple the
-	 * direction from the main rumble but that seems to be outside the spec
-	 * of the rumble protocol (direction without any magnitude should do
-	 * nothing).
-	 */
-	if (direction <= DIRECTION_LEFT) {
-		/* scale the left trigger between 0x0000..0x4000 (0%..100%) */
-		fraction_TL = (direction * 100) / QUARTER;
-		fraction_TR = 0;
-	} else if (direction <= DIRECTION_UP) {
-		/* scale the right trigger between 0x4000..0x8000 (0%..100%) */
-		fraction_TL = 100;
-		fraction_TR = ((direction - DIRECTION_LEFT) * 100) / QUARTER;
-	} else if (direction <= DIRECTION_RIGHT) {
-		/* scale the right trigger between 0x8000..0xC000 (100%..0%) */
-		fraction_TL = 100;
-		fraction_TR = ((DIRECTION_RIGHT - direction) * 100) / QUARTER;
-	} else {
-		/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
-		fraction_TL = 100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
-		fraction_TR = 0;
-	}
-
-	/*
-	 * we want to keep the rumbling at the triggers below the maximum
+	 * we want to keep the rumbling at the triggers at the maximum
 	 * of the weak and strong main rumble
 	 */
-	max_unscaled = weak > strong ? weak : strong;
+	max_unscaled = max(weak, strong);
 
 	/*
 	 * the user can change the damping at runtime, hence check the
 	 * range
 	 */
-	if (param_trigger_rumble_damping > 0)
+	if (unlikely(param_trigger_rumble_damping > 0))
 		max_damped = max_unscaled / param_trigger_rumble_damping;
 	else
 		max_damped = max_unscaled;
@@ -336,9 +342,11 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(330);
 
-	ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-	mdelay(330);
+	if (likely(param_trigger_rumble_mode < PARAM_TRIGGER_RUMBLE_DISABLE)) {
+		ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
+		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
+		mdelay(330);
+	}
 }
 
 static int xpadneo_init_ff(struct hid_device *hdev)
@@ -352,7 +360,7 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	if (xdata->output_report_dmabuf == NULL)
 		return -ENOMEM;
 
-	if (!param_disable_ff && param_ff_connect_notify)
+	if (param_ff_connect_notify)
 		xpadneo_welcome_rumble(hdev);
 
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
@@ -722,14 +730,18 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
 	 * is set, so remember the current value
 	 */
-	if (param_combined_z_axis && (usage->type == EV_ABS)) {
+	if (usage->type == EV_ABS) {
 		switch (usage->code) {
 		case ABS_Z:
 			xdata->last_abs_z = value;
-			goto combine_z_axes;
+			if (param_combined_z_axis)
+				goto combine_z_axes;
+			break;
 		case ABS_RZ:
 			xdata->last_abs_rz = value;
-			goto combine_z_axes;
+			if (param_combined_z_axis)
+				goto combine_z_axes;
+			break;
 		}
 	}
 
