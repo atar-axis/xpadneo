@@ -141,17 +141,20 @@ struct xpadneo_devdata {
 
 struct quirk {
 	char *name_match;
+	char *oui_match;
 	u16 name_len;
 	u16 flags;
 };
 
 #define DEVICE_NAME_QUIRK(n, f) \
 	{ .name_match = (n), .name_len = sizeof(n) - 1, .flags = (f) }
+#define DEVICE_OUI_QUIRK(o, f) \
+	{ .oui_match = (o), .flags = (f) }
 
 static const struct quirk xpadneo_quirks[] = {
-	DEVICE_NAME_QUIRK("8BitDo SN30 Pro+",
-			  XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
-			  XPADNEO_QUIRK_NO_MOTOR_MASK),
+	DEVICE_OUI_QUIRK("E4:17:D8",
+			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
+			 XPADNEO_QUIRK_NO_MOTOR_MASK),
 };
 
 struct usage_map {
@@ -881,7 +884,11 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	xdata->quirks = 0;
 	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
 		const struct quirk *q = &xpadneo_quirks[i];
-		if (strncmp(q->name_match, xdata->idev->name, q->name_len) == 0)
+
+		if (q->name_match && (strncmp(q->name_match, xdata->idev->name, q->name_len) == 0))
+			xdata->quirks |= q->flags;
+
+		if (q->oui_match && (strncasecmp(q->oui_match, xdata->idev->uniq, 8) == 0))
 			xdata->quirks |= q->flags;
 	}
 
