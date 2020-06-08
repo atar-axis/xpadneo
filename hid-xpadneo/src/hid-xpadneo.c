@@ -204,19 +204,9 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
 
-	/* generate no report when magnitudes are still the same */
-	if (memcmp(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff)) == 0)
-		return;
-	else
-		memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
-
 	memset(r, 0, sizeof(*r));
-
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
-
 	r->ff.enable = FF_RUMBLE_ALL;
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE))
-		r->ff.enable &= ~FF_RUMBLE_TRIGGERS;
 
 	/* if pulse is not supported, we do not have to care about explicitly
 	 * stopping the effect, the kernel will do this for us as part of its
@@ -224,14 +214,18 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	 */
 	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0)) {
 		/*
-		 * ff-memless has a time resolution of 50ms but we pulse the motors
-		 * as long as possible
+		 * ff-memless has a time resolution of 50ms but we pulse the
+		 * motors as long as possible as we also optimize out
+		 * repeated motor programming below
 		 */
 		r->ff.pulse_sustain_10ms = U8_MAX;
 		r->ff.loop_count = U8_MAX;
 	}
 
-	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE) == 0)) {
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
+		/* do not send these bits if not supported */
+		r->ff.enable &= ~FF_RUMBLE_TRIGGERS;
+	} else {
 		/* trigger motors */
 		r->ff.magnitude_left = xdata->ff.magnitude_left;
 		r->ff.magnitude_right = xdata->ff.magnitude_right;
@@ -241,19 +235,26 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	r->ff.magnitude_strong = xdata->ff.magnitude_strong;
 	r->ff.magnitude_weak = xdata->ff.magnitude_weak;
 
-	/*
-	 * if we cannot mask motors from the command, we need to explicitly
-	 * set the strength to 0
-	 */
+	/* do not reprogram motors that have not changed */
+	if (unlikely(xdata->ff_shadow.magnitude_strong == r->ff.magnitude_strong))
+		r->ff.enable &= ~FF_RUMBLE_STRONG;
+	if (unlikely(xdata->ff_shadow.magnitude_weak == r->ff.magnitude_weak))
+		r->ff.enable &= ~FF_RUMBLE_WEAK;
+	if (likely(xdata->ff_shadow.magnitude_left == r->ff.magnitude_left))
+		r->ff.enable &= ~FF_RUMBLE_LEFT;
+	if (likely(xdata->ff_shadow.magnitude_right == r->ff.magnitude_right))
+		r->ff.enable &= ~FF_RUMBLE_RIGHT;
+
+	/* do not send a report if nothing changed */
+	if (unlikely(r->ff.enable == FF_RUMBLE_NONE))
+		return;
+
+	/* shadow our current rumble values for the next cycle */
+	memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
+
+	/* do not send these bits if not supported */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)) {
-		if (likely((r->ff.enable & FF_RUMBLE_STRONG) == 0))
-			r->ff.magnitude_strong = 0;
-		if (likely((r->ff.enable & FF_RUMBLE_WEAK) == 0))
-			r->ff.magnitude_weak = 0;
-		if (unlikely((r->ff.enable & FF_RUMBLE_LEFT) == 0))
-			r->ff.magnitude_left = 0;
-		if (unlikely((r->ff.enable & FF_RUMBLE_RIGHT) == 0))
-			r->ff.magnitude_right = 0;
+		r->ff.enable = 0;
 	}
 
 	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
