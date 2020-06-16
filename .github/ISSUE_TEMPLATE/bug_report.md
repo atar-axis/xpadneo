@@ -47,7 +47,9 @@ about: Report a bug
      number picked in the previous step -->
 
 <!-- Attach the resulting files, do not bundle the files into a single
-	 archive. If some files are too bug, gzip them individually. -->
+     archive. If some files are too big, gzip them individually. Drag
+     and drop the files below. -->
+
 
 ## Additional context
 <!-- Add any other context about the problem here. -->
