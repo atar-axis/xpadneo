@@ -1,3 +1,16 @@
+Changes since v0.7.2 up to v0.7.3
+
+Fixes a minor bug in battery read-out, in dmesg output during an
+error path, and a potential Makefile crash on non-DKMS builds.
+
+Kai Krakow (2):
+      hid_xpadneo, probe: Fix newline in error path
+      hid-xpadneo, Makefile: Accept `rmmod` failing
+
+Adam Becker (1):
+      Fix bug where 2 would map to unknown PS type instead of battery.
+
+
 Changes since v0.7.1 up to v0.7.2
 
 Headlines:
