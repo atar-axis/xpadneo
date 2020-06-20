@@ -211,7 +211,8 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
 	r->ff.enable = FF_RUMBLE_ALL;
 
-	/* if pulse is not supported, we do not have to care about explicitly
+	/*
+	 * if pulse is not supported, we do not have to care about explicitly
 	 * stopping the effect, the kernel will do this for us as part of its
 	 * ff-memless emulation
 	 */
