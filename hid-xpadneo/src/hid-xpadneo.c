@@ -134,6 +134,7 @@ struct xpadneo_devdata {
 	s32 last_abs_rz;
 
 	/* buffer for ff_worker */
+	spinlock_t ff_lock;
 	struct work_struct ff_worker;
 	struct ff_data ff;
 	struct ff_data ff_shadow;
@@ -207,6 +208,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
+	unsigned long flags;
 
 	memset(r, 0, sizeof(*r));
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
@@ -226,6 +228,8 @@ static void xpadneo_ff_worker(struct work_struct *work)
 		r->ff.pulse_sustain_10ms = U8_MAX;
 		r->ff.loop_count = U8_MAX;
 	}
+
+	spin_lock_irqsave(&xdata->ff_lock, flags);
 
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 		/* do not send these bits if not supported */
@@ -251,11 +255,15 @@ static void xpadneo_ff_worker(struct work_struct *work)
 		r->ff.enable &= ~FF_RUMBLE_RIGHT;
 
 	/* do not send a report if nothing changed */
-	if (unlikely(r->ff.enable == FF_RUMBLE_NONE))
+	if (unlikely(r->ff.enable == FF_RUMBLE_NONE)) {
+		spin_unlock_irqrestore(&xdata->ff_lock, flags);
 		return;
+	}
 
 	/* shadow our current rumble values for the next cycle */
 	memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
+
+	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	/* do not send these bits if not supported */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)) {
@@ -277,6 +285,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		QUARTER = DIRECTION_LEFT,
 	};
 
+	unsigned long flags;
 	int fraction_TL, fraction_TR, fraction_MAIN;
 	s32 weak, strong, direction, max_damped, max_unscaled;
 
@@ -357,10 +366,6 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		break;
 	}
 
-	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
-	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
-
 	/*
 	 * we want to keep the rumbling at the triggers at the maximum
 	 * of the weak and strong main rumble
@@ -376,9 +381,17 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	else
 		max_damped = max_unscaled;
 
+	spin_lock_irqsave(&xdata->ff_lock, flags);
+
+	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
+	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
+
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
 	xdata->ff.magnitude_left = (u8)((max_damped * fraction_TL) / U16_MAX);
 	xdata->ff.magnitude_right = (u8)((max_damped * fraction_TR) / U16_MAX);
+
+	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	/* schedule writing a rumble report to the controller */
 	schedule_work(&xdata->ff_worker);
