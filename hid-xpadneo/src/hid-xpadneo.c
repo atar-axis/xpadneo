@@ -117,6 +117,7 @@ struct xpadneo_devdata {
 	s32 last_abs_rz;
 
 	/* buffer for ff_worker */
+	spinlock_t ff_lock;
 	struct work_struct ff_worker;
 	struct ff_data ff;
 	struct ff_data ff_shadow;
@@ -173,6 +174,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
+	unsigned long flags;
 
 	/* generate no report when magnitudes are still the same */
 	if (memcmp(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff)) == 0)
@@ -198,6 +200,8 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	r->ff.pulse_sustain_10ms = U8_MAX;
 	r->ff.loop_count = U8_MAX;
 
+	spin_lock_irqsave(&xdata->ff_lock, flags);
+
 	/* trigger motors */
 	r->ff.magnitude_left = xdata->ff.magnitude_left;
 	r->ff.magnitude_right = xdata->ff.magnitude_right;
@@ -205,6 +209,8 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	/* main motors */
 	r->ff.magnitude_strong = xdata->ff.magnitude_strong;
 	r->ff.magnitude_weak = xdata->ff.magnitude_weak;
+
+	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
@@ -222,6 +228,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		QUARTER = DIRECTION_LEFT,
 	};
 
+	unsigned long flags;
 	int fraction_TL, fraction_TR, fraction_MAIN;
 	s32 weak, strong, direction, max_damped, max_unscaled;
 
@@ -250,10 +257,6 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 		fraction_MAIN =
 		    ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
 	}
-
-	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
-	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
 
 	/*
 	 * scale the trigger rumble lineary within each quarter:
@@ -310,9 +313,17 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data,
 	else
 		max_damped = max_unscaled;
 
+	spin_lock_irqsave(&xdata->ff_lock, flags);
+
+	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
+	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
+
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
 	xdata->ff.magnitude_left = (u8)((max_damped * fraction_TL) / U16_MAX);
 	xdata->ff.magnitude_right = (u8)((max_damped * fraction_TR) / U16_MAX);
+
+	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	/* schedule writing a rumble report to the controller */
 	schedule_work(&xdata->ff_worker);
