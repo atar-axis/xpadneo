@@ -7,12 +7,12 @@
  * Copyright (c) 2017 Florian Dollinger <dollinger.florian@gmx.de>
  */
 
+#include <linux/delay.h>
 #include <linux/hid.h>
+#include <linux/input.h>
+#include <linux/module.h>
 #include <linux/power_supply.h>
-#include <linux/input.h>	/* ff_memless(), ... */
-#include <linux/module.h>	/* MODULE_*, module_*, ... */
-#include <linux/slab.h>		/* kzalloc(), kfree(), ... */
-#include <linux/delay.h>	/* mdelay(), ... */
+#include <linux/slab.h>
 #include "hid-ids.h"		/* VENDOR_ID... */
 
 #define DEBUG
