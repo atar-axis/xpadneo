@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/power_supply.h>
 #include <linux/slab.h>
+#include <linux/time.h>
 #include "hid-ids.h"		/* VENDOR_ID... */
 
 #define DEBUG
@@ -81,6 +82,9 @@ MODULE_PARM_DESC(quriks,
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
+#define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
+#define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
+
 enum {
 	FF_RUMBLE_NONE = 0x00,
 	FF_RUMBLE_WEAK = 0x01,
@@ -135,7 +139,9 @@ struct xpadneo_devdata {
 
 	/* buffer for ff_worker */
 	spinlock_t ff_lock;
-	struct work_struct ff_worker;
+	struct delayed_work ff_worker;
+	unsigned long ff_throttle_until;
+	bool ff_scheduled;
 	struct ff_data ff;
 	struct ff_data ff_shadow;
 	void *output_report_dmabuf;
@@ -204,7 +210,8 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 static void xpadneo_ff_worker(struct work_struct *work)
 {
-	struct xpadneo_devdata *xdata = container_of(work, struct xpadneo_devdata, ff_worker);
+	struct xpadneo_devdata *xdata =
+	    container_of(to_delayed_work(work), struct xpadneo_devdata, ff_worker);
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
@@ -230,6 +237,9 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	}
 
 	spin_lock_irqsave(&xdata->ff_lock, flags);
+
+	/* let our scheduler know we've been called */
+	xdata->ff_scheduled = false;
 
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 		/* do not send these bits if not supported */
@@ -263,6 +273,12 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	/* shadow our current rumble values for the next cycle */
 	memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
 
+	/*
+	 * throttle next command submission, the firmware doesn't like us to
+	 * send rumble data any faster
+	 */
+	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
+
 	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	/* do not send these bits if not supported */
@@ -285,7 +301,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		QUARTER = DIRECTION_LEFT,
 	};
 
-	unsigned long flags;
+	unsigned long flags, ff_run_at, ff_throttle_until;
+	long delay_work;
 	int fraction_TL, fraction_TR, fraction_MAIN;
 	s32 weak, strong, direction, max_damped, max_unscaled;
 
@@ -391,10 +408,40 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	xdata->ff.magnitude_left = (u8)((max_damped * fraction_TL) / U16_MAX);
 	xdata->ff.magnitude_right = (u8)((max_damped * fraction_TR) / U16_MAX);
 
-	spin_unlock_irqrestore(&xdata->ff_lock, flags);
+	/* synchronize: is our worker still scheduled? */
+	if (xdata->ff_scheduled) {
+		/* the worker is still guarding rumble programming */
+		hid_notice_once(hdev, "throttling rumble reprogramming\n");
+		goto unlock_and_return;
+	}
+
+	/* we want to run now but may be throttled */
+	ff_run_at = jiffies;
+	ff_throttle_until = xdata->ff_throttle_until;
+	if (time_before(ff_run_at, ff_throttle_until)) {
+		/* last rumble was recently executed */
+		delay_work = (long)ff_throttle_until - (long)ff_run_at;
+	} else {
+		/* the firmware is ready */
+		delay_work = 0;
+	}
+
+	/*
+	 * sanitize: If 0 > delay > 1000ms, something is weird: this
+	 * may happen if the delay between two rumble requests is
+	 * several weeks long
+	 */
+	delay_work = min((long)HZ, delay_work);
+	delay_work = max(0L, delay_work);
 
 	/* schedule writing a rumble report to the controller */
-	schedule_work(&xdata->ff_worker);
+	if (schedule_delayed_work(&xdata->ff_worker, delay_work))
+		xdata->ff_scheduled = true;
+	else
+		hid_err(hdev, "lost rumble packet\n");
+
+unlock_and_return:
+	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 	return 0;
 }
 
@@ -489,7 +536,7 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	INIT_WORK(&xdata->ff_worker, xpadneo_ff_worker);
+	INIT_DELAYED_WORK(&xdata->ff_worker, xpadneo_ff_worker);
 	xdata->output_report_dmabuf = devm_kzalloc(&hdev->dev,
 						   sizeof(struct ff_report), GFP_KERNEL);
 	if (xdata->output_report_dmabuf == NULL)
@@ -500,6 +547,9 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 
 	if (param_ff_connect_notify)
 		xpadneo_welcome_rumble(hdev);
+
+	/* initialize our rumble command throttle */
+	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
 
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
 	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
@@ -1001,7 +1051,7 @@ static void xpadneo_remove(struct hid_device *hdev)
 
 	hid_hw_close(hdev);
 
-	cancel_work_sync(&xdata->ff_worker);
+	cancel_delayed_work_sync(&xdata->ff_worker);
 
 	xpadneo_release_device_id(xdata);
 	hid_hw_stop(hdev);
