@@ -15,16 +15,15 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 
 **Advantages of this driver**
 * Supports Bluetooth
-* Supports Force Feedback (Rumble) in General
-* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) (not even supported in Windows)  
-  see it in action: run `misc/examples/c_directional_rumble_test/direction_rumble_test <eventnumber in /dev/input> [<magnitude, 0 to 65535>]`
+* Supports all Force Feedback/Rumble effects through Linux `ff-memless` effect emulation
+* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ)
+  in every game by applying a pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
 * Supports disabling FF
 * Supports multiple Gamepads at the same time (not even supported in Windows)
-* Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before
+* Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software layers (SDL2, Stadia via Chrome Gamepad API, etc)
 * Working Select, Start, Mode buttons
 * Supports Battery Level Indication (including the Play \`n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
-* Supports faking the Input Device Version in order to prevent SDL from trying to fix an unbroken mapping.
 * Easy Installation
 * Agile Support and Development
 
@@ -44,6 +43,8 @@ Make sure you have installed *dkms*, *linux headers* and a bluetooth implementat
 * On **Raspbian**, it is  
   `sudo apt-get install dkms raspberrypi-kernel-headers`  
   If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for your kernel. Please follow the steps described [here](https://github.com/notro/rpi-source/wiki) in this case.
+* On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
+  `cd hid-xpadneo && make modules && sudo make modules_install`
   
 Please feel free to add other Distributions as well!
 
@@ -51,7 +52,8 @@ Please feel free to add other Distributions as well!
 * Download the Repository to your local machine 
   `git clone https://github.com/atar-axis/xpadneo.git`
 * `cd xpadneo`
-* Run `sudo ./install.sh`
+* If using DKMS, run `sudo ./install.sh`
+* If not using DKMS, follow steps above (generic distribution)
 * Done!
 
 ### Connection
@@ -63,20 +65,23 @@ Please feel free to add other Distributions as well!
 * `[bluetooth]# pair <MAC>`
 * `[bluetooth]# trust <MAC>`
 * `[bluetooth]# connect <MAC>`
+* The `<MAC>` parameter is optional if the command line already shows the controller name
 
 You know that everything works fine when you feel the gamepad rumble ;)
 
 ### Configuration
 
-* Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the available options.
+* If using DKMS: Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the available options.
 
 ### Update
 In order to update xpadneo, do the following
 * Update your cloned repo: `git pull`
-* Run `sudo ./update.sh`
+* If using DKMS: Run `sudo ./update.sh`
+* otherwise follow the steps above (generic distribution)
 
 ### Uninstallation
-* Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
+* If using DKSM: Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
+* otherwise follow the steps above (generic distribution)
 
 
 ## Further information
