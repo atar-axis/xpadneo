@@ -1,5 +1,13 @@
 #!/bin/sh
-echo "Removing Modules Hooks and Configurations"
+
+echo "Removing Bluetooth configuration (requires reboot)..."
 rm -f /etc/modprobe.d/99-xpadneo-bluetooth.conf
-rm -f /etc/udev/rules.d/99-xpadneo.rules
-rm -f /etc/udev/rules.d/xpadneo.sh
+
+echo "Uninstalling modalias database..."
+rm -f /etc/modprobe.d/xpadneo.conf
+
+echo "Uninstalling udev rules..."
+rm -f /etc/udev/rules.d/98-xpadneo.rules
+
+echo "Reloading udev..."
+udevadm control --reload

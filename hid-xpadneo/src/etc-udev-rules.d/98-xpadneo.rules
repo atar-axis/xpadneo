@@ -1,0 +1,1 @@
+ACTION=="add", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*|0005:045E:0B05.*", SUBSYSTEM=="hid", DRIVER!="xpadneo", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
