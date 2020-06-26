@@ -16,6 +16,11 @@ else
 	echo "Y" >/sys/module/bluetooth/parameters/disable_ertm
 fi
 
-echo "Installing UDEV rule to automatically bind xpadneo (necessary on kernel < 4.16 and >= 4.20)..."
-cp ./src/udev_rules/99-xpadneo.rules /etc/udev/rules.d/
-udevadm control --reload # not necessary, we do it anyway
+echo "Installing modalias database..."
+install -D -t /etc/modprobe.d etc-modprobe.d/xpadneo.conf
+
+echo "Installing udev rules..."
+install -D -t /etc/udev/rules.d etc-udev-rules.d/98-xpadneo.rules
+
+echo "Reloading udev..."
+udevadm control --reload
