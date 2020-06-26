@@ -644,14 +644,14 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
 		xpadneo_setup_battery(hdev, field);
-		return -1;
+		return MAP_IGNORE;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(xpadneo_usage_maps); i++) {
 		const struct usage_map *entry = &xpadneo_usage_maps[i];
 
 		if (entry->usage == usage->hid) {
-			if (entry->behaviour == 1) {
+			if (entry->behaviour == MAP_STATIC) {
 				hid_map_usage_clear(hi, usage, bit, max,
 						    entry->ev.event_type, entry->ev.input_code);
 			}
@@ -660,7 +660,7 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 	}
 
 	/* let HID handle this */
-	return 0;
+	return MAP_AUTO;
 }
 
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
