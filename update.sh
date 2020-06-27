@@ -24,7 +24,10 @@ elif __version_lte "${LATEST}" "${VERSION}"; then
     echo "Looks like you are on a developer version, reinstalling!"
     reinstall
 else
-    
+    echo "Latest stable version: ${LATEST}"
+    echo "Installed versions: ${INSTALLED}"
+    echo "Repository version: ${VERSION}"
+
     if [[ "${GIT_ROOT}" != "" ]]; then
         echo "Please update this directory by running 'git reset --hard' and 'git pull', afterwards run this script again"
     else
