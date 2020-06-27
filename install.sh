@@ -3,8 +3,6 @@
 # shellcheck disable=SC1090
 source "$(dirname "$0")/lib/installer.sh"
 
-VERSION=$(<VERSION)
-
 # backup original files, preserve permissions
 cp --preserve hid-xpadneo/dkms.conf hid-xpadneo/dkms.conf_bck
 cp --preserve hid-xpadneo/src/hid-xpadneo.c hid-xpadneo/src/hid-xpadneo.c_bck
