@@ -15,7 +15,8 @@ get_dkms_versions_installed() {
 }
 
 get_upstream_version_latest() {
-	curl -Lq "https://raw.githubusercontent.com/atar-axis/xpadneo/master/VERSION"
+	curl -sI "https://github.com/atar-axis/xpadneo/releases/latest" | \
+	awk -- 'BEGIN{IGNORECASE=1} /^location:/ { n = split($2, v, /\//); print v[n]; exit }'
 }
 
 # shellcheck disable=SC2034
