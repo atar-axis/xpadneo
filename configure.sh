@@ -9,7 +9,6 @@ set -o posix
 NAME="$0"
 
 # Define Variables
-VERSION="$(cat ./VERSION)"
 MODULE="/sys/module/hid_xpadneo/"
 PARAMS="/sys/module/hid_xpadneo/parameters"
 CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
