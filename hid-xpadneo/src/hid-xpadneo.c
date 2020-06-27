@@ -761,6 +761,7 @@ err_free_name:
 	return ret;
 }
 
+#define xpadneo_map_usage_clear(ev) hid_map_usage_clear(hi, usage, bit, max, (ev).event_type, (ev).input_code)
 static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 				 struct hid_field *field,
 				 struct hid_usage *usage, unsigned long **bit, int *max)
@@ -780,10 +781,8 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 		const struct usage_map *entry = &xpadneo_usage_maps[i];
 
 		if (entry->usage == usage->hid) {
-			if (entry->behaviour == MAP_STATIC) {
-				hid_map_usage_clear(hi, usage, bit, max,
-						    entry->ev.event_type, entry->ev.input_code);
-			}
+			if (entry->behaviour == MAP_STATIC)
+				xpadneo_map_usage_clear(entry->ev);
 			return entry->behaviour;
 		}
 	}
