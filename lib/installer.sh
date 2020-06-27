@@ -5,6 +5,16 @@ if [ ${EUID} -ne 0 ]; then
 	exit 3
 fi
 
+# shellcheck disable=SC2034
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+
+__version() {
+	git describe --tags --dirty 2>/dev/null || cat "$(dirname "${BASH_SOURCE[0]}/../VERSION")"
+}
+
+# shellcheck disable=SC2034
+VERSION=$(__version)
+
 DKMS_BIN=$(type -p dkms)
 
 # shellcheck disable=SC2086

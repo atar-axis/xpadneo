@@ -4,8 +4,6 @@
 source "$(dirname "$0")/lib/installer.sh"
 
 LATEST=$(get_upstream_version_latest)
-VERSION=$(<VERSION)
-IS_GIT=$(git rev-parse --is-inside-work-tree 2>/dev/null)
 
 
 if [[ $LATEST == "$VERSION" ]]; then
@@ -24,7 +22,7 @@ if [[ $LATEST == "$VERSION" ]]; then
     
 else
     
-    if [[ $IS_GIT == "true" ]]; then
+    if [[ "${GIT_ROOT}" != "" ]]; then
         echo "Please update this directory by running 'git reset --hard' and 'git pull', afterwards run this script again"
     else
         echo "Please update this directory by downloading the latest version from https://github.com/atar-axis/xpadneo/archive/master.zip"
