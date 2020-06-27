@@ -33,9 +33,5 @@ else
     else
         echo "Please update this directory by downloading the latest version from https://github.com/atar-axis/xpadneo/archive/master.zip"
     fi
-    
     exit -4
-
 fi
-
-
