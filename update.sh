@@ -5,21 +5,24 @@ source "$(dirname "$0")/lib/installer.sh"
 
 LATEST=$(get_upstream_version_latest)
 
-
-if [[ $LATEST == "$VERSION" ]]; then
-
-    echo "Looks like the repo is up to date, fine!"
-    
-    if [[ $LATEST == "$INSTALLED" ]]; then
-        echo "You have already installed the latest version! Yay."
+reinstall() {
+    if [[ "${VERSION}" == "${INSTALLED}" ]]; then
+        echo "You have already installed ${VERSION}!"
     else
         echo "* uninstalling outdated modules"
         ./uninstall.sh
-            
+
         echo "* installing latest version"
         ./install.sh
     fi
-    
+}
+
+if [[ "${LATEST}" == "${VERSION}" ]]; then
+    echo "Looks like the repo is up to date, fine!"
+    reinstall
+elif __version_lte "${LATEST}" "${VERSION}"; then
+    echo "Looks like you are on a developer version, reinstalling!"
+    reinstall
 else
     
     if [[ "${GIT_ROOT}" != "" ]]; then
