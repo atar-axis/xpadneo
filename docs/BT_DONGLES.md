@@ -56,3 +56,8 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
     * Connection flawless
     * Sometimes laggy while Gameplay
   * Reported by Zowayix [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-487280791)
+
+**Qualcomm**
+
+* Unspecified model (https://github.com/atar-axis/xpadneo/issues/180):
+  * `btmon` logs showed very low input report rate and high input lag (300ms+)
