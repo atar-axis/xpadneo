@@ -9,7 +9,7 @@ Usually the driver does disable this incompatible mode automatically, but someti
 
 #### Incompatible Bluetooth Chipset
 
-Some Chipsets, as the CSR 85xx, do have problems when you try to reconnect the Gamepad.
+Some chipsets, e.g. the CSR 85xx, do have problems when you try to reconnect the Gamepad.
 
 #### Secure Boot
 
