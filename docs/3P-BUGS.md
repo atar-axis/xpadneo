@@ -11,6 +11,6 @@ some of which are fixed now - others are not:
 * Binding of specialized drivers
   * before kernel 4.16
     * official way: Add driver to `hid_have_special_driver` an recompilation of HIDcore
-    * workaround: UDEV rule (see src/udev_rules)
+    * workaround: UDEV rule (see `src/etc-udev-rules.d`)
   * official way as from kernel 4.16: Specialized drivers are bound to the device [automatically](https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9)
 * Cambridge Silicon Radio chipsets do have problems while reconnecting
