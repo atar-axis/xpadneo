@@ -28,7 +28,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
     * `4` if your controller does not support individual motor programming (i.e., 8BitDo controllers)
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
-  
+
 **Example**
 To set the highest level of debug verbosity temporarily, run  
 `echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level`  
