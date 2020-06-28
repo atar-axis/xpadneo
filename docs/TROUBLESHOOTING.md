@@ -35,3 +35,48 @@ See [Configuration](https://atar-axis.github.io/xpadneo/#configuration) and `mod
 for more information. You may also want to use the hidraw testing utility which bypasses the
 driver and let's you try different combination of parameters. The utility is located at
 `misc/examples/c_hidraw`.
+
+### Gamepad axes are swapped, seemingly unresponsive or strange behavior
+
+If you observe this problem with `jstest`, `systemsettings joystick` (KDE) or `jstest-gtk`, there's usually nothing
+to do as these test programs use the old `joydev` API while most (modern) games use the `evdev` API. Some emulators,
+tho, use the `joydev` API and do not respect the axes naming from `evdev`. In this case, please run the following
+command to correct the axes mapping for the js interface:
+
+```bash
+jscal -u 8,0,1,3,4,2,5,16,17,10,304,305,307,308,310,311,314,315,317,318 /dev/input/js0
+```
+
+Explanation: `-u` set the mapping for `8` axes to axes code `0,1,3,4,...` and for `10` buttons to button codes
+`304,305,307,308,...`. This only remaps the `joydev` API, **not** the `evdev` API. Making this change may have
+unexpected consequences for applications using both APIs.
+
+**IMPORTANT:** Now test all your axes to collect calibration data. You can then use the following command to store the
+settings permanently:
+
+```bash
+sudo jscal-store /dev/input/js0
+```
+
+If the gamepad does not restore the mapping after disconnecting and reconnecting it, i.e., your distribution doesn't
+ship a proper udev rule for that, you may want to add the this udev rule, then reboot (see also
+`/misc/examples/udev-rules/99-xpadneo-joydev.rules`):
+
+```bash
+# /etc/udev/rules.d/99-xpadneo-joydev.rules
+KERNEL=="js*", ACTION=="add", DRIVERS=="xpadneo", RUN+="/usr/bin/jscal-restore %E{DEVNAME}"
+```
+
+From now on, connecting the gamepad should restore the values from /var/lib/joystick/joystick.state. If you messed up,
+simply remove your gamepad from the file and start over.
+
+Please check, if `jscal-restore` is really in `/usr/bin`, otherwise use the correct path, found by running:
+
+```bash
+type -p jscal-restore
+```
+
+**IMPORTANT NOTE:** The Chrome gamepad API (used for Stadia and other browser games) is a hybrid user of both the
+`joydev` and the `evdev` API bit it uses a hard-coded axes mapping for each controller model. Thus, when you run the
+above commands, the API will be confused and now shows the problem you initially tried to fix. To use the Chrome
+gamepad API, you'd need to revert that settings. There is currently no known work-around.
