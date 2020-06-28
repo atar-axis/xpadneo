@@ -15,6 +15,17 @@
 #include <linux/delay.h>	/* mdelay(), ... */
 #include "hid-ids.h"		/* VENDOR_ID... */
 
+#ifndef hid_notice_once
+#define hid_notice_once(hid, fmt, ...)					\
+do {									\
+	static bool __print_once __read_mostly;				\
+	if (!__print_once) {						\
+		__print_once = true;					\
+		hid_notice(hid, fmt, ##__VA_ARGS__);			\
+	}								\
+} while (0)
+#endif
+
 #define DEBUG
 
 /* Module Information */
