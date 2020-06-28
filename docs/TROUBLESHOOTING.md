@@ -11,6 +11,9 @@ Usually the driver does disable this incompatible mode automatically, but someti
 
 Some chipsets, e.g. the CSR 85xx, do have problems when you try to reconnect the Gamepad.
 
+Some chipsets may need additional driver firmware to work correctly. Try installing
+`linux-firmware` from your distribution.
+
 #### Secure Boot
 
 Secure Boot may be enabled on your computer. On most Linux distribution, running `mokutil --sb-state` will tell you if it is the case. When Secure Boot is enabled, unsigned kernel module cannot be loaded. Two options are available:
