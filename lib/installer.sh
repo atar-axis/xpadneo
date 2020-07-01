@@ -9,7 +9,7 @@ fi
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 
 __version() {
-	git describe --tags --dirty 2>/dev/null || cat "$(dirname "${BASH_SOURCE[0]}/../VERSION")"
+	git describe --tags --dirty 2>/dev/null || sed -re's/v?(.*)/v\1/' "$(dirname "${BASH_SOURCE[0]}")/../VERSION"
 }
 
 __version_lte() {
