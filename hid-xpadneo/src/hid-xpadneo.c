@@ -222,6 +222,42 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* disable duplicate button */
 	USAGE_IGN(0xC0224),
+
+	/* XBE2: Disable "dial", which is a redundant representation of the D-Pad */
+	USAGE_IGN(0x10037),
+
+	/* XBE2: Disable blind axes */
+	USAGE_IGN(0x10040),	/* Vx */
+	USAGE_IGN(0x10041),	/* Vy */
+	USAGE_IGN(0x10042),	/* Vz */
+	USAGE_IGN(0x10043),	/* Vbrx */
+	USAGE_IGN(0x10044),	/* Vbry */
+	USAGE_IGN(0x10045),	/* Vbrz */
+
+	/* XBE2: Disable duplicate buttons */
+	USAGE_IGN(0x90010),	/* copy of A */
+	USAGE_IGN(0x90011),	/* copy of B */
+	USAGE_IGN(0x90013),	/* copy of X */
+	USAGE_IGN(0x90014),	/* copy of Y */
+	USAGE_IGN(0x90016),	/* copy of LB */
+	USAGE_IGN(0x90017),	/* copy of RB */
+	USAGE_IGN(0x9001B),	/* copy of Start */
+	USAGE_IGN(0x9001D),	/* copy of LS */
+	USAGE_IGN(0x9001E),	/* copy of RS */
+	USAGE_IGN(0xC0082),	/* copy of Select button */
+
+	/* XBE2: Disable extra features until proper support is implemented */
+	USAGE_IGN(0xC0081),	/* Four paddles */
+	USAGE_IGN(0xC0085),	/* Profile switcher */
+
+	/* XBE2: Disable unused buttons */
+	USAGE_IGN(0x90012),	/* 6 "TRIGGER_HAPPY" buttons */
+	USAGE_IGN(0x90015),
+	USAGE_IGN(0x90018),
+	USAGE_IGN(0x90019),
+	USAGE_IGN(0x9001A),
+	USAGE_IGN(0x9001C),
+	USAGE_IGN(0xC00B9),	/* KEY_SHUFFLE button */
 };
 
 static void xpadneo_ff_worker(struct work_struct *work)
@@ -731,6 +767,10 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 {
 	int i = 0;
 
+	/* XBE2 reports a full keyboard, which we don't need */
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_KEYBOARD)
+		return MAP_IGNORE;
+
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
 		xpadneo_setup_battery(hdev, field);
 		return MAP_IGNORE;
@@ -855,7 +895,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	}
 
 	/* correct button mapping of Xbox controllers in Linux mode */
-	if (report->id == 1 && (reportsize == 17 || reportsize == 39)) {
+	if (report->id == 1 && (reportsize == 17 || reportsize == 39 || reportsize == 55)) {
 		u16 bits = 0;
 
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
@@ -897,16 +937,6 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * 0xB05 wireless Linux mode (Android mode)
 	 */
 	switch (xdata->idev->id.product) {
-#if 0
-	case 0x0B05:
-		/* FIXME What's the Windows ID of this controller? */
-		hid_info(hdev,
-			 "pretending XBE2 Windows wireless mode (changed PID from 0x%04X to 0x???)\n",
-			 (u16)xdata->idev->id.product);
-		xdata->idev->id.product = 0x02E0;
-		break;
-
-#endif
 	case 0x02E0:
 		hid_info(hdev,
 			 "pretending XB1S Linux firmware version "
@@ -914,6 +944,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		xdata->idev->id.version = 0x00000903;
 		break;
 	case 0x02FD:
+	case 0x0B05:
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
 			 "(changed PID from 0x%04X to 0x02E0)\n", (u16)xdata->idev->id.product);
