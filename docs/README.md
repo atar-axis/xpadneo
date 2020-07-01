@@ -27,6 +27,12 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 * Easy Installation
 * Agile Support and Development
 
+### Xbox Elite Series 2 Wireless controller
+
+While basic support for the Xbox Elite Series 2 Wireless controller is present, the following features are missing:
+- Profile support. All four profiles behave the same way currently, and there is no support for configuring them.
+- The four paddles at the bottom are currently not supported.
+
 ## Getting started
 ### Prerequisites
 Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their dependencies.
