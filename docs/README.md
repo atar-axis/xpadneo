@@ -33,6 +33,8 @@ Make sure you have installed *dkms*, *linux headers* and a bluetooth implementat
 
 * On **Arch** and Arch-based distros (like **Antergos**), try  
   `sudo pacman -S dkms linux-headers bluez bluez-utils`  
+* On **Manjaro** try
+  `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
 * On **Debian** based systems (like Ubuntu) you can install those packages by running  
   ``sudo apt-get install dkms linux-headers-`uname -r` ``  
 * On **Fedora**, it is  
