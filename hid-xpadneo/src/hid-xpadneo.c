@@ -938,6 +938,8 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 */
 	switch (xdata->idev->id.product) {
 	case 0x02E0:
+		if (xdata->idev->id.version == 0x00000903)
+			break;
 		hid_info(hdev,
 			 "pretending XB1S Linux firmware version "
 			 "(changed version from 0x%08X to 0x00000903)\n", xdata->idev->id.version);
