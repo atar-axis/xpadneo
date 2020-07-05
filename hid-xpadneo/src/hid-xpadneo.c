@@ -924,7 +924,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * exposing the Windows mapping. This prevents SDL and other layers
 	 * (probably browser game controller APIs) from treating our driver
 	 * unnecessarily with button and axis mapping fixups, and it seems
-	 * this is actually a firmware mode meant to Android usage only:
+	 * this is actually a firmware mode meant for Android usage only:
 	 *
 	 * Xbox One S:
 	 * 0x2E0 wireless Windows mode (non-Android mode)
