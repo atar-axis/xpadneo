@@ -4,7 +4,7 @@
 source "$(dirname "$0")/lib/installer.sh"
 
 echo "* unloading current driver module"
-modprobe -r hid_xpadneo
+modprobe -r hid_xpadneo || true
 
 echo "* looking for registered instances"
 echo "found ${#INSTALLED[@]} registered instance(s) on your system"
