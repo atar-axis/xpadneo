@@ -28,8 +28,6 @@ do {									\
 } while (0)
 #endif
 
-#define DEBUG
-
 /* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
@@ -45,12 +43,6 @@ MODULE_VERSION(DRV_VER);
  * module parameter it is, since <params.c> does use kstrtou16 for shorts
  * since version 3.14
  */
-
-#ifdef DEBUG
-static u8 param_debug_level;
-module_param_named(debug_level, param_debug_level, byte, 0644);
-MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (most verbose).");
-#endif
 
 static bool param_combined_z_axis;
 module_param_named(combined_z_axis, param_combined_z_axis, bool, 0444);
