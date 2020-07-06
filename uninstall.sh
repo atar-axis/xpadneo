@@ -15,7 +15,7 @@ do
     echo "* $instance"
 
     echo "  * uninstalling and removing $instance from DKMS"
-    dkms remove -m hid-xpadneo -v "$instance" --all
+    dkms remove "hid-xpadneo/${instance}" --all
 
     echo "  * removing $instance folder from /usr/src"
     rm --recursive "/usr/src/hid-xpadneo-$instance/"
