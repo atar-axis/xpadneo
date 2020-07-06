@@ -116,6 +116,9 @@ struct xpadneo_devdata {
 	struct input_dev *idev;
 	struct power_supply *battery;
 
+	/* Xbox logo button special handling */
+	bool xbox_button_down;
+
 	/* battery information */
 	spinlock_t battery_lock;
 	struct power_supply_desc psy_desc;
@@ -148,6 +151,8 @@ struct usage_map {
 	} ev;
 };
 
+#define BTN_XBOX KEY_HOMEPAGE
+
 #define USAGE_MAP(u, b, e, i) \
 	{ .usage = (u), .behaviour = (b), .ev = { .event_type = (e), .input_code = (i) } }
 #define USAGE_IGN(u) USAGE_MAP(u, MAP_IGNORE, 0, 0)
@@ -166,13 +171,13 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_MAP(0x9000A, MAP_STATIC, EV_KEY, BTN_THUMBR),	/* RS */
 
 	/* fixup the Xbox logo button */
-	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),	/* Xbox */
+	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
-	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),
+	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, BTN_XBOX),
 
 	/* fixup code "AC Home" from Linux report descriptor */
-	USAGE_MAP(0xC0223, MAP_STATIC, EV_KEY, KEY_HOMEPAGE),
+	USAGE_MAP(0xC0223, MAP_STATIC, EV_KEY, BTN_XBOX),
 
 	/* disable duplicate button */
 	USAGE_IGN(0xC0224),
@@ -770,11 +775,11 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	/*
-	 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-	 * is set, so remember the current value
-	 */
 	if (param_combined_z_axis && (usage->type == EV_ABS)) {
+		/*
+		 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
+		 * is set, so remember the current value
+		 */
 		switch (usage->code) {
 		case ABS_Z:
 			xdata->last_abs_z = value;
@@ -782,6 +787,28 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		case ABS_RZ:
 			xdata->last_abs_rz = value;
 			goto combine_z_axes;
+		}
+	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
+		/*
+		 * Handle the Xbox logo button: We want to cache the button
+		 * down event so we don't send an event when the user just
+		 * wants to turn the controller off.
+		 */
+		if (!xdata->xbox_button_down && (value == 1)) {
+			/* cache this event */
+			xdata->xbox_button_down = true;
+			return EV_STOP_PROCESSING;
+		} else if (xdata->xbox_button_down && (value == 0)) {
+			/* replay cached event */
+			xdata->xbox_button_down = false;
+			input_report_key(idev, BTN_XBOX, 1);
+			input_sync(idev);
+			/* synthesize the release to remove the scan code */
+			input_report_key(idev, BTN_XBOX, 0);
+			input_sync(idev);
+			return EV_STOP_PROCESSING;
+		} else {
+			return EV_STOP_PROCESSING;
 		}
 	}
 
