@@ -18,10 +18,10 @@ if [[ -z "$INSTALLED" ]]; then
     cp --recursive "$PWD/hid-xpadneo/" "/usr/src/hid-xpadneo-$VERSION"
 
     echo "* adding module to DKMS"
-    dkms add -m hid-xpadneo -v "$VERSION"
+    dkms add "hid-xpadneo/${VERSION}"
 
     echo "* installing module (using DKMS)"
-    dkms install -m hid-xpadneo -v "$VERSION"
+    dkms install "hid-xpadneo/${VERSION}"
 
 else
 
