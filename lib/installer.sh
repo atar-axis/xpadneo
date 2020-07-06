@@ -6,7 +6,7 @@ if [ ${EUID} -ne 0 ]; then
 fi
 
 # shellcheck disable=SC2034
-GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 
 __version() {
 	git describe --tags --dirty 2>/dev/null || sed -re's/v?(.*)/v\1/' "$(dirname "${BASH_SOURCE[0]}")/../VERSION"
