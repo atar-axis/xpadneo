@@ -52,7 +52,7 @@ MODULE_PARM_DESC(debug_level, "(u8) Debug information level: 0 (none) to 3+ (mos
 #endif
 
 static bool param_combined_z_axis;
-module_param_named(combined_z_axis, param_combined_z_axis, bool, 0644);
+module_param_named(combined_z_axis, param_combined_z_axis, bool, 0444);
 MODULE_PARM_DESC(combined_z_axis,
 		 "(bool) Combine the triggers to form a single axis. "
 		 "1: combine, 0: do not combine.");
