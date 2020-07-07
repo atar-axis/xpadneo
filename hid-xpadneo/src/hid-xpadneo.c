@@ -75,6 +75,12 @@ module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
 MODULE_PARM_DESC(ff_connect_notify,
 		 "(bool) Connection notification using force feedback. 1: enable, 0: disable.");
 
+static bool param_gamepad_compliance = 1;
+module_param_named(gamepad_compliance, param_gamepad_compliance, bool, 0444);
+MODULE_PARM_DESC(gamepad_compliance,
+		 "(bool) Adhere to Linux Gamepad Specification by using signed axis values. "
+		 "1: enable, 0: disable.");
+
 #define XPADNEO_QUIRK_NO_PULSE          1
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     4
@@ -913,6 +919,14 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		break;
 	}
 
+	if (param_gamepad_compliance) {
+		hid_info(hdev, "enabling compliance with Linux Gamepad Specification\n");
+		input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
+		input_set_abs_params(xdata->idev, ABS_Y, -32768, 32767, 255, 4095);
+		input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
+		input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
+	}
+
 	if (param_combined_z_axis) {
 		/*
 		 * We also need to translate the incoming events to fit within
@@ -932,11 +946,22 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct input_dev *idev = xdata->idev;
 
 	if (usage->type == EV_ABS) {
+		switch (usage->code) {
+		case ABS_X:
+		case ABS_Y:
+		case ABS_RX:
+		case ABS_RY:
+			/* Linux Gamepad Specification */
+			if (param_gamepad_compliance) {
+				input_report_abs(idev, usage->code, value - 32768);
+				/* no need to sync here */
+				goto stop_processing;
+			}
+			break;
 		/*
 		 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
 		 * is set, so remember the current value
 		 */
-		switch (usage->code) {
 		case ABS_Z:
 			xdata->last_abs_z = value;
 			if (param_combined_z_axis)
