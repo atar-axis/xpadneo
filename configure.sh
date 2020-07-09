@@ -112,8 +112,7 @@ function set_param {
 
 ## Argument Parsing ##
 function parse_args {
-  LINE_EXISTS=$(grep 'options hid_xpadneo' "$CONF_FILE")
-  if [[ -z "$LINE_EXISTS" ]];
+  if ! grep -sq 'options hid_xpadneo' "${CONF_FILE}";
   then
     # If line doesn't exist echo all of the defaults.
     echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
