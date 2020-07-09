@@ -11,7 +11,8 @@ NAME="$0"
 # Define Variables
 MODULE="/sys/module/hid_xpadneo/"
 PARAMS="/sys/module/hid_xpadneo/parameters"
-CONF_FILE=$(find /etc/modprobe.d/ -mindepth 1 -maxdepth 1 -type f -name "*xpadneo*")
+CONF_FILE=$(grep -sl '^options hid_xpadneo' /etc/modprobe.d/*.conf | tail -1)
+: "${CONF_FILE:="/etc/modprobe.d/99-xpadneo-options.conf"}"
 
 # Use getopt NOT getopts to parse arguments.
 OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,trigger-rumble-damping: -- "$@")
