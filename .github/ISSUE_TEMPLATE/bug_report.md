@@ -4,6 +4,10 @@ about: Report a bug
 
 ---
 
+## Version of xpadneo
+<!-- Please let us know the version number of xpadneo, either the one shown
+     during install (preferred) or the one you downloaded (releases). -->
+
 ## Describe the bug
 <!-- A clear and concise description of what the bug is. -->
 
