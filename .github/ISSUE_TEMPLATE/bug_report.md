@@ -9,7 +9,8 @@ about: Report a bug
      during install (preferred) or the one you downloaded (releases). -->
 
 ## Severity / Impact
-<!-- Give us some impression of the importance of this bug report. -->
+<!-- Give us some impression of the importance of this bug report. You can
+     easily check these after submitting the bug report. -->
 
 * [ ] I've read the docs and the bug reporting instructions
 * [ ] It does not work at all
