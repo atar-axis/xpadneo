@@ -928,11 +928,6 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			 struct hid_usage *usage, __s32 value)
 {
-	enum {
-		EV_CONT_PROCESSING,	/* Let the hid-core autodetect the event */
-		EV_STOP_PROCESSING	/* Stop further processing */
-	};
-
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
@@ -962,7 +957,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		if (!xdata->xbox_button_down && (value == 1)) {
 			/* cache this event */
 			xdata->xbox_button_down = true;
-			return EV_STOP_PROCESSING;
 		} else if (xdata->xbox_button_down && (value == 0)) {
 			/* replay cached event */
 			xdata->xbox_button_down = false;
@@ -971,18 +965,19 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			/* synthesize the release to remove the scan code */
 			input_report_key(idev, BTN_XBOX, 0);
 			input_sync(idev);
-			return EV_STOP_PROCESSING;
-		} else {
-			return EV_STOP_PROCESSING;
 		}
+		goto stop_processing;
 	}
 
-	return EV_CONT_PROCESSING;
+	/* Let hid-core handle the event */
+	return 0;
 
 combine_z_axes:
 	input_report_abs(idev, ABS_Z, xdata->last_abs_rz - xdata->last_abs_z);
 	input_sync(idev);
-	return EV_STOP_PROCESSING;
+
+stop_processing:
+	return 1;
 }
 
 static int xpadneo_init_hw(struct hid_device *hdev)
