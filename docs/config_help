@@ -1,15 +1,11 @@
 configure.sh Usage:
-NOTE: Short options don't require an equals sign, only long options.  EX. -d 3 vs. --debug-level=3
+NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 vs. --trigger-rumble-damping=3
 
 -h, --help
 	Display this help screen.
 
 --version
 	Display version number of xpadneo
-
--d, --debug-level
-	If you are asked to send debug info or want to fix bugs.  [0 to 3]
-	Ex. https://atar-axis.github.io/xpadneo/#debugging
 
 -f, --disable-ff
 	Disable the force feedback (Rumble).  [0 (enable all), 1 (disable main only), 2 (disable triggers only), 3 (disable all)]
