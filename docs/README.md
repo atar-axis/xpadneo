@@ -35,6 +35,7 @@ These other projects may not support some of the advanced features of xpadneo.
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
 * Working Select, Start, Mode buttons
+* Correct Axis Range (signed, important for e.g. RPCS3)
 * Supports Battery Level Indication (including the Play \`n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
