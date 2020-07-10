@@ -8,6 +8,19 @@ about: Report a bug
 <!-- Please let us know the version number of xpadneo, either the one shown
      during install (preferred) or the one you downloaded (releases). -->
 
+## Severity / Impact
+<!-- Give us some impression of the importance of this bug report. -->
+
+* [ ] I've read the docs and the bug reporting instructions
+* [ ] It does not work at all
+* [ ] It mostly works but sometimes it doesn't
+* [ ] I found a work-around
+* [ ] I probably didn't figure it all out but it's too early to give up
+* [ ] I don't know how to ... <!-- describe below -->
+* [ ] It's too complicated
+* [ ] Fantastic work but ... <!-- describe below -->
+* [ ] I can code and I want to help
+
 ## Describe the bug
 <!-- A clear and concise description of what the bug is. -->
 
