@@ -40,6 +40,16 @@ These other projects may not support some of the advanced features of xpadneo.
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
 * Agile Support and Development
+* Supports customization through profiles
+
+
+### Xbox One S Wireless controller
+
+The driver emulates profile switching for this controller by pressing buttons A, B, X, or Y while holding down the
+Xbox logo button. However, the following caveats apply:
+- Profiles currently behave all the same, and there is no support for configuring them.
+- Full support will be available once the Xbox Elite Series 2 controller is fully supported.
+
 
 
 ### Xbox Elite Series 2 Wireless controller
@@ -106,6 +116,13 @@ You know that everything works fine when you feel the gamepad rumble ;)
 * If using DKMS: Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the
   available options.
 
+
+
+### Profile switching
+
+The driver supports switching between different profiles on the Xbox One S controller by holding down the Xbox logo
+button while pressing button A, B, X, or Y to select one of four profiles. This switching can be done at any time
+even while in a game. The API for customizing each profile does not exist yet.
 
 ### Update
 

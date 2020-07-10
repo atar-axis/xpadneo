@@ -77,6 +77,7 @@ MODULE_PARM_DESC(gamepad_compliance,
 #define XPADNEO_QUIRK_NO_PULSE          1
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     4
+#define XPADNEO_QUIRK_USE_HW_PROFILES   8
 
 static struct {
 	char *args[17];
@@ -88,7 +89,8 @@ MODULE_PARM_DESC(quriks,
 		 ", MAC format = 11:22:33:44:55:66"
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
 		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
-		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK));
+		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
+		 ", hardware profile switch = " __stringify(XPADNEO_QUIRK_USE_HW_PROFILES));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -144,8 +146,9 @@ struct xpadneo_devdata {
 	/* quirk flags */
 	u16 quirks;
 
-	/* Xbox logo button special handling */
-	bool xbox_button_down;
+	/* profile switching */
+	bool xbox_button_down, profile_switched;
+	u8 profile;
 
 	/* battery information */
 	struct {
@@ -841,6 +844,18 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 	return rdesc;
 }
 
+static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profile,
+				   const bool emulated)
+{
+	if (xdata->profile != profile) {
+		hid_info(xdata->hdev, "Switching profile to %d\n", profile);
+		xdata->profile = profile;
+	}
+
+	/* Indicate to profile emulation that a request was made */
+	xdata->profile_switched = emulated;
+}
+
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
@@ -867,6 +882,11 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);
 		data[16] = 0;
+	}
+
+	if (report->id == 1 && reportsize == 55) {
+		/* XBE2: track the current controller profile */
+		xpadneo_switch_profile(xdata, data[35] & 0x03, false);
 	}
 
 	return 0;
@@ -969,22 +989,48 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
 		/*
 		 * Handle the Xbox logo button: We want to cache the button
-		 * down event so we don't send an event when the user just
-		 * wants to turn the controller off.
+		 * down event to allow for profile switching. The button will
+		 * act as a shift key and only send the input events when
+		 * released without pressing an additional button.
 		 */
 		if (!xdata->xbox_button_down && (value == 1)) {
 			/* cache this event */
 			xdata->xbox_button_down = true;
 		} else if (xdata->xbox_button_down && (value == 0)) {
-			/* replay cached event */
 			xdata->xbox_button_down = false;
-			input_report_key(idev, BTN_XBOX, 1);
-			input_sync(idev);
-			/* synthesize the release to remove the scan code */
-			input_report_key(idev, BTN_XBOX, 0);
-			input_sync(idev);
+			if (xdata->profile_switched) {
+				xdata->profile_switched = false;
+			} else {
+				/* replay cached event */
+				input_report_key(idev, BTN_XBOX, 1);
+				input_sync(idev);
+				/* synthesize the release to remove the scan code */
+				input_report_key(idev, BTN_XBOX, 0);
+				input_sync(idev);
+			}
 		}
 		goto stop_processing;
+	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
+		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
+			switch (usage->code) {
+			case BTN_A:
+				if (value == 1)
+					xpadneo_switch_profile(xdata, 0, true);
+				goto stop_processing;
+			case BTN_B:
+				if (value == 1)
+					xpadneo_switch_profile(xdata, 1, true);
+				goto stop_processing;
+			case BTN_X:
+				if (value == 1)
+					xpadneo_switch_profile(xdata, 2, true);
+				goto stop_processing;
+			case BTN_Y:
+				if (value == 1)
+					xpadneo_switch_profile(xdata, 3, true);
+				goto stop_processing;
+			}
+		}
 	}
 
 	/* Let hid-core handle the event */
@@ -1136,7 +1182,8 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
 
 	/* XBOX ONE Elite Series 2 */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05)},
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
+	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES},
 
 	/* SENTINEL VALUE, indicates the end */
 	{}
