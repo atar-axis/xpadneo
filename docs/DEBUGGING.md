@@ -1,25 +1,12 @@
 ## Debugging
 
-### Enable Debug Output
+If you are asked to send debug info or want to fix bugs, follow the guide
+displayed when [opening a new bug report](https://github.com/atar-axis/xpadneo/issues/new?template=bug_report.md).
+This has all the hints to get you started with debugging. You may also want
+to increase the kernel debug level if your distribution sets it very low.
+Otherwise, the driver reports most incidents, quirks, and fixes to `dmesg`.
 
-If you are asked to send debug info or want to fix bugs, enable debugging
-first in the driver and upon request send the xpadneo related part:
-
-```bash
-echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level
-dmesg | egrep -i 'hid|input|xpadneo' | tee xpadneo-dmesg.txt
-```
-
-where `3` is the most verbose debug level. Disable debugging by setting the
-value back to `0`.
-
-You may want to set the debug level at load time of the driver. You can do
-this by applying the setting to modprobe:
-```bash
-echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf
-```
-
-Now, the driver will be initialized with debug level 3 during modprobe.
+### Environment
 
 Useful information can now be aquired with the commands:
 

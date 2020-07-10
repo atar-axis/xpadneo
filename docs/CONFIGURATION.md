@@ -5,9 +5,6 @@
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
-* `debug_level` (default `0`)
-  * `0` (no debug output) to `3` (all)
-  * For more information, please take a look [here](https://atar-axis.github.io/xpadneo/#debugging)
 * `trigger_rumble_mode` (default `0`)
   * `0` rumbles triggers by pressure and current rumble effect
   * `1` rumbles triggers by force direction (non-conformant)
@@ -30,7 +27,9 @@ files in `/sys/module/hid_xpadneo/parameters`:
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
 
 **Example**
-To set the highest level of debug verbosity temporarily, run  
-`echo 3 | sudo tee /sys/module/hid_xpadneo/parameters/debug_level`  
-To make the setting permanent and applied at loading time, try  
-`echo "options hid_xpadneo debug_level=3" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf`
+
+To disable trigger rumbling temporarily, run
+`echo 2 | sudo tee /sys/module/hid_xpadneo/parameters/trigger_rumble_mode`
+
+To make the setting permanent and applied at loading time, try
+`echo "options hid_xpadneo trigger_rumble_mode=2" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf`

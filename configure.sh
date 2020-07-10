@@ -15,7 +15,7 @@ CONF_FILE=$(grep -sl '^options hid_xpadneo' /etc/modprobe.d/*.conf | tail -1)
 : "${CONF_FILE:="/etc/modprobe.d/99-xpadneo-options.conf"}"
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,debug-level:,disable-ff:,trigger-rumble-damping: -- "$@")
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,disable-ff:,trigger-rumble-damping: -- "$@")
 
 
 
@@ -35,13 +35,6 @@ function check_param {
     value=$2
     
     case $key in
-    "debug_level")
-        if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
-        then
-            echo "$NAME: $key: Invalid value! Value must be between 0 and 3."
-            exit 1
-        fi
-        ;;
     "disable_ff")
         if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
         then
@@ -117,7 +110,7 @@ function parse_args {
     # If line doesn't exist echo all of the defaults.
     mkdir -p "$(dirname "${CONF_FILE}")"
     touch "${CONF_FILE}"
-    echo "options hid_xpadneo debug_level=0 disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo disable_ff=0 trigger_rumble_damping=4 fake_dev_version=4400 combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
@@ -139,13 +132,6 @@ function parse_args {
       --version)
         display_version
         shift
-        ;;
-
-      -d | --debug-level)
-        key='debug_level'
-        value="${2#*=}"
-        set_param "$key" "$value"
-        shift 2
         ;;
 
       -f | --disable-ff)
