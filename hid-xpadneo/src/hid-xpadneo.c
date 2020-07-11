@@ -93,6 +93,15 @@ MODULE_PARM_DESC(quriks,
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
+static enum power_supply_property xpadneo_battery_props[] = {
+	POWER_SUPPLY_PROP_CAPACITY_LEVEL,
+	POWER_SUPPLY_PROP_MODEL_NAME,
+	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_PRESENT,
+	POWER_SUPPLY_PROP_SCOPE,
+	POWER_SUPPLY_PROP_STATUS,
+};
+
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
 
@@ -132,7 +141,6 @@ struct xpadneo_devdata {
 	/* logical device interfaces */
 	struct hid_device *hdev;
 	struct input_dev *idev;
-	struct power_supply *battery;
 
 	/* quirk flags */
 	u16 quirks;
@@ -141,11 +149,15 @@ struct xpadneo_devdata {
 	bool xbox_button_down;
 
 	/* battery information */
-	spinlock_t battery_lock;
-	struct power_supply_desc psy_desc;
-	u8 battery_report_id;
-	u8 battery_flags;
-	u8 battery_capacity;
+	struct {
+		bool initialized;
+		struct power_supply *psy;
+		struct power_supply_desc desc;
+		char *name;
+		char *name_pnc;
+		u8 report_id;
+		u8 flags;
+	} battery;
 
 	/* axis states */
 	s32 last_abs_z;
@@ -607,63 +619,57 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
 }
 
-#define XPADNEO_BATTERY_ONLINE(data)         ((data&0x80)>>7)
-#define XPADNEO_BATTERY_MODE(data)           ((data&0x0C)>>2)
-#define XPADNEO_BATTERY_PRESENT(data)        ((data&0x0C)>0)
-#define XPADNEO_BATTERY_CHARGING(data)       ((data&0x10)>>4)
+#define XPADNEO_PSY_ONLINE(data)     ((data&0x80)>0)
+#define XPADNEO_PSY_MODE(data)       ((data&0x0C)>>2)
+
+#define XPADNEO_POWER_USB(data)      (XPADNEO_PSY_MODE(data)==0)
+#define XPADNEO_POWER_BATTERY(data)  (XPADNEO_PSY_MODE(data)==1)
+#define XPADNEO_POWER_PNC(data)      (XPADNEO_PSY_MODE(data)==2)
+
+#define XPADNEO_BATTERY_ONLINE(data)         ((data&0x0C)>0)
+#define XPADNEO_BATTERY_CHARGING(data)       ((data&0x10)>0)
 #define XPADNEO_BATTERY_CAPACITY_LEVEL(data) (data&0x03)
 
-static int xpadneo_get_battery_property(struct power_supply *psy,
-					enum power_supply_property property,
-					union power_supply_propval *val)
+static int xpadneo_get_psy_property(struct power_supply *psy,
+				    enum power_supply_property property,
+				    union power_supply_propval *val)
 {
 	struct xpadneo_devdata *xdata = power_supply_get_drvdata(psy);
-	unsigned long flags;
 	int ret = 0;
-	u8 battery_flags, level, charging;
 
 	static int capacity_level_map[] = {
-		[0] = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL,
-		[1] = POWER_SUPPLY_CAPACITY_LEVEL_LOW,
+		[0] = POWER_SUPPLY_CAPACITY_LEVEL_LOW,
+		[1] = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL,
 		[2] = POWER_SUPPLY_CAPACITY_LEVEL_HIGH,
 		[3] = POWER_SUPPLY_CAPACITY_LEVEL_FULL,
 	};
 
-	if (!xdata->battery)
-		return -EINVAL;
-
-	spin_lock_irqsave(&xdata->battery_lock, flags);
-
-	battery_flags = xdata->battery_flags;
-	level = XPADNEO_BATTERY_CAPACITY_LEVEL(battery_flags);
-	charging = XPADNEO_BATTERY_CHARGING(battery_flags);
+	u8 flags = xdata->battery.flags;
+	u8 level = min(3, XPADNEO_BATTERY_CAPACITY_LEVEL(flags));
+	bool online = XPADNEO_PSY_ONLINE(flags);
+	bool charging = XPADNEO_BATTERY_CHARGING(flags);
 
 	switch (property) {
-	case POWER_SUPPLY_PROP_CAPACITY:
-		val->intval = xdata->battery_capacity;
-		break;
-
 	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		if (level >= ARRAY_SIZE(capacity_level_map)
-		    || xdata->psy_desc.type == POWER_SUPPLY_TYPE_UNKNOWN)
-			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
-		else if (XPADNEO_BATTERY_MODE(battery_flags)
-			 || XPADNEO_BATTERY_CHARGING(battery_flags))
+		if (online && XPADNEO_BATTERY_ONLINE(flags))
 			val->intval = capacity_level_map[level];
 		else
 			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
 		break;
 
 	case POWER_SUPPLY_PROP_MODEL_NAME:
-		val->strval = xdata->hdev->name;
+		if (online && XPADNEO_POWER_PNC(flags))
+			val->strval = xdata->battery.name_pnc;
+		else
+			val->strval = xdata->battery.name;
 		break;
 
 	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = XPADNEO_BATTERY_ONLINE(battery_flags);
+		val->intval = online && XPADNEO_BATTERY_ONLINE(flags);
 		break;
 
 	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = XPADNEO_BATTERY_PRESENT(battery_flags);
+		val->intval = online && (XPADNEO_BATTERY_ONLINE(flags) || charging);
 		break;
 
 	case POWER_SUPPLY_PROP_SCOPE:
@@ -671,13 +677,11 @@ static int xpadneo_get_battery_property(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_STATUS:
-		if (xdata->psy_desc.type == POWER_SUPPLY_TYPE_UNKNOWN)
-			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-		else if (!charging && XPADNEO_BATTERY_CAPACITY_LEVEL(battery_flags) == 3)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else if (charging)
+		if (online && charging)
 			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else if (XPADNEO_BATTERY_PRESENT(battery_flags))
+		else if (online && !charging && XPADNEO_POWER_USB(flags))
+			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		else if (online && XPADNEO_BATTERY_ONLINE(flags))
 			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
 		else
 			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
@@ -688,77 +692,71 @@ static int xpadneo_get_battery_property(struct power_supply *psy,
 		break;
 	}
 
-	spin_unlock_irqrestore(&xdata->battery_lock, flags);
-
 	return ret;
 }
 
-static int xpadneo_setup_battery(struct hid_device *hdev, struct hid_field *field)
+static int xpadneo_setup_psy(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct power_supply_config ps_config = {
 		.drv_data = xdata
 	};
-
 	int ret;
 
-	/* What properties can be queried? */
-	static enum power_supply_property battery_props[] = {
-		POWER_SUPPLY_PROP_CAPACITY,
-		POWER_SUPPLY_PROP_CAPACITY_LEVEL,
-		POWER_SUPPLY_PROP_MODEL_NAME,
-		POWER_SUPPLY_PROP_ONLINE,
-		POWER_SUPPLY_PROP_PRESENT,
-		POWER_SUPPLY_PROP_SCOPE,
-		POWER_SUPPLY_PROP_STATUS,
-	};
-
 	/* already registered */
-	if (xdata->battery)
+	if (xdata->battery.psy)
 		return 0;
 
-	xdata->psy_desc.name =
-	    kasprintf(GFP_KERNEL, "xpadneo-%s-battery",
-		      strnlen(hdev->uniq, 1) ? hdev->uniq : dev_name(&hdev->dev));
-	if (!xdata->psy_desc.name)
+	xdata->battery.desc.name = kasprintf(GFP_KERNEL, "xpadneo_battery_%i", xdata->id);
+	if (!xdata->battery.desc.name)
 		return -ENOMEM;
 
-	xdata->psy_desc.properties = battery_props;
-	xdata->psy_desc.num_properties = ARRAY_SIZE(battery_props);
-	xdata->psy_desc.use_for_apm = 0;
-	xdata->psy_desc.get_property = xpadneo_get_battery_property;
+	xdata->battery.desc.properties = xpadneo_battery_props;
+	xdata->battery.desc.num_properties = ARRAY_SIZE(xpadneo_battery_props);
+	xdata->battery.desc.use_for_apm = 0;
+	xdata->battery.desc.get_property = xpadneo_get_psy_property;
+	xdata->battery.desc.type = POWER_SUPPLY_TYPE_BATTERY;
 
-	/*
-	 * This is a work-around to prevent undefined capacity indication
-	 * and make the desktops actually report the battery capacity. In
-	 * tests, changing the power supply type dynamically wasn't picked
-	 * up by the desktop notification.
-	 */
-	xdata->psy_desc.type = POWER_SUPPLY_TYPE_BATTERY;
-	xdata->battery_capacity = 50;
-
-	/*
-	 * register power supply via device manager (thus it will
-	 * auto-release on detach)
-	 */
-	xdata->battery = devm_power_supply_register(&hdev->dev, &xdata->psy_desc, &ps_config);
-	if (IS_ERR(xdata->battery)) {
-		ret = PTR_ERR(xdata->battery);
+	/* register battery via device manager */
+	xdata->battery.psy =
+	    devm_power_supply_register(&hdev->dev, &xdata->battery.desc, &ps_config);
+	if (IS_ERR(xdata->battery.psy)) {
+		ret = PTR_ERR(xdata->battery.psy);
 		hid_err(hdev, "battery registration failed\n");
 		goto err_free_name;
 	} else {
 		hid_info(hdev, "battery registered\n");
 	}
 
-	xdata->battery_report_id = field->report->id;
-	power_supply_powers(xdata->battery, &hdev->dev);
+	power_supply_powers(xdata->battery.psy, &xdata->hdev->dev);
+
 	return 0;
 
 err_free_name:
-	kfree(xdata->psy_desc.name);
-	xdata->psy_desc.name = NULL;
+	kfree(xdata->battery.desc.name);
+	xdata->battery.desc.name = NULL;
 
 	return ret;
+}
+
+static void xpadneo_update_psy(struct xpadneo_devdata *xdata, u8 value)
+{
+	int old_value = xdata->battery.flags;
+
+	if (!xdata->battery.initialized && XPADNEO_PSY_ONLINE(value)) {
+		xdata->battery.initialized = true;
+		xpadneo_setup_psy(xdata->hdev);
+	}
+
+	if (!xdata->battery.psy)
+		return;
+
+	xdata->battery.flags = value;
+	if (old_value != value) {
+		if (!XPADNEO_PSY_ONLINE(value))
+			hid_info(xdata->hdev, "shutting down\n");
+		power_supply_changed(xdata->battery.psy);
+	}
 }
 
 #define xpadneo_map_usage_clear(ev) hid_map_usage_clear(hi, usage, bit, max, (ev).event_type, (ev).input_code)
@@ -773,7 +771,11 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 		return MAP_IGNORE;
 
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
-		xpadneo_setup_battery(hdev, field);
+		struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+		xdata->battery.report_id = field->report->id;
+		hid_info(hdev, "battery detected\n");
+
 		return MAP_IGNORE;
 	}
 
@@ -840,56 +842,14 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 	return rdesc;
 }
 
-static void xpadneo_update_battery(struct xpadneo_devdata *xdata, u8 value)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(&xdata->battery_lock, flags);
-
-	xdata->battery_flags = value;
-	switch (XPADNEO_BATTERY_MODE(value)) {
-	case 0:
-		xdata->psy_desc.type = POWER_SUPPLY_TYPE_USB;
-		break;
-	case 1:
-	case 2:
-		xdata->psy_desc.type = POWER_SUPPLY_TYPE_BATTERY;
-		break;
-	default:
-		xdata->psy_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;
-		break;
-	}
-
-	if (XPADNEO_BATTERY_CHARGING(value) || XPADNEO_BATTERY_PRESENT(value)) {
-		switch (XPADNEO_BATTERY_CAPACITY_LEVEL(value)) {
-		case 0:
-			xdata->battery_capacity = 5;
-			break;
-		case 1:
-			xdata->battery_capacity = 33;
-			break;
-		case 2:
-			xdata->battery_capacity = 66;
-			break;
-		case 3:
-			xdata->battery_capacity = 99;
-			break;
-		}
-	}
-
-	spin_unlock_irqrestore(&xdata->battery_lock, flags);
-
-	power_supply_changed(xdata->battery);
-}
-
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	/* we are taking care of the battery report ourselves */
-	if (report->id == xdata->battery_report_id && reportsize == 2) {
-		xpadneo_update_battery(xdata, data[1]);
+	if (xdata->battery.report_id && report->id == xdata->battery.report_id && reportsize == 2) {
+		xpadneo_update_psy(xdata, data[1]);
 		return -1;
 	}
 
@@ -1027,8 +987,23 @@ combine_z_axes:
 
 static int xpadneo_init_hw(struct hid_device *hdev)
 {
-	int i;
+	int i, ret;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	xdata->battery.name =
+	    kasprintf(GFP_KERNEL, "%s [%s]", xdata->idev->name, xdata->idev->uniq);
+	if (!xdata->battery.name) {
+		ret = -ENOMEM;
+		goto err_free_name;
+	}
+
+	xdata->battery.name_pnc =
+	    kasprintf(GFP_KERNEL, "%s [%s] Play'n Charge Kit", xdata->idev->name,
+		      xdata->idev->uniq);
+	if (!xdata->battery.name_pnc) {
+		ret = -ENOMEM;
+		goto err_free_name;
+	}
 
 	xdata->quirks = 0;
 	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
@@ -1048,10 +1023,10 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		    && (param_quirks.args[i][offset] == ':')) {
 			char *quirks_arg = &param_quirks.args[i][offset + 1];
 			u16 quirks = 0;
-			int ret = kstrtou16(quirks_arg, 0, &quirks);
+			ret = kstrtou16(quirks_arg, 0, &quirks);
 			if (ret) {
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
-				return ret;
+				goto err_free_name;
 			} else {
 				hid_info(hdev, "quirks override: %s\n", xdata->idev->uniq);
 				xdata->quirks = quirks;
@@ -1065,6 +1040,15 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		hid_info(hdev, "controller quirks: 0x%04x\n", xdata->quirks);
 
 	return 0;
+
+err_free_name:
+	kfree(xdata->battery.name);
+	xdata->battery.name = NULL;
+
+	kfree(xdata->battery.name_pnc);
+	xdata->battery.name_pnc = NULL;
+
+	return ret;
 }
 
 static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id)
@@ -1122,6 +1106,12 @@ static void xpadneo_remove(struct hid_device *hdev)
 	hid_hw_close(hdev);
 
 	cancel_delayed_work_sync(&xdata->ff_worker);
+
+	kfree(xdata->battery.name);
+	xdata->battery.name = NULL;
+
+	kfree(xdata->battery.name_pnc);
+	xdata->battery.name_pnc = NULL;
 
 	xpadneo_release_device_id(xdata);
 	hid_hw_stop(hdev);
