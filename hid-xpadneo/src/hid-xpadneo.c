@@ -14,7 +14,8 @@
 #include <linux/power_supply.h>
 #include <linux/slab.h>
 #include <linux/time.h>
-#include "hid-ids.h"		/* VENDOR_ID... */
+
+#include "hid-ids.h"
 
 #ifndef hid_notice_once
 #define hid_notice_once(hid, fmt, ...)					\
