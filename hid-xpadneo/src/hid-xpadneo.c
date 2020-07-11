@@ -1103,6 +1103,8 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (ret)
 		hid_err(hdev, "could not initialize ff, continuing anyway\n");
 
+	hid_info(hdev, "%s connected\n", xdata->battery.name);
+
 	return 0;
 }
 
