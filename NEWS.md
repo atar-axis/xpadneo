@@ -42,6 +42,15 @@ received its end of life. If you're having problems with the new features,
 please report that and use the v0.7 branch until that specific bug is fixed.
 
 
+## Breaking Changes
+
+This version removed some module parameters with only partial replacement.
+One of those if `disable_ff` which can no longer be used. Instead, there's
+a new parameter `trigger_rumble_mode` which can disable trigger rumble
+only. The next update will include a new parameter to set rumble attenuation
+to 100% which translates to no rumble at all.
+
+
 ## Headlines:
 
   * dmks, installer: Move etc sources one level up
