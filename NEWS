@@ -1,3 +1,11 @@
+Changes since v0.7.5 up to v0.7.6
+
+Kai Krakow (3):
+      configure: Choose a single or default config file only
+      configure: Silence superfluous error messages
+      configure: Create missing directories and files on demand
+
+
 Changes since v0.7.4 up to v0.7.5
 
 Headlines:
