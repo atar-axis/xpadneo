@@ -31,21 +31,10 @@ do {									\
 } while (0)
 #endif
 
-/* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
-
-/* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
-
-/*
- * NOTE:
- * In general it is not guaranteed that a short variable is no more than
- * 16 bit long in C, it depends on the computer architecure. But as a kernel
- * module parameter it is, since <params.c> does use kstrtou16 for shorts
- * since version 3.14
- */
 
 static bool param_combined_z_axis;
 module_param_named(combined_z_axis, param_combined_z_axis, bool, 0444);
