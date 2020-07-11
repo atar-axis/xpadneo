@@ -14,6 +14,7 @@ about: Report a bug
 
 * [ ] I've read the docs and the bug reporting instructions
 * [ ] It does not work at all
+* [ ] It used to work in a previous version
 * [ ] It mostly works but sometimes it doesn't
 * [ ] I found a work-around
 * [ ] I probably didn't figure it all out but it's too early to give up
