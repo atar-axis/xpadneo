@@ -20,5 +20,3 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 v
 
 NOTE: For more information on configuring xpadneo visit https://atar-axis.github.io/xpadneo/
       Or the GitHub page: https://github.com/atar-axis/xpadneo
-
-

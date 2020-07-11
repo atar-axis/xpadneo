@@ -1,16 +1,25 @@
 ## Working with Secure Boot
 
-Secure Boot is a verification mechanism used when your computer loads your operating system. The boot  process of a Linux distribution usually goes like this: [UEFI](https://help.ubuntu.com/community/UEFI) -> [UEFI Shim loader](https://www.rodsbooks.com/efi-bootloaders/secureboot.html#shim) -> your distribution.
+Secure Boot is a verification mechanism used when your computer loads your operating system. The boot  process of a
+Linux distribution usually goes like this:
+[UEFI](https://help.ubuntu.com/community/UEFI) -> [UEFI Shim loader](https://www.rodsbooks.com/efi-bootloaders/secureboot.html#shim) -> your distribution.
 Now back to our two options: disabling Secure Boot or signing xpadneo with your own key.
+
 
 ### Disabling Secure Boot
 
-In order for Secure Boot to be active, it must be enabled both at the UEFI level and at the shim level. Which means you should be able to disable Secure Boot:
+In order for Secure Boot to be active, it must be enabled both at the UEFI level and at the shim level. Which means you
+should be able to disable Secure Boot:
 
-* either in your firmware options. You can usually access them by pressing F1, F2 or F12 justa after turning on the computer.
-* or in the shim. Run `sudo mokutil --disable-validation`, and choose a password. Reboot your computer. You will be asked if you really want to disable Secure Boot. Press `Yes` and enter the password. You can now safely forget the password.
+* either in your firmware options. You can usually access them by pressing F1, F2 or F12 justa after turning on the
+  computer.
+* or in the shim. Run `sudo mokutil --disable-validation`, and choose a password. Reboot your computer. You will be
+  asked if you really want to disable Secure Boot. Press `Yes` and enter the password. You can now safely forget the
+  password.
 
-After choosing either of these two options, Secure Boot should be disabled. You may therefore try to connect your Xbox One gamepad.
+After choosing either of these two options, Secure Boot should be disabled. You may therefore try to connect your Xbox
+One gamepad.
+
 
 ### Signing xpadneo with your own keys
 
@@ -20,7 +29,8 @@ If you do not wish to disable Secure Boot, you will need to get the Shim to trus
 * sign the module with your private key
 * get the shim to trust your public key
 
-Xpadneo will need to be re-signed every time it is updated, and every time the kernel is updated. To simplify this process, we provide scripts which will help you generate your keys and automatically sign xpadneo when needed.
+Xpadneo will need to be re-signed every time it is updated, and every time the kernel is updated. To simplify this
+process, we provide scripts which will help you generate your keys and automatically sign xpadneo when needed.
 
 ```console
 cd xpadneo
@@ -36,7 +46,9 @@ sudo cp -r misc/module-signing /root
 sudo /root/module-signing/one-time-setup
 
 # READ THIS BEFORE REBOOTING:
-# Just after rebooting, you will be prompted to press a key to enter the Shim. Press any key, then select the `Enroll key` option. You will get a chance to review the key that you are about to trust. To accept the key, select Yes then enter the password you chose previously.
+# Just after rebooting, you will be prompted to press a key to enter the Shim. Press any key, then select the
+# `Enroll key` option. You will get a chance to review the key that you are about to trust. To accept the key, select
+# Yes then enter the password you chose previously.
 # /!\ WARNING: The keyboard layout used to type the password will be QWERTY, no matter what keyboard you use.
 
 # Choose `Continue` to boot into your operating system.
@@ -58,5 +70,8 @@ Notes:
    sudo mokutil --delete "/root/module-signing/MOK.der"
    ```
 
-   Reboot, and follow the procedure.
-* using theses scripts, your private key will be kept unencrypted in the `/root` directory. This may pose a security risk. If you wish to password protect your private keys, use [these scripts, written by dop3j0e](https://gist.github.com/dop3j0e/2a9e2dddca982c4f679552fc1ebb18df). Be warned that you will be asked for your password every time the kernel gets an update.
+  Reboot, and follow the procedure.
+* using theses scripts, your private key will be kept unencrypted in the `/root` directory. This may pose a security
+  risk. If you wish to password protect your private keys, use
+  [these scripts, written by dop3j0e](https://gist.github.com/dop3j0e/2a9e2dddca982c4f679552fc1ebb18df). Be warned
+  that you will be asked for your password every time the kernel gets an update.
