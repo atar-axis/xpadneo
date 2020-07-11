@@ -5,6 +5,9 @@
  *
  * This driver was developed for a student project at fortiss GmbH in Munich.
  * Copyright (c) 2017 Florian Dollinger <dollinger.florian@gmx.de>
+ *
+ * Additional features and code redesign
+ * Copyright (c) 2020 Kai Krakow <kai@kaishome.de>
  */
 
 #include <linux/delay.h>
