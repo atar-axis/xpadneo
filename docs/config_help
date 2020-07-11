@@ -1,5 +1,5 @@
 configure.sh Usage:
-NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 vs. --trigger-rumble-damping=3
+NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 vs. --rumble-attenuation=50
 
 -h, --help
 	Display this help screen.
@@ -10,8 +10,8 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 v
 -f, --disable-ff
 	Disable the force feedback (Rumble).  [0 (enable all), 1 (disable main only), 2 (disable triggers only), 3 (disable all)]
 
--r, --trigger-rumble-damping
-	Damp the strength of the trigger force feedback. [1 (none) to 256 (max)]
+-r, --rumble-attenuation
+	Attenuate the strength of the trigger force feedback. [0 (none, full rumble) to 100 (max, no rumble)]
 
 -z, --combined-z-axis
 	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in

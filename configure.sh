@@ -15,7 +15,7 @@ CONF_FILE=$(grep -sl '^options hid_xpadneo' /etc/modprobe.d/*.conf | tail -1)
 : "${CONF_FILE:="/etc/modprobe.d/99-xpadneo-options.conf"}"
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,disable-ff:,trigger-rumble-damping: -- "$@")
+OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,disable-ff:,rumble-attenuation: -- "$@")
 
 
 
@@ -42,10 +42,10 @@ function check_param {
             exit 1
         fi
         ;;
-    "trigger_rumble_damping")
-        if [[ "$value" -gt 256 ]] || [[ "$value" -lt 1 ]];
+    "rumble_attenuation")
+        if [[ "$value" -gt 100 ]] || [[ "$value" -lt 0 ]];
         then
-            echo "$NAME: $key: Invalid value! Value must be between 1 and 256."
+            echo "$NAME: $key: Invalid value! Value must be between 0 and 100."
             exit 1
         fi
         ;;
@@ -110,7 +110,7 @@ function parse_args {
     # If line doesn't exist echo all of the defaults.
     mkdir -p "$(dirname "${CONF_FILE}")"
     touch "${CONF_FILE}"
-    echo "options hid_xpadneo disable_ff=0 trigger_rumble_damping=1 trigger_rumble_mode=0 combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo disable_ff=0 rumble_attenuation=0 trigger_rumble_mode=0 combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
@@ -141,8 +141,8 @@ function parse_args {
         shift 2
         ;;
 
-      -r | --trigger-rumble-damping)
-        key='trigger_rumble_damping'
+      -r | --rumble-attenuation)
+        key='rumble_attenuation'
         value="${2#*=}"
         set_param "$key" "$value"
         shift 2
