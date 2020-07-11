@@ -59,9 +59,11 @@ module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_mode,
 		 "(u8) Trigger rumble mode. 0: pressure, 1: directional, 2: disable.");
 
-static u8 param_trigger_rumble_damping = 0;
-module_param_named(trigger_rumble_damping, param_trigger_rumble_damping, byte, 0644);
-MODULE_PARM_DESC(trigger_rumble_damping, "(u8) Damp the trigger: 1 (none) to 2^8+ (max).");
+static u8 param_rumble_attenuation[2];
+module_param_array_named(rumble_attenuation, param_rumble_attenuation, byte, NULL, 0644);
+MODULE_PARM_DESC(rumble_attenuation,
+		 "(u8) Attenuate the rumble strength: all[,triggers] "
+		 "0 (none, full rumble) to 100 (max, no rumble).");
 
 static bool param_ff_connect_notify = 1;
 module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
@@ -369,8 +371,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 
 	unsigned long flags, ff_run_at, ff_throttle_until;
 	long delay_work;
-	int fraction_TL, fraction_TR, fraction_MAIN;
-	s32 weak, strong, direction, max_damped, max_unscaled;
+	int fraction_TL, fraction_TR, fraction_MAIN, percent_TRIGGERS, percent_MAIN;
+	s32 weak, strong, direction, max_main;
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -382,6 +384,14 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	weak = effect->u.rumble.weak_magnitude;
 	strong = effect->u.rumble.strong_magnitude;
 
+	/* calculate the rumble attenuation */
+	percent_MAIN = 100 - param_rumble_attenuation[0];
+	percent_MAIN = clamp(percent_MAIN, 0, 100);
+
+	percent_TRIGGERS = 100 - param_rumble_attenuation[1];
+	percent_TRIGGERS = clamp(percent_TRIGGERS, 0, 100);
+	percent_TRIGGERS = percent_TRIGGERS * percent_MAIN / 100;
+
 	switch (param_trigger_rumble_mode) {
 	case PARAM_TRIGGER_RUMBLE_DIRECTIONAL:
 		/*
@@ -392,10 +402,10 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		direction = effect->direction;
 		if (direction <= DIRECTION_UP) {
 			/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
-			fraction_MAIN = ((DIRECTION_UP - direction) * 100) / DIRECTION_UP;
+			fraction_MAIN = ((DIRECTION_UP - direction) * percent_MAIN) / DIRECTION_UP;
 		} else {
 			/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
-			fraction_MAIN = ((direction - DIRECTION_UP) * 100) / DIRECTION_UP;
+			fraction_MAIN = ((direction - DIRECTION_UP) * percent_MAIN) / DIRECTION_UP;
 		}
 
 		/*
@@ -421,29 +431,30 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		 */
 		if (direction <= DIRECTION_LEFT) {
 			/* scale the left trigger between 0x0000..0x4000 (0%..100%) */
-			fraction_TL = (direction * 100) / QUARTER;
+			fraction_TL = (direction * percent_TRIGGERS) / QUARTER;
 			fraction_TR = 0;
 		} else if (direction <= DIRECTION_UP) {
 			/* scale the right trigger between 0x4000..0x8000 (0%..100%) */
 			fraction_TL = 100;
-			fraction_TR = ((direction - DIRECTION_LEFT) * 100) / QUARTER;
+			fraction_TR = ((direction - DIRECTION_LEFT) * percent_TRIGGERS) / QUARTER;
 		} else if (direction <= DIRECTION_RIGHT) {
 			/* scale the right trigger between 0x8000..0xC000 (100%..0%) */
 			fraction_TL = 100;
-			fraction_TR = ((DIRECTION_RIGHT - direction) * 100) / QUARTER;
+			fraction_TR = ((DIRECTION_RIGHT - direction) * percent_TRIGGERS) / QUARTER;
 		} else {
 			/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
-			fraction_TL = 100 - ((direction - DIRECTION_RIGHT) * 100) / QUARTER;
+			fraction_TL =
+			    100 - ((direction - DIRECTION_RIGHT) * percent_TRIGGERS) / QUARTER;
 			fraction_TR = 0;
 		}
 		break;
 	case PARAM_TRIGGER_RUMBLE_PRESSURE:
-		fraction_MAIN = 100;
-		fraction_TL = max(0, xdata->last_abs_z * 100 / 1023);
-		fraction_TR = max(0, xdata->last_abs_rz * 100 / 1023);
+		fraction_MAIN = percent_MAIN;
+		fraction_TL = max(0, xdata->last_abs_z * percent_TRIGGERS / 1023);
+		fraction_TR = max(0, xdata->last_abs_rz * percent_TRIGGERS / 1023);
 		break;
 	default:
-		fraction_MAIN = 100;
+		fraction_MAIN = percent_MAIN;
 		fraction_TL = 0;
 		fraction_TR = 0;
 		break;
@@ -453,16 +464,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	 * we want to keep the rumbling at the triggers at the maximum
 	 * of the weak and strong main rumble
 	 */
-	max_unscaled = max(weak, strong);
-
-	/*
-	 * the user can change the damping at runtime, hence check the
-	 * range
-	 */
-	if (unlikely(param_trigger_rumble_damping > 0))
-		max_damped = max_unscaled / param_trigger_rumble_damping;
-	else
-		max_damped = max_unscaled;
+	max_main = max(weak, strong);
 
 	spin_lock_irqsave(&xdata->ff_lock, flags);
 
@@ -471,8 +473,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_left = (u8)((max_damped * fraction_TL) / U16_MAX);
-	xdata->ff.magnitude_right = (u8)((max_damped * fraction_TR) / U16_MAX);
+	xdata->ff.magnitude_left = (u8)((max_main * fraction_TL) / U16_MAX);
+	xdata->ff.magnitude_right = (u8)((max_main * fraction_TR) / U16_MAX);
 
 	/* synchronize: is our worker still scheduled? */
 	if (xdata->ff_scheduled) {

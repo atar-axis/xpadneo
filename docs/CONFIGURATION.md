@@ -9,9 +9,15 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * `0` rumbles triggers by pressure and current rumble effect
   * `1` rumbles triggers by force direction (non-conformant)
   * `2` disables trigger rumble
-* `trigger_rumble_damping` (default `4`)
-  * Damp the strength of the trigger force feedback
-  * `1` (none) to `256` (max)
+* `rumble_attenuation` (default `0,0`)
+  * Attenuation the strength of the force feedback
+  * `0` (none, full rumble) to `100` (max, no rumble)
+  * If one or two values are given, the first value is the overall attenuation
+  * If two values are given, the second value applies an extra attenuation to the triggers
+  * Example 1: `0,100` turns trigger rumble off, `100,0` or `100` turn all rumble off
+  * Example 2: `50,50` makes 50% rumble overall, and 25% for the triggers (50% of 50% = 25%)
+  * Example 3: `50` makes 50% rumble overall (main and triggers)
+  * Trigger-only rumble is not possible
 * `combined_z_axis` (default `n`)
   * Combine the triggers (`ABS_Z` and `ABS_RZ`) to form a single axis `ABS_Z` which is used e.g. in flight simulators
   * The left and right trigger will work against each other.
