@@ -1052,7 +1052,6 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		goto err_free_name;
 	}
 
-	xdata->quirks = 0;
 	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
 		const struct quirk *q = &xpadneo_quirks[i];
 
