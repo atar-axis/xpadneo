@@ -2,7 +2,8 @@
 
 Please report your Dongles and how they work [here](https://github.com/atar-axis/xpadneo/issues/93)
 
-**Cambridge Silicon Radio**
+
+### Cambridge Silicon Radio
 
 * [Panda Bluetooth 4.0 USB Nano Adapter](https://www.amazon.com/gp/product/B00BCU4TZE/)
   * Chipset: CSR ???
@@ -40,7 +41,8 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
     * Reliable once connected
   * Reported by @NoXPhasma [here](https://github.com/atar-axis/xpadneo/issues/91#issuecomment-484815264)
 
-**Broadcom**
+
+### Broadcom
 
 * [Plugable USB Bluetooth 4.0 Low Energy Micro Adapter](https://www.amazon.com/Plugable-Bluetooth-Adapter-Raspberry-Compatible/dp/B009ZIILLI/)
   * Chipset: BCM20702A0
@@ -57,7 +59,8 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
     * Sometimes laggy while Gameplay
   * Reported by Zowayix [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-487280791)
 
-**Qualcomm**
+
+### Qualcomm
 
 * Unspecified model (https://github.com/atar-axis/xpadneo/issues/180):
   * `btmon` logs showed very low input report rate and high input lag (300ms+)

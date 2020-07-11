@@ -26,7 +26,8 @@ files in `/sys/module/hid_xpadneo/parameters`:
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
 
-**Example**
+
+### Example
 
 To disable trigger rumbling temporarily, run
 `echo 2 | sudo tee /sys/module/hid_xpadneo/parameters/trigger_rumble_mode`
