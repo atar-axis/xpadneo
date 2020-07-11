@@ -14,6 +14,16 @@ This is the first and yet only driver for the Xbox One Wireless Gamepad (which i
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless Adapter) and a pack of mouthwatering guarana cacao :coffee:
 
 
+## Other Projects
+
+* [xow](https://github.com/medusalix/xow) is a driver for the Xbox One S controllers, too, and supports the native
+  dongles packaged with the controller. Kudos to @meduslaix for working together on finding some work aorunds for
+  controller firmware bugs.
+* [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
+
+These other projects may not support some of the advanced features of xpadneo.
+
+
 ## Advantages of this driver
 
 * Supports Bluetooth
