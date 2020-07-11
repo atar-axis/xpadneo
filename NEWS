@@ -1,3 +1,29 @@
+Changes since v0.7.4 up to v0.7.5
+
+Headlines:
+
+  * dmks, installer: Move etc sources one level up
+  * hid-xpadneo, compat: Fix compilation on kernel 4.19
+
+Kai Krakow (17):
+      installer: Get latest version from the releases page
+      installer: Try to fetch the current version from git tags
+      installer: Compare latest version correctly
+      installer: Print some version information in update instructions
+      hid-xpadneo, compat: Fix compilation on kernel 4.19
+      installer: Fix non-git version lookup
+      dkms, udev: Eliminate bash scripting from udev rules
+      dmks, installer: Move etc sources one level up
+      hid-xpadneo, events: Do not send Xbox logo event for turn-off
+      dkms, installer: Fix early exit if `git-rev-parse` does not work
+      dkms, installer: Fix version parsing
+      dkms: Use cmdline format which requires less escaping
+      installer: Trim whitespace from online version numbers
+      dkms, update: Suggest a download URL actually matching the version
+      dkms, uninstall: Fix early exit if `modprobe -r` does not work
+      dkms, install: Do not apply inline version patching
+
+
 Changes since v0.7.3 up to v0.7.4
 
 Fixes a potential race between kernel and user space while accessing
