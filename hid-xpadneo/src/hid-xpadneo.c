@@ -1018,7 +1018,6 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		goto err_free_name;
 	}
 
-	xdata->quirks = 0;
 	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
 		const struct quirk *q = &xpadneo_quirks[i];
 
@@ -1090,6 +1089,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 		return ret;
 	}
 
+	xdata->quirks = id->driver_data;
 	ret = xpadneo_init_hw(hdev);
 	if (ret) {
 		hid_err(hdev, "hw init failed: %d\n", ret);
