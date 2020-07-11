@@ -33,7 +33,7 @@ function display_version {
 function check_param {
     key=$1
     value=$2
-    
+
     case $key in
     "disable_ff")
         if [[ "$value" -gt 3 ]] || [[ "$value" -lt 0 ]];
@@ -78,7 +78,7 @@ function set_param {
 
   key=$1
   value=$2
-  
+
   # check for valid parameters first
   check_param "$key" "$value"
 
@@ -92,7 +92,7 @@ function set_param {
       exit 1
     fi
   fi
-  
+
   # edit modprobe config file
   if ! set_modprobe_param "$key" "$value";
   then
@@ -100,7 +100,7 @@ function set_param {
     exit 1
   fi
   echo "$NAME: $key: parameter written to $CONF_FILE"
-  
+
 }
 
 ## Argument Parsing ##
