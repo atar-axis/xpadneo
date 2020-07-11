@@ -33,21 +33,10 @@ do {									\
 
 #define DEBUG
 
-/* Module Information */
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(DRV_VER);
-
-/* Module Parameters, located at /sys/module/hid_xpadneo/parameters */
-
-/*
- * NOTE:
- * In general it is not guaranteed that a short variable is no more than
- * 16 bit long in C, it depends on the computer architecure. But as a kernel
- * module parameter it is, since <params.c> does use kstrtou16 for shorts
- * since version 3.14
- */
 
 #ifdef DEBUG
 static u8 param_debug_level;
