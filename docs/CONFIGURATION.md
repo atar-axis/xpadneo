@@ -24,7 +24,8 @@ files in `/sys/module/hid_xpadneo/parameters`:
     * `2` if your controller does not support trigger rumble (most clones in compat-mode)
     * `4` if your controller does not support individual motor programming (i.e., 8BitDo controllers)
 
-Some settings may need to be changed at loading time of the module, take a look at the following example to see how that works:
+Some settings may need to be changed at loading time of the module, take a look at the following example to see how
+that works:
 
 
 ### Example
