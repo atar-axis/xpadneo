@@ -13,7 +13,9 @@ This is the first and yet only driver for the Xbox One Wireless Gamepad (which i
 
 Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless Adapter) and a pack of mouthwatering guarana cacao :coffee:
 
-**Advantages of this driver**
+
+## Advantages of this driver
+
 * Supports Bluetooth
 * Supports all Force Feedback/Rumble effects through Linux `ff-memless` effect emulation
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ)
