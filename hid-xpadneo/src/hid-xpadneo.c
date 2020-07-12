@@ -79,6 +79,7 @@ MODULE_PARM_DESC(gamepad_compliance,
 #define XPADNEO_QUIRK_NO_PULSE          BIT(0)
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE BIT(1)
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     BIT(2)
+#define XPADNEO_QUIRK_LINUX_BUTTONS     BIT(4)
 
 static struct {
 	char *args[17];
@@ -90,7 +91,8 @@ MODULE_PARM_DESC(quirks,
 		 ", MAC format = 11:22:33:44:55:66"
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
 		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
-		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK));
+		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
+		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -833,7 +835,9 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
+			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
+			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
 			rdesc[145] = 0x0B;	/* 15 buttons -> 11 buttons */
 			rdesc[153] = 0x0B;	/* 15 bits -> 11 bits buttons */
 			rdesc[163] = 0x05;	/* 1 bit -> 5 bits constants */
@@ -855,7 +859,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	}
 
 	/* correct button mapping of Xbox controllers in Linux mode */
-	if (report->id == 1 && (reportsize == 17 || reportsize == 39 || reportsize == 55)) {
+	if ((xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) && report->id == 1 && reportsize >= 17) {
 		u16 bits = 0;
 
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
@@ -1076,6 +1080,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 		return -ENOMEM;
 
 	xdata->id = ida_simple_get(&xpadneo_device_id_allocator, 0, 0, GFP_KERNEL);
+	xdata->quirks = id->driver_data;
 
 	xdata->hdev = hdev;
 	hid_set_drvdata(hdev, xdata);
