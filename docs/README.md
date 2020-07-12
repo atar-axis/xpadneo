@@ -60,6 +60,17 @@ While basic support for the Xbox Elite Series 2 Wireless controller is present, 
 - The four paddles at the bottom are currently not supported.
 
 
+### 8BitDo controllers
+
+This driver respects the Nintendo layout of those controllers and exposes them correctly as button A, B, X, and Y
+as labelled on the device. This is swapped compared to the original Xbox controller layout. You can override that
+behavior with a quirk flag (by removing the Nintendo layout bit).
+
+**Breaking change:** Users of previous versions of the driver may want to remove their custom SDL mappings. Full
+support has been added for these controllers and broken mapping of previously versions no longer needs to be
+applied. See also: [SDL]((https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
+
+
 ## Getting started
 
 ### Prerequisites
