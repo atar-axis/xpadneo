@@ -1,3 +1,29 @@
+# Changes since v0.8 up to v0.8.1
+
+The previous version removed the `disable_ff` module parameter. There is
+now a full replacement to disable rumble completely by setting the rumble
+attenuation to 100%. Use the module parameter `rumble_attenuation=100` to
+completely disable rumble. Use `rumble_attenuation=0,100` or
+`trigger_rumble_mode=2` to only disable the triggers. In the latter case
+you don't need to set both.
+
+The initial rumble notification won't be disabled by this. To also disable
+the notification, use `ff_connect_notify=0`.
+
+
+## Headlines:
+
+  * hid-xpadneo, rumble: Migrate damping to generic attenuation parameter
+
+```
+Kai Krakow (4):
+      docs, news: Document breaking changes.
+      hid-xpadneo, rumble: Migrate damping to generic attenuation parameter
+      configure, cleanup: Remove the tedious whitespace
+      hid-xpadneo: Update copyright
+```
+
+
 # Changes since v0.7 up to v0.8
 
 *Quote of the day:*
