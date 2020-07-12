@@ -13,10 +13,6 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 v
 -r, --rumble-attenuation
 	Attenuate the strength of the trigger force feedback. [0 (none, full rumble) to 100 (max, no rumble)]
 
--z, --combined-z-axis
-	Combine the triggers (ABS_Z and ABS_RZ) to form a single axis ABS_Z which is used e.g. in
-	flight simulators.  The left and right trigger will work against each other.  [y, n]
-
 
 NOTE: For more information on configuring xpadneo visit https://atar-axis.github.io/xpadneo/
       Or the GitHub page: https://github.com/atar-axis/xpadneo

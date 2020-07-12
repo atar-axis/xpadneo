@@ -21,9 +21,6 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Example 2: `50,50` makes 50% rumble overall, and 25% for the triggers (50% of 50% = 25%)
   * Example 3: `50` makes 50% rumble overall (main and triggers)
   * Trigger-only rumble is not possible
-* `combined_z_axis` (default `n`)
-  * Combine the triggers (`ABS_Z` and `ABS_RZ`) to form a single axis `ABS_Z` which is used e.g. in flight simulators
-  * The left and right trigger will work against each other.
 * `quirks` (default empty)
   * Let's you adjust the quirk mode of your controller
   * Comma separated list of `address:flags` pairs
