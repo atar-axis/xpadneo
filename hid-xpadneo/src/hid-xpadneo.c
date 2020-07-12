@@ -80,6 +80,7 @@ MODULE_PARM_DESC(gamepad_compliance,
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE BIT(1)
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     BIT(2)
 #define XPADNEO_QUIRK_LINUX_BUTTONS     BIT(4)
+#define XPADNEO_QUIRK_NINTENDO          BIT(5)
 
 static struct {
 	char *args[17];
@@ -92,7 +93,8 @@ MODULE_PARM_DESC(quirks,
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
 		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
 		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
-		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS));
+		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
+		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -191,7 +193,7 @@ struct quirk {
 static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
-			 XPADNEO_QUIRK_NO_MOTOR_MASK),
+			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
 };
 
 struct usage_map {
@@ -847,6 +849,8 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 	return rdesc;
 }
 
+#define SWAP_BITS(v,b1,b2) \
+	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
@@ -873,6 +877,12 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);
 		data[16] = 0;
+	}
+
+	/* swap button A with B and X with Y for Nintendo style controllers */
+	if ((xdata->quirks & XPADNEO_QUIRK_NINTENDO) && report->id == 1 && reportsize >= 15) {
+		data[14] = SWAP_BITS(data[14], 0, 1);
+		data[14] = SWAP_BITS(data[14], 2, 3);
 	}
 
 	return 0;
