@@ -166,6 +166,7 @@ struct xpadneo_devdata {
 	} battery;
 
 	/* axis states */
+	u8 count_abs_z_rz;
 	s32 last_abs_z;
 	s32 last_abs_rz;
 
@@ -869,6 +870,9 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
+	/* reset the count at the beginning of the frame */
+	xdata->count_abs_z_rz = 0;
+
 	/* we are taking care of the battery report ourselves */
 	if (xdata->battery.report_id && report->id == xdata->battery.report_id && reportsize == 2) {
 		xpadneo_update_psy(xdata, data[1]);
@@ -963,17 +967,11 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	input_set_abs_params(xdata->idev, ABS_RX, abs_min, abs_max, 32, deadzone);
 	input_set_abs_params(xdata->idev, ABS_RY, abs_min, abs_max, 32, deadzone);
 
-	if (param_combined_z_axis) {
-		/*
-		 * We also need to translate the incoming events to fit within
-		 * the new range, we will do that in the xpadneo_event() hook.
-		 */
-		input_set_abs_params(xdata->idev, ABS_Z, -1023, 1023, 4, 0);
-		__clear_bit(ABS_RZ, xdata->idev->absbit);
-	} else {
-		input_set_abs_params(xdata->idev, ABS_Z, 0, 1023, 4, 0);
-		input_set_abs_params(xdata->idev, ABS_RZ, 0, 1023, 4, 0);
-	}
+	input_set_abs_params(xdata->idev, ABS_Z, 0, 1023, 4, 0);
+	input_set_abs_params(xdata->idev, ABS_RZ, 0, 1023, 4, 0);
+
+	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
+	input_set_abs_params(xdata->idev, ABS_MISC, -1023, 1023, 3, 63);
 
 	return 0;
 }
@@ -997,20 +995,12 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				goto stop_processing;
 			}
 			break;
-		/*
-		 * We need to combine ABS_Z and ABS_RZ if param_combined_z_axis
-		 * is set, so remember the current value
-		 */
 		case ABS_Z:
 			xdata->last_abs_z = value;
-			if (param_combined_z_axis)
-				goto combine_z_axes;
-			break;
+			goto combine_z_axes;
 		case ABS_RZ:
 			xdata->last_abs_rz = value;
-			if (param_combined_z_axis)
-				goto combine_z_axes;
-			break;
+			goto combine_z_axes;
 		}
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
 		/*
@@ -1063,8 +1053,11 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	return 0;
 
 combine_z_axes:
-	input_report_abs(idev, ABS_Z, xdata->last_abs_rz - xdata->last_abs_z);
-	input_sync(idev);
+	if (++xdata->count_abs_z_rz == 2) {
+		xdata->count_abs_z_rz = 0;
+		input_report_abs(idev, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
+	}
+	return 0;
 
 stop_processing:
 	return 1;
