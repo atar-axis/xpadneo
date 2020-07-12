@@ -85,7 +85,7 @@ static struct {
 	unsigned int nargs;
 } param_quirks;
 module_param_array_named(quirks, param_quirks.args, charp, &param_quirks.nargs, 0644);
-MODULE_PARM_DESC(quriks,
+MODULE_PARM_DESC(quirks,
 		 "(string) Override device quirks, specify as: \"MAC1:quirks1[,...16]\""
 		 ", MAC format = 11:22:33:44:55:66"
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
