@@ -146,7 +146,7 @@ struct xpadneo_devdata {
 	struct input_dev *idev;
 
 	/* quirk flags */
-	u16 quirks;
+	u32 quirks;
 
 	/* profile switching */
 	bool xbox_button_down, profile_switched;
@@ -181,7 +181,7 @@ struct quirk {
 	char *name_match;
 	char *oui_match;
 	u16 name_len;
-	u16 flags;
+	u32 flags;
 };
 
 #define DEVICE_NAME_QUIRK(n, f) \
@@ -1082,8 +1082,8 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		if ((strncasecmp(xdata->idev->uniq, param_quirks.args[i], offset) == 0)
 		    && (param_quirks.args[i][offset] == ':')) {
 			char *quirks_arg = &param_quirks.args[i][offset + 1];
-			u16 quirks = 0;
-			ret = kstrtou16(quirks_arg, 0, &quirks);
+			u32 quirks = 0;
+			ret = kstrtou32(quirks_arg, 0, &quirks);
 			if (ret) {
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
 				goto err_free_name;
@@ -1097,7 +1097,7 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	kernel_param_unlock(THIS_MODULE);
 
 	if (xdata->quirks > 0)
-		hid_info(hdev, "controller quirks: 0x%04x\n", xdata->quirks);
+		hid_info(hdev, "controller quirks: 0x%08x\n", xdata->quirks);
 
 	return 0;
 
