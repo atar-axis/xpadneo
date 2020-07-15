@@ -68,7 +68,7 @@ behavior with a quirk flag (by removing the Nintendo layout bit).
 
 **Breaking change:** Users of previous versions of the driver may want to remove their custom SDL mappings. Full
 support has been added for these controllers and broken mapping of previously versions no longer needs to be
-applied. See also: [SDL]((https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
+applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
 
 
 ## Getting started
