@@ -82,12 +82,12 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
-#define XPADNEO_QUIRK_NO_PULSE          1
-#define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
-#define XPADNEO_QUIRK_NO_MOTOR_MASK     4
-#define XPADNEO_QUIRK_USE_HW_PROFILES   8
-#define XPADNEO_QUIRK_LINUX_BUTTONS     16
-#define XPADNEO_QUIRK_NINTENDO          32
+#define XPADNEO_QUIRK_NO_PULSE          BIT(0)
+#define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE BIT(1)
+#define XPADNEO_QUIRK_NO_MOTOR_MASK     BIT(2)
+#define XPADNEO_QUIRK_USE_HW_PROFILES   BIT(3)
+#define XPADNEO_QUIRK_LINUX_BUTTONS     BIT(4)
+#define XPADNEO_QUIRK_NINTENDO          BIT(5)
 
 static struct {
 	char *args[17];
