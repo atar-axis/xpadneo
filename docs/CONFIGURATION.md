@@ -5,6 +5,9 @@
 The driver can be reconfigured at runtime by accessing the following sysfs
 files in `/sys/module/hid_xpadneo/parameters`:
 
+* `disable_deadzones` (default `0`)
+  * `0` enables standard behavior to be compatible with `joydev` expectations
+  * `1` enables raw passthrough of axis values without dead zones for high-precision use with modern Wine/Proton games
 * `trigger_rumble_mode` (default `0`)
   * `0` rumbles triggers by pressure and current rumble effect
   * `1` rumbles triggers by force direction (non-conformant)

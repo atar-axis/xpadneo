@@ -41,6 +41,7 @@ These other projects may not support some of the advanced features of xpadneo.
 * Easy Installation
 * Agile Support and Development
 * Supports customization through profiles
+* Optional high-precision mode for Wine/Proton users
 
 
 ### Xbox One S Wireless controller
