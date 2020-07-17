@@ -891,6 +891,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *hi)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	int deadzone = 3072, abs_min = 0, abs_max = 65535;
 
 	xdata->idev = hi->input;
 
@@ -930,19 +931,25 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 
 	if (param_gamepad_compliance) {
 		hid_info(hdev, "enabling compliance with Linux Gamepad Specification\n");
-		input_set_abs_params(xdata->idev, ABS_X, -32768, 32767, 255, 4095);
-		input_set_abs_params(xdata->idev, ABS_Y, -32768, 32767, 255, 4095);
-		input_set_abs_params(xdata->idev, ABS_RX, -32768, 32767, 255, 4095);
-		input_set_abs_params(xdata->idev, ABS_RY, -32768, 32767, 255, 4095);
+		abs_min = -32768;
+		abs_max = 32767;
 	}
+
+	input_set_abs_params(xdata->idev, ABS_X, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->idev, ABS_Y, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->idev, ABS_RX, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->idev, ABS_RY, abs_min, abs_max, 32, deadzone);
 
 	if (param_combined_z_axis) {
 		/*
 		 * We also need to translate the incoming events to fit within
 		 * the new range, we will do that in the xpadneo_event() hook.
 		 */
-		input_set_abs_params(xdata->idev, ABS_Z, -1023, 1023, 3, 63);
+		input_set_abs_params(xdata->idev, ABS_Z, -1023, 1023, 4, 0);
 		__clear_bit(ABS_RZ, xdata->idev->absbit);
+	} else {
+		input_set_abs_params(xdata->idev, ABS_Z, 0, 1023, 4, 0);
+		input_set_abs_params(xdata->idev, ABS_RZ, 0, 1023, 4, 0);
 	}
 
 	return 0;
