@@ -49,6 +49,7 @@ environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
 * Agile Support and Development
+* Optional high-precision mode for Wine/Proton users
 
 
 ### Xbox Elite Series 2 Wireless controller

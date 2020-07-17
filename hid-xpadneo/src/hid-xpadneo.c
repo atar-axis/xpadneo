@@ -76,6 +76,12 @@ MODULE_PARM_DESC(gamepad_compliance,
 		 "(bool) Adhere to Linux Gamepad Specification by using signed axis values. "
 		 "1: enable, 0: disable.");
 
+static bool param_disable_deadzones = 0;
+module_param_named(disable_deadzones, param_disable_deadzones, bool, 0444);
+MODULE_PARM_DESC(disable_deadzones,
+		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
+		 "0: disable, 1: enable.");
+
 #define XPADNEO_QUIRK_NO_PULSE          BIT(0)
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE BIT(1)
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     BIT(2)
@@ -927,6 +933,11 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 			 "(changed PID from 0x%04X to 0x02E0)\n", (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
+	}
+
+	if (param_disable_deadzones) {
+		hid_warn(hdev, "disabling dead zones\n");
+		deadzone = 0;
 	}
 
 	if (param_gamepad_compliance) {

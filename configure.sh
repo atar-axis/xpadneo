@@ -110,7 +110,7 @@ function parse_args {
     # If line doesn't exist echo all of the defaults.
     mkdir -p "$(dirname "${CONF_FILE}")"
     touch "${CONF_FILE}"
-    echo "options hid_xpadneo disable_ff=0 rumble_attenuation=0 trigger_rumble_mode=0 combined_z_axis=n" >> "$CONF_FILE"
+    echo "options hid_xpadneo disable_ff=0 disable_deadzones=0 rumble_attenuation=0 trigger_rumble_mode=0 combined_z_axis=n" >> "$CONF_FILE"
   fi
 
   if [[ $1 == "" ]];
