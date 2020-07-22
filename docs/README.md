@@ -24,6 +24,15 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 These other projects may not support some of the advanced features of xpadneo.
 
 
+## SDL2 Breaking Changes
+
+As of SDL 2.0.12, SDL introduced a new HIDAPI which can read HID devices in raw mode, bypassing the drivers. Due to
+the way SDL works, and because xpadneo exposes hidraw devices as user-readable, SDL may see wrong button mappings
+because it may make wrong assumptions about the protocol mode of Xbox and compatible controllers. If you see wrong
+button mappings / missing buttons in SDL applications, you may need to turn off this behavior by setting an
+environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
+
+
 ## Advantages of this driver
 
 * Supports Bluetooth
