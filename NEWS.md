@@ -1,3 +1,56 @@
+# Changes since v0.8.1 up to v0.8.2
+
+This release documents a few issues with latest SDL releases, works
+around a libinput bug (which has been fixed upstream and should arrive
+in your distribution at some time).
+
+This release also features more precise handling of the thumb sticks
+and an optional high-precision mode which can be activated via a module
+parameter and is intended only for usage primarily in Proton games.
+Efforts are currently being done to migrate this fix to SDL and Proton
+itself so in a future release, you may longer need to use this mode
+explicitly.
+
+8BitDo controllers which are not 100% compatible with Xbox controllers,
+and Xbox controllers that show up in Windows mode despite being
+connected to Linux are handled properly now. This is actually a
+situation that may occur in the controller firmware when swapped
+between Windows and Linux regularly and appears to be a bug in the
+firmware.
+
+
+## Breaking Changes
+
+This release fixes button mappings for 8BitDo controllers to actually
+match their names on the controller instead of matching positions with
+original Xbox controllers. The X,Y and A,B buttons will be swapped
+compared to previous versions.
+
+
+## Headlines:
+
+  * hid-xpadneo, quirks: We need to carry a quirk for Linux button mappings
+  * xpadneo, deadzones: Implement a high-precision mode without dead zones
+  * xpadneo, udev: Work around libinput using the controller as touchpad
+
+```
+Kai Krakow (13):
+      docs: Document another storage location for SDL gamepad mappings
+      docs: Document SDL HIDAPI breakage
+      hid-xpadneo, quirks: Convert to proper bit values
+      xpadneo, cleanup: Fix missing newline at end of file
+      hid-xpadneo, cleanup: Remove some more comments
+      hid-xpadneo: Tell the user which controller connected
+      hid-xpadneo, quirks: Fix a typo
+      hid-xpadneo, quirks: Expand flags to 32 bit
+      hid-xpadneo, quirks: We need to carry a quirk for Linux button mappings
+      xpadneo, quirks: Add Nintendo mappings quirk for 8BitDo controllers
+      xpadneo, deadzones: Use smaller dead zone and fuzz for precision
+      xpadneo, deadzones: Implement a high-precision mode without dead zones
+      xpadneo, udev: Work around libinput using the controller as touchpad
+```
+
+
 # Changes since v0.8 up to v0.8.1
 
 The previous version removed the `disable_ff` module parameter. There is
