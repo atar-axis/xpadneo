@@ -283,6 +283,8 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_IGN(0xC00B9),	/* KEY_SHUFFLE button */
 };
 
+static struct workqueue_struct *xpadneo_rumble_wq;
+
 static void xpadneo_ff_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata =
@@ -509,7 +511,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	delay_work = clamp(delay_work, 0L, (long)HZ);
 
 	/* schedule writing a rumble report to the controller */
-	if (schedule_delayed_work(&xdata->ff_worker, delay_work))
+	if (queue_delayed_work(xpadneo_rumble_wq, &xdata->ff_worker, delay_work))
 		xdata->ff_scheduled = true;
 	else
 		hid_err(hdev, "lost rumble packet\n");
@@ -1238,7 +1240,16 @@ static struct hid_driver xpadneo_driver = {
 static int __init xpadneo_init(void)
 {
 	dbg_hid("xpadneo:%s\n", __func__);
-	return hid_register_driver(&xpadneo_driver);
+	xpadneo_rumble_wq = alloc_ordered_workqueue("xpadneo/rumbled", WQ_HIGHPRI);
+	if (xpadneo_rumble_wq) {
+		int ret = hid_register_driver(&xpadneo_driver);
+		if (ret != 0) {
+			destroy_workqueue(xpadneo_rumble_wq);
+			xpadneo_rumble_wq = NULL;
+		}
+		return ret;
+	}
+	return -EINVAL;
 }
 
 static void __exit xpadneo_exit(void)
@@ -1246,6 +1257,7 @@ static void __exit xpadneo_exit(void)
 	dbg_hid("xpadneo:%s\n", __func__);
 	hid_unregister_driver(&xpadneo_driver);
 	ida_destroy(&xpadneo_device_id_allocator);
+	destroy_workqueue(xpadneo_rumble_wq);
 }
 
 module_init(xpadneo_init);
