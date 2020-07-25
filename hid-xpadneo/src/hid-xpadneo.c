@@ -133,6 +133,7 @@ struct ff_data {
 } __packed;
 
 #define XPADNEO_XB1S_FF_REPORT 0x03
+#define XPADNEO_REPORT_0x01_LENGTH (38+1)
 
 struct ff_report {
 	u8 report_id;
@@ -164,6 +165,9 @@ struct xpadneo_devdata {
 		u8 report_id;
 		u8 flags;
 	} battery;
+
+	/* duplicate report buffers */
+	u8 input_report_0x01[XPADNEO_REPORT_0x01_LENGTH];
 
 	/* axis states */
 	u8 count_abs_z_rz;
@@ -869,6 +873,14 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	/* the controller spams reports multiple times */
+	if (likely(report->id == 0x01)) {
+		int size = min(reportsize, (int)XPADNEO_REPORT_0x01_LENGTH);
+		if (likely(memcmp(&xdata->input_report_0x01, data, size) == 0))
+			return -1;
+		memcpy(&xdata->input_report_0x01, data, size);
+	}
 
 	/* reset the count at the beginning of the frame */
 	xdata->count_abs_z_rz = 0;
