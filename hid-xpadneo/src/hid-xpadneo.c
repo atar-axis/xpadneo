@@ -506,8 +506,7 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	 * may happen if the delay between two rumble requests is
 	 * several weeks long
 	 */
-	delay_work = min((long)HZ, delay_work);
-	delay_work = max(0L, delay_work);
+	delay_work = clamp(delay_work, 0L, (long)HZ);
 
 	/* schedule writing a rumble report to the controller */
 	if (schedule_delayed_work(&xdata->ff_worker, delay_work))
