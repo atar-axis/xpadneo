@@ -133,7 +133,7 @@ struct ff_data {
 } __packed;
 
 #define XPADNEO_XB1S_FF_REPORT 0x03
-#define XPADNEO_REPORT_0x01_LENGTH (38+1)
+#define XPADNEO_REPORT_0x01_LENGTH (55+1)
 
 struct ff_report {
 	u8 report_id;
