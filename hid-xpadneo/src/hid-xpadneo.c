@@ -242,6 +242,12 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	/* shadow our current rumble values for the next cycle */
 	memcpy(&xdata->ff_shadow, &xdata->ff, sizeof(xdata->ff));
 
+	/* clear the magnitudes to properly accumulate the maximum values */
+	xdata->ff.magnitude_left = 0;
+	xdata->ff.magnitude_right = 0;
+	xdata->ff.magnitude_weak = 0;
+	xdata->ff.magnitude_strong = 0;
+
 	/*
 	 * throttle next command submission, the firmware doesn't like us to
 	 * send rumble data any faster
@@ -259,6 +265,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
 
+#define update_magnitude(m, v) m = (v) > 0 ? max(m, v) : 0
 static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
 	enum {
@@ -369,12 +376,16 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	spin_lock_irqsave(&xdata->ff_lock, flags);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN + S16_MAX) / U16_MAX);
-	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN + S16_MAX) / U16_MAX);
+	update_magnitude(xdata->ff.magnitude_strong,
+			 (u8)((strong * fraction_MAIN + S16_MAX) / U16_MAX));
+	update_magnitude(xdata->ff.magnitude_weak,
+			 (u8)((weak * fraction_MAIN + S16_MAX) / U16_MAX));
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_left = (u8)((max_main * fraction_TL + S16_MAX) / U16_MAX);
-	xdata->ff.magnitude_right = (u8)((max_main * fraction_TR + S16_MAX) / U16_MAX);
+	update_magnitude(xdata->ff.magnitude_left,
+			 (u8)((max_main * fraction_TL + S16_MAX) / U16_MAX));
+	update_magnitude(xdata->ff.magnitude_right,
+			 (u8)((max_main * fraction_TR + S16_MAX) / U16_MAX));
 
 	/* synchronize: is our worker still scheduled? */
 	if (xdata->ff_scheduled) {
