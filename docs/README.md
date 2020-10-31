@@ -21,6 +21,8 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
   dongles packaged with the controller. Kudos to @meduslaix for working together on finding some work aorunds for
   controller firmware bugs.
 * [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
+* [MissionControl](https://github.com/ndeadly/MissionControl) aims to support the controller on Nintendo Switch via
+  Bluetooth.
 
 These other projects may not support some of the advanced features of xpadneo.
 
