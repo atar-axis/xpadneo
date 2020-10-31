@@ -141,12 +141,12 @@ You know that everything works fine when you feel the gamepad rumble ;)
   available options.
 
 
-
 ### Profile switching
 
 The driver supports switching between different profiles on the Xbox One S controller by holding down the Xbox logo
 button while pressing button A, B, X, or Y to select one of four profiles. This switching can be done at any time
 even while in a game. The API for customizing each profile does not exist yet.
+
 
 ### Update
 
