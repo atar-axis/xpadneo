@@ -1,3 +1,14 @@
+# Changes since v0.8.3 up to v0.8.4
+
+This release improves the rumble timing.
+
+```
+Kai Krakow (2):
+      hid-xpadneo, timing: Use clamp() instead min()/max()
+      hid-xpadneo, rumble: Tighten the rumble timing
+```
+
+
 # Changes since v0.8.2 up to v0.8.3
 
 The previous release was missing an important commit to tell the
