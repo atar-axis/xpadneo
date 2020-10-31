@@ -1,3 +1,19 @@
+# Changes since v0.8.2 up to v0.8.3
+
+The previous release was missing an important commit to tell the
+different protocol modes of the controllers correctly apart.
+
+Headlines:
+
+  * hid-xpadneo, quirks: Pass quirks from driver data
+
+```
+Kai Krakow (2):
+      hid-xpadneo, quirks: Pass quirks from driver data
+      Revert "hid-xpadneo, quirks: Convert to proper bit values"
+```
+
+
 # Changes since v0.8.1 up to v0.8.2
 
 This release documents a few issues with latest SDL releases, works
