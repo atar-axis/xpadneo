@@ -6,6 +6,8 @@ Just leave a message if your donation is for a specific use (like a new hardware
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7bba9bae5e6e493189969dd2a80ac09e)](https://www.codacy.com/app/atar-axis/xpadneo?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=atar-axis/xpadneo&amp;utm_campaign=Badge_Grade)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/atar-axis/xpadneo.svg)](http://isitmaintained.com/project/atar-axis/xpadneo "Average time to resolve an issue")
 [![Packaging status](https://repology.org/badge/tiny-repos/xpadneo.svg)](https://repology.org/project/xpadneo/versions)
+[![Discord](https://img.shields.io/discord/733964971842732042)](https://discord.gg/nCqfKa84KA)
+
 
 # Advanced Linux Driver for Xbox One Wireless Gamepad
 
