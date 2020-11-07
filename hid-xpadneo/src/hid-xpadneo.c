@@ -140,6 +140,13 @@ struct ff_report {
 	struct ff_data ff;
 } __packed;
 
+enum xpadneo_trigger_scale {
+	XBOX_TRIGGER_SCALE_FULL,
+	XBOX_TRIGGER_SCALE_HALF,
+	XBOX_TRIGGER_SCALE_DIGITAL,
+	XBOX_TRIGGER_SCALE_NUM
+} __packed;
+
 struct xpadneo_devdata {
 	/* unique physical device id (randomly assigned) */
 	int id;
@@ -154,6 +161,11 @@ struct xpadneo_devdata {
 	/* profile switching */
 	bool xbox_button_down, profile_switched;
 	u8 profile;
+
+	/* trigger scale */
+	struct {
+		u8 left, right;
+	} trigger_scale;
 
 	/* battery information */
 	struct {
@@ -248,6 +260,8 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
+	USAGE_IGN(0xC0099),	/* Trigger scale switches */
+
 	/* XBE2: Disable "dial", which is a redundant representation of the D-Pad */
 	USAGE_IGN(0x10037),
 
@@ -271,7 +285,6 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* XBE2: Disable extra features until proper support is implemented */
 	USAGE_IGN(0xC0081),	/* Four paddles */
-	USAGE_IGN(0xC0099),	/* Trigger scale switches */
 
 	/* XBE2: Disable unused buttons */
 	USAGE_IGN(0x90012),	/* 6 "TRIGGER_HAPPY" buttons */
@@ -862,6 +875,28 @@ static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profi
 	xdata->profile_switched = emulated;
 }
 
+static void xpadneo_switch_triggers(struct xpadneo_devdata *xdata, const u8 mode)
+{
+	char *name[XBOX_TRIGGER_SCALE_NUM] = {
+		[XBOX_TRIGGER_SCALE_FULL] = "full range",
+		[XBOX_TRIGGER_SCALE_HALF] = "half range",
+		[XBOX_TRIGGER_SCALE_DIGITAL] = "digital",
+	};
+
+	enum xpadneo_trigger_scale left = (mode >> 0) & 0x03;
+	enum xpadneo_trigger_scale right = (mode >> 2) & 0x03;
+
+	if ((xdata->trigger_scale.left != left) && (left < XBOX_TRIGGER_SCALE_NUM)) {
+		hid_info(xdata->hdev, "switching left trigger to %s mode\n", name[left]);
+		xdata->trigger_scale.left = left;
+	}
+
+	if ((xdata->trigger_scale.right != right) && (right < XBOX_TRIGGER_SCALE_NUM)) {
+		hid_info(xdata->hdev, "switching right trigger to %s mode\n", name[right]);
+		xdata->trigger_scale.right = right;
+	}
+}
+
 #define SWAP_BITS(v,b1,b2) \
 	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
@@ -909,14 +944,16 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[14] = SWAP_BITS(data[14], 2, 3);
 	}
 
-	/* XBE2: track the current controller profile */
+	/* XBE2: track the current controller settings */
 	if (report->id == 1 && reportsize >= 21) {
 		if (reportsize == 55) {
-			hid_notice_once(hdev, "detected broken XBE2 v1 packet format, please update the firmware");
+			hid_notice_once(hdev,
+					"detected broken XBE2 v1 packet format, please update the firmware");
 			xpadneo_switch_profile(xdata, data[35] & 0x03, false);
-		}
-		else {
+			xpadneo_switch_triggers(xdata, data[36] & 0x0F);
+		} else {
 			xpadneo_switch_profile(xdata, data[19] & 0x03, false);
+			xpadneo_switch_triggers(xdata, data[20] & 0x0F);
 		}
 	}
 
