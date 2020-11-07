@@ -112,7 +112,7 @@ static enum power_supply_property xpadneo_battery_props[] = {
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
 
-enum {
+enum xpadneo_rumble_motors {
 	FF_RUMBLE_NONE = 0x00,
 	FF_RUMBLE_WEAK = 0x01,
 	FF_RUMBLE_STRONG = 0x02,
@@ -121,10 +121,10 @@ enum {
 	FF_RUMBLE_LEFT = 0x08,
 	FF_RUMBLE_TRIGGERS = FF_RUMBLE_LEFT | FF_RUMBLE_RIGHT,
 	FF_RUMBLE_ALL = 0x0F
-};
+} __packed;
 
 struct ff_data {
-	u8 enable;
+	enum xpadneo_rumble_motors enable;
 	u8 magnitude_left;
 	u8 magnitude_right;
 	u8 magnitude_strong;
