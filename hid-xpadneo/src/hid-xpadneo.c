@@ -460,8 +460,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		break;
 	case PARAM_TRIGGER_RUMBLE_PRESSURE:
 		fraction_MAIN = percent_MAIN;
-		fraction_TL = xdata->last_abs_z * percent_TRIGGERS / 1023;
-		fraction_TR = xdata->last_abs_rz * percent_TRIGGERS / 1023;
+		fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 511) / 1023;
+		fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 511) / 1023;
 		break;
 	default:
 		fraction_MAIN = percent_MAIN;
@@ -479,12 +479,12 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	spin_lock_irqsave(&xdata->ff_lock, flags);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN) / U16_MAX);
-	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN) / U16_MAX);
+	xdata->ff.magnitude_strong = (u8)((strong * fraction_MAIN + S16_MAX) / U16_MAX);
+	xdata->ff.magnitude_weak = (u8)((weak * fraction_MAIN + S16_MAX) / U16_MAX);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->ff.magnitude_left = (u8)((max_main * fraction_TL) / U16_MAX);
-	xdata->ff.magnitude_right = (u8)((max_main * fraction_TR) / U16_MAX);
+	xdata->ff.magnitude_left = (u8)((max_main * fraction_TL + S16_MAX) / U16_MAX);
+	xdata->ff.magnitude_right = (u8)((max_main * fraction_TR + S16_MAX) / U16_MAX);
 
 	/* synchronize: is our worker still scheduled? */
 	if (xdata->ff_scheduled) {
