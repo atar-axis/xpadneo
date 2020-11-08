@@ -361,9 +361,8 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
 	/* do not send these bits if not supported */
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)) {
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
 		r->ff.enable = 0;
-	}
 
 	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
