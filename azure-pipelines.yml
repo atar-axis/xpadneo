@@ -16,5 +16,5 @@ steps:
     sudo apt-get install -y dkms
   displayName: 'setup'
 - script: |
-    sudo ./install.sh
+    sudo ./install.sh --verbose
   displayName: 'install'
