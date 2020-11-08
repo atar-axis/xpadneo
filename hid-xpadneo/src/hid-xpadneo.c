@@ -460,8 +460,8 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		break;
 	case PARAM_TRIGGER_RUMBLE_PRESSURE:
 		fraction_MAIN = percent_MAIN;
-		fraction_TL = max(0, xdata->last_abs_z * percent_TRIGGERS / 1023);
-		fraction_TR = max(0, xdata->last_abs_rz * percent_TRIGGERS / 1023);
+		fraction_TL = xdata->last_abs_z * percent_TRIGGERS / 1023;
+		fraction_TR = xdata->last_abs_rz * percent_TRIGGERS / 1023;
 		break;
 	default:
 		fraction_MAIN = percent_MAIN;
