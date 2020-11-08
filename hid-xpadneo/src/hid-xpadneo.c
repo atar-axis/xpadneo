@@ -505,17 +505,11 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	if (time_before(ff_run_at, ff_throttle_until)) {
 		/* last rumble was recently executed */
 		delay_work = (long)ff_throttle_until - (long)ff_run_at;
+		delay_work = clamp(delay_work, 0L, (long)HZ);
 	} else {
 		/* the firmware is ready */
 		delay_work = 0;
 	}
-
-	/*
-	 * sanitize: If 0 > delay > 1000ms, something is weird: this
-	 * may happen if the delay between two rumble requests is
-	 * several weeks long
-	 */
-	delay_work = clamp(delay_work, 0L, (long)HZ);
 
 	/* schedule writing a rumble report to the controller */
 	if (queue_delayed_work(xpadneo_rumble_wq, &xdata->ff_worker, delay_work))
