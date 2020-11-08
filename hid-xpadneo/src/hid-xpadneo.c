@@ -860,7 +860,7 @@ static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profi
 				   const bool emulated)
 {
 	if (xdata->profile != profile) {
-		hid_info(xdata->hdev, "Switching profile to %d\n", profile);
+		hid_info(xdata->hdev, "switching profile to %d\n", profile);
 		xdata->profile = profile;
 	}
 
