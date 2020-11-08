@@ -249,15 +249,13 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	/* XBE2: Disable "dial", which is a redundant representation of the D-Pad */
 	USAGE_IGN(0x10037),
 
-	/* XBE2: Disable blind axes */
-	USAGE_IGN(0x10040),	/* Vx */
-	USAGE_IGN(0x10041),	/* Vy */
-	USAGE_IGN(0x10042),	/* Vz */
-	USAGE_IGN(0x10043),	/* Vbrx */
-	USAGE_IGN(0x10044),	/* Vbry */
-	USAGE_IGN(0x10045),	/* Vbrz */
-
-	/* XBE2: Disable duplicate buttons */
+	/* XBE2: Disable duplicate report fields of broken v1 packet format */
+	USAGE_IGN(0x10040),	/* Vx, copy of X axis */
+	USAGE_IGN(0x10041),	/* Vy, copy of Y axis */
+	USAGE_IGN(0x10042),	/* Vz, copy of Z axis */
+	USAGE_IGN(0x10043),	/* Vbrx, copy of Rx */
+	USAGE_IGN(0x10044),	/* Vbry, copy of Ry */
+	USAGE_IGN(0x10045),	/* Vbrz, copy of Rz */
 	USAGE_IGN(0x90010),	/* copy of A */
 	USAGE_IGN(0x90011),	/* copy of B */
 	USAGE_IGN(0x90013),	/* copy of X */
