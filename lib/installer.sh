@@ -34,6 +34,14 @@ get_upstream_version_latest() {
 	tr -d '[:space:]'
 }
 
+cat_dkms_make_log() {
+	local last_error=$?
+	if [ -n "${V[*]}" ]; then
+		cat "/var/lib/dkms/hid-xpadneo/${VERSION}/build/make.log" || true
+	fi
+	exit ${last_error}
+}
+
 # shellcheck disable=SC2034
 INSTALLED=(
 	$(get_dkms_versions_installed)

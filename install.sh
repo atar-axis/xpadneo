@@ -22,10 +22,10 @@ if [[ -z "$INSTALLED" ]]; then
     set -e
 
     echo "* adding module to DKMS"
-    dkms add "${V[*]}" "hid-xpadneo/${VERSION}"
+    dkms add "${V[*]}" "hid-xpadneo/${VERSION}" || cat_dkms_make_log
 
     echo "* installing module (using DKMS)"
-    dkms install "${V[*]}" "hid-xpadneo/${VERSION}"
+    dkms install "${V[*]}" "hid-xpadneo/${VERSION}" || cat_dkms_make_log
 
 else
 
