@@ -68,21 +68,30 @@ b1 02 09 0e 15 00 26 ff 00 75 08 95 01 b1 02 09 0f 26 ff 00
 
 ## Packet structure (as captured by `btmon`)
 
+### Packet Format v1
+
 ```
-a1 01 LX LX LY LY RX RX RY RY LT LT RT RT DP BB  
+a1 01 LX LX LY LY RX RX RY RY LT LT RT RT DP BB
 ST SE LX LX LY LY RX RX RY RY LT LT RT RT DP BB // Copy of the first row (except first two bytes)
 ST SE PP 00 PR TS 00 00 00 00 00 00 00 00 00 00 // First two bytes are a copy of the first two bytes from above
-00 00 00 00 00 00 00 00   
+00 00 00 00 00 00 00 00
 ```
-        
+
+### Packet Format v2 (after firmware update)
+```
+a1 01 LX LX LY LY RX RX RY RY LT LT RT RT DP BB
+ST SE PP 00 PR TS 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+```
+
 LX, LY, RX, RY: X and Y axes for the left and right sticks (00 00 - ff ff)
-        
+
 LT, RT: Going from 00 00 to FF 03
-        
+
 DP: D-Pad info
 0 -> nothing
 01-08 -> N, NE, E, SE, S, SW, W, NW
-        
+
 BB: on/off for ABXY, LB, RB
 0bRL0Y X0BA // R = RB, L = LB
 
@@ -95,7 +104,7 @@ ST: on/off for Start and Sticks (thumbstick buttons)
 SE: on/off for Select
 0b0000 000S // S = Select
 
-PP: on/off Paddles
+PP: on/off Paddles (mapped to A,B,X,Y by default in profile 1-3)
 0b0000 4321 // 1 = P1, etc.
 
 PR: Profile
