@@ -1,6 +1,7 @@
 #!/bin/sh
 
 ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
+DISABLE_ERTM="/sys/module/bluetooth/parameters/disable_ertm"
 
 if [ "$(readlink "${ERTM_OVERRIDE}" 2>/dev/null)" = "/dev/null" ]; then
 	echo "Not disabling ERTM, local override in place..."
@@ -12,8 +13,10 @@ else
 	echo "options bluetooth disable_ertm=y" >"${ERTM_OVERRIDE}"
 	echo "HINT: If you want to prevent this in the future, run 'ln -snf /dev/null ${ERTM_OVERRIDE}'."
 
-	echo "Disabling ERTM instantly..."
-	echo "Y" >/sys/module/bluetooth/parameters/disable_ertm
+	if [ -w "${DISABLE_ERTM}" ]; then
+		echo "Disabling ERTM instantly..."
+		echo "Y" >"${DISABLE_ERTM}"
+	fi
 fi
 
 echo "Installing modalias database..."
