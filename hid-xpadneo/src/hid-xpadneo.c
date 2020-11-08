@@ -272,6 +272,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	/* XBE2: Disable extra features until proper support is implemented */
 	USAGE_IGN(0xC0081),	/* Four paddles */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
+	USAGE_IGN(0xC0099),	/* Trigger scale switches */
 
 	/* XBE2: Disable unused buttons */
 	USAGE_IGN(0x90012),	/* 6 "TRIGGER_HAPPY" buttons */
