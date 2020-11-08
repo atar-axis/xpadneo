@@ -6,8 +6,17 @@
 trigger:
 - master
 
+strategy:
+  matrix:
+    Ubuntu 16.04 LTS:
+      imageName: 'ubuntu-16.04'
+    Ubuntu 18.04 LTS:
+      imageName: 'ubuntu-18.04'
+    Ubuntu 20.04 LTS:
+      imageName: 'ubuntu-20.04'
+
 pool:
-  vmImage: 'Ubuntu-16.04'
+  vmImage: $(imageName)
 
 steps:
 - script: |
