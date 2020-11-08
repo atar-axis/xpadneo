@@ -246,18 +246,18 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	/* disable duplicate button */
 	USAGE_IGN(0xC0224),
 
+	/* hardware features handled at the raw report level */
+	USAGE_IGN(0xC0085),	/* Profile switcher */
 	/* XBE2: Disable "dial", which is a redundant representation of the D-Pad */
 	USAGE_IGN(0x10037),
 
-	/* XBE2: Disable blind axes */
-	USAGE_IGN(0x10040),	/* Vx */
-	USAGE_IGN(0x10041),	/* Vy */
-	USAGE_IGN(0x10042),	/* Vz */
-	USAGE_IGN(0x10043),	/* Vbrx */
-	USAGE_IGN(0x10044),	/* Vbry */
-	USAGE_IGN(0x10045),	/* Vbrz */
-
-	/* XBE2: Disable duplicate buttons */
+	/* XBE2: Disable duplicate report fields of broken v1 packet format */
+	USAGE_IGN(0x10040),	/* Vx, copy of X axis */
+	USAGE_IGN(0x10041),	/* Vy, copy of Y axis */
+	USAGE_IGN(0x10042),	/* Vz, copy of Z axis */
+	USAGE_IGN(0x10043),	/* Vbrx, copy of Rx */
+	USAGE_IGN(0x10044),	/* Vbry, copy of Ry */
+	USAGE_IGN(0x10045),	/* Vbrz, copy of Rz */
 	USAGE_IGN(0x90010),	/* copy of A */
 	USAGE_IGN(0x90011),	/* copy of B */
 	USAGE_IGN(0x90013),	/* copy of X */
@@ -271,7 +271,6 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* XBE2: Disable extra features until proper support is implemented */
 	USAGE_IGN(0xC0081),	/* Four paddles */
-	USAGE_IGN(0xC0085),	/* Profile switcher */
 	USAGE_IGN(0xC0099),	/* Trigger scale switches */
 
 	/* XBE2: Disable unused buttons */
@@ -910,9 +909,15 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[14] = SWAP_BITS(data[14], 2, 3);
 	}
 
-	if (report->id == 1 && reportsize == 55) {
-		/* XBE2: track the current controller profile */
-		xpadneo_switch_profile(xdata, data[35] & 0x03, false);
+	/* XBE2: track the current controller profile */
+	if (report->id == 1 && reportsize >= 21) {
+		if (reportsize == 55) {
+			hid_notice_once(hdev, "detected broken XBE2 v1 packet format, please update the firmware");
+			xpadneo_switch_profile(xdata, data[35] & 0x03, false);
+		}
+		else {
+			xpadneo_switch_profile(xdata, data[19] & 0x03, false);
+		}
 	}
 
 	return 0;
