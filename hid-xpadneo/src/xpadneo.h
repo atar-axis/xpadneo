@@ -49,6 +49,8 @@ do {									\
 /* timing of rumble commands to work around firmware crashes */
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
+#define XPADNEO_RUMBLE_DELAY_POOL       (200L * HZ / 1000)
+#define XPADNEO_RUMBLE_COOLDOWN         (100L * HZ / 1000)
 
 /* rumble motors enable bits */
 enum xpadneo_rumble_motors {
@@ -144,6 +146,8 @@ struct xpadneo_devdata {
 	spinlock_t ff_lock;
 	struct delayed_work ff_worker;
 	unsigned long ff_throttle_until;
+	unsigned long ff_sent_at;
+	unsigned long ff_delay_pool;
 	bool ff_scheduled;
 	struct ff_data ff;
 	struct ff_data ff_shadow;

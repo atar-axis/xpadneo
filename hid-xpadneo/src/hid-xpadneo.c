@@ -190,7 +190,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	struct hid_device *hdev = xdata->hdev;
 	struct ff_report *r = xdata->output_report_dmabuf;
 	int ret;
-	unsigned long flags;
+	unsigned long flags, now;
 
 	memset(r, 0, sizeof(*r));
 	r->report_id = XPADNEO_XB1S_FF_REPORT;
@@ -254,6 +254,12 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	 * send rumble data any faster
 	 */
 	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
+
+	/* pool all intervals to detect rumble bursts */
+	now = jiffies;
+	xdata->ff_delay_pool += now;
+	xdata->ff_delay_pool -= xdata->ff_sent_at;
+	xdata->ff_sent_at = now;
 
 	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
@@ -402,6 +408,16 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		delay_work = 0;
 	}
 
+	/* reset burst delay pool after 1s */
+	if (time_after(ff_run_at, ff_throttle_until + XPADNEO_RUMBLE_COOLDOWN))
+		xdata->ff_delay_pool = 0;
+
+	/* detect bursts and delay work */
+	if (xdata->ff_delay_pool >= XPADNEO_RUMBLE_DELAY_POOL) {
+		hid_notice(hdev, "rumble burst detected: delay pool jiffies %ld\n", xdata->ff_delay_pool);
+		delay_work = XPADNEO_RUMBLE_COOLDOWN;
+	}
+
 	/* schedule writing a rumble report to the controller */
 	if (queue_delayed_work(xpadneo_rumble_wq, &xdata->ff_worker, delay_work))
 		xdata->ff_scheduled = true;
@@ -518,6 +534,7 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 
 	/* initialize our rumble command throttle */
 	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
+	xdata->ff_sent_at = jiffies;
 
 	input_set_capability(idev, EV_FF, FF_RUMBLE);
 	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
