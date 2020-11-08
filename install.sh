@@ -19,6 +19,8 @@ if [[ -z "$INSTALLED" ]]; then
 		sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/hid-xpadneo.c
 	)
 
+    set -e
+
     echo "* adding module to DKMS"
     dkms add "${V[*]}" "hid-xpadneo/${VERSION}"
 

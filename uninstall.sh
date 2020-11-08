@@ -17,6 +17,8 @@ for instance in "${INSTALLED[@]}"
 do
     echo "* $instance"
 
+    set -e
+
     echo "  * uninstalling and removing $instance from DKMS"
     dkms remove "${V[*]}" "hid-xpadneo/${instance}" --all
 
