@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # shellcheck disable=SC1090
+source "$(dirname "$0")/lib/verbose.sh"
+
+# shellcheck disable=SC1090
 source "$(dirname "$0")/lib/installer.sh"
 
 echo "* unloading current driver module"
@@ -15,7 +18,7 @@ do
     echo "* $instance"
 
     echo "  * uninstalling and removing $instance from DKMS"
-    dkms remove "hid-xpadneo/${instance}" --all
+    dkms remove "${V[*]}" "hid-xpadneo/${instance}" --all
 
     echo "  * removing $instance folder from /usr/src"
     rm --recursive "/usr/src/hid-xpadneo-$instance/"

@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
 # shellcheck disable=SC1090
+source "$(dirname "$0")/lib/verbose.sh"
+
+# shellcheck disable=SC1090
 source "$(dirname "$0")/lib/installer.sh"
 
 DESTDIR="/usr/src/hid-xpadneo-${VERSION}"
@@ -17,10 +20,10 @@ if [[ -z "$INSTALLED" ]]; then
 	)
 
     echo "* adding module to DKMS"
-    dkms add "hid-xpadneo/${VERSION}"
+    dkms add "${V[*]}" "hid-xpadneo/${VERSION}"
 
     echo "* installing module (using DKMS)"
-    dkms install "hid-xpadneo/${VERSION}"
+    dkms install "${V[*]}" "hid-xpadneo/${VERSION}"
 
 else
 
