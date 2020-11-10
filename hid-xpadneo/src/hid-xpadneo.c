@@ -80,6 +80,7 @@ MODULE_PARM_DESC(disable_deadzones,
 #define XPADNEO_QUIRK_USE_HW_PROFILES   8
 #define XPADNEO_QUIRK_LINUX_BUTTONS     16
 #define XPADNEO_QUIRK_NINTENDO          32
+#define XPADNEO_QUIRK_SHARE_BUTTON      64
 
 static struct {
 	char *args[17];
@@ -94,7 +95,8 @@ MODULE_PARM_DESC(quirks,
 		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
 		 ", hardware profile switch = " __stringify(XPADNEO_QUIRK_USE_HW_PROFILES)
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
-		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO));
+		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
+		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -212,6 +214,7 @@ static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
+	DEVICE_OUI_QUIRK("44:16:22", XPADNEO_QUIRK_SHARE_BUTTON),
 };
 
 struct usage_map {
@@ -248,6 +251,9 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* fixup the Xbox logo button */
 	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
+
+	/* fixup the Share button */
+	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, KEY_RECORD),	/* Share */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
 	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, BTN_XBOX),
@@ -928,11 +934,16 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
 		bits |= (data[14] & (BIT(3) | BIT(4))) >> 1;	/* X, Y */
 		bits |= (data[14] & (BIT(6) | BIT(7))) >> 2;	/* LB, RB */
-		bits |= (data[16] & BIT(0)) << 6;	/* Back */
+		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+			bits |= (data[15] & BIT(2)) << 4;	/* Back */
+		else
+			bits |= (data[16] & BIT(0)) << 6;	/* Back */
 		bits |= (data[15] & BIT(3)) << 4;	/* Menu */
 		bits |= (data[15] & BIT(5)) << 3;	/* LS */
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
 		bits |= (data[15] & BIT(4)) << 6;	/* Xbox */
+		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+			bits |= (data[16] & BIT(0)) << 11;	/* Share */
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);
 		data[16] = 0;
@@ -1255,6 +1266,9 @@ static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE Elite Series 2 */
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES},
+
+	/* XBOX ONE Series X / S */
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13)},
 
 	/* SENTINEL VALUE, indicates the end */
 	{}
