@@ -67,7 +67,6 @@ Xbox logo button. However, the following caveats apply:
 - Full support will be available once the Xbox Elite Series 2 controller is fully supported.
 
 
-
 ### Xbox Elite Series 2 Wireless controller
 
 While basic support for the Xbox Elite Series 2 Wireless controller is present, the following features are missing:
