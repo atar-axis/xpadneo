@@ -51,7 +51,7 @@ environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
 * Working Select, Start, Mode buttons
 * Correct Axis Range (signed, important for e.g. RPCS3)
-* Supports Battery Level Indication (including the Play \`n Charge Kit)
+* Supports Battery Level Indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
 * Agile Support and Development
