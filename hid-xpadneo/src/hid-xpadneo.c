@@ -239,6 +239,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* fixup the Xbox logo button */
 	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
+	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, KEY_RECORD),	/* Share */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
 	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, BTN_XBOX),
@@ -911,6 +912,8 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[15] & BIT(5)) << 3;	/* LS */
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
 		bits |= (data[15] & BIT(4)) << 6;	/* Xbox */
+		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+			bits |= (data[16] & BIT(0)) << 11; /* Share */
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);
 		data[16] = 0;
