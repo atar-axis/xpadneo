@@ -5,14 +5,14 @@ Hex dump of the controller descriptor:
 # xxd -c20 -g1 /sys/module/hid_xpadneo/drivers/hid:xpadneo/0005:045E:0B13.000A/report_descriptor
 
 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff
-ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 33 09 34 15 00
-27 ff ff 00 00 95 02 75 10 81 02 c0 05 01 09 32 15 00 26 ff
-03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 01 09
-35 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
+ff 00 00 95 02 75 10 81 02 c0 09 01 a1 00 09 32 09 35 15 00
+27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff
+03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09
+c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04
 95 01 81 42 75 04 95 01 15 00 25 00 35 00 45 00 65 00 81 03
-05 09 19 01 29 0b 15 00 25 01 75 01 95 0b 81 02 15 00 25 00
-75 01 95 05 81 03 05 0c 0a b2 00 15 00 25 01 95 01 75 01 81
+05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+75 01 95 01 81 03 05 0c 0a b2 00 15 00 25 01 95 01 75 01 81
 02 15 00 25 00 75 07 95 01 81 03 05 0f 09 21 85 03 a1 02 09
 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01 91
 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e
@@ -40,16 +40,16 @@ Parsed descriptor:
 0xC0,              //   End Collection
 0x09, 0x01,        //   Usage (Pointer)
 0xA1, 0x00,        //   Collection (Physical)
-0x09, 0x33,        //     Usage (Rx)
-0x09, 0x34,        //     Usage (Ry)
+0x09, 0x32,        //     Usage (Z)
+0x09, 0x35,        //     Usage (Rz)
 0x15, 0x00,        //     Logical Minimum (0)
 0x27, 0xFF, 0xFF, 0x00, 0x00,  //     Logical Maximum (65534)
 0x95, 0x02,        //     Report Count (2)
 0x75, 0x10,        //     Report Size (16)
 0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
 0xC0,              //   End Collection
-0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
-0x09, 0x32,        //   Usage (Z)
+0x05, 0x02,        //   Usage Page (Sim Ctrls)
+0x09, 0xC5,        //   Usage (Brake)
 0x15, 0x00,        //   Logical Minimum (0)
 0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
 0x95, 0x01,        //   Report Count (1)
@@ -60,8 +60,8 @@ Parsed descriptor:
 0x75, 0x06,        //   Report Size (6)
 0x95, 0x01,        //   Report Count (1)
 0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
-0x09, 0x35,        //   Usage (Rz)
+0x05, 0x02,        //   Usage Page (Sim Ctrls)
+0x09, 0xC4,        //   Usage (Accelerator)
 0x15, 0x00,        //   Logical Minimum (0)
 0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
 0x95, 0x01,        //   Report Count (1)
@@ -92,16 +92,16 @@ Parsed descriptor:
 0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
 0x05, 0x09,        //   Usage Page (Button)
 0x19, 0x01,        //   Usage Minimum (0x01)
-0x29, 0x0B,        //   Usage Maximum (0x0B)
+0x29, 0x0F,        //   Usage Maximum (0x0F)
 0x15, 0x00,        //   Logical Minimum (0)
 0x25, 0x01,        //   Logical Maximum (1)
 0x75, 0x01,        //   Report Size (1)
-0x95, 0x0B,        //   Report Count (11)
+0x95, 0x0F,        //   Report Count (15)
 0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
 0x15, 0x00,        //   Logical Minimum (0)
 0x25, 0x00,        //   Logical Maximum (0)
 0x75, 0x01,        //   Report Size (1)
-0x95, 0x05,        //   Report Count (5)
+0x95, 0x01,        //   Report Count (1)
 0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
 0x05, 0x0C,        //   Usage Page (Consumer)
 0x0A, 0xB2, 0x00,  //   Usage (Record)
