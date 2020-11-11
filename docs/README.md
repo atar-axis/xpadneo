@@ -55,43 +55,61 @@ environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
 * Agile Support and Development
-* Supports customization through profiles
+* Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users
 * Share button support on supported controllers
 
 
 ### Xbox One S Wireless controller
 
-The driver emulates profile switching for this controller by pressing buttons A, B, X, or Y while holding down the
-Xbox logo button. However, the following caveats apply:
-- Profiles currently behave all the same, and there is no support for configuring them.
-- Full support will be available once the Xbox Elite Series 2 controller is fully supported.
+This is the initial controller supported from the first version of xpadneo. All features are fully supported. This
+controller uses emulated profile switching support (see below).
 
 
 ### Xbox Elite Series 2 Wireless controller
 
-While basic support for the Xbox Elite Series 2 Wireless controller is present, the following features are missing:
+Basic support for the Xbox Elite Series 2 Wireless controller is present, covering all the features of the driver.
+The following features are missing:
 
-- Profile support. All four profiles behave the same way currently, and there is no support for configuring them.
 - The four paddles at the bottom are currently not supported.
+- Upload of profile mappings and sensitivity curves is currently not supported.
+
+This controller uses native profile switching support (see below).
 
 
 ### Xbox Series X / S Wireless controller
 
 Full support for the Xbox Series X / S controller is present including the share button. This is currently mapped
 to keyboard event `KEY_RECORD` and may not work at all for any purpose. Thus, this implementation details may
-change during one of the next updates.
+change during one of the next updates. This controller uses emulated profile switching support (see below).
 
 
 ### 8BitDo controllers
 
 This driver respects the Nintendo layout of those controllers and exposes them correctly as button A, B, X, and Y
 as labelled on the device. This is swapped compared to the original Xbox controller layout. You can override that
-behavior with a quirk flag (by removing the Nintendo layout bit).
+behavior with a quirk flag (by removing the Nintendo layout bit). This controller uses emulated profile switching
+support (see below).
 
 **Breaking change:** Users of previous versions of the driver may want to remove their custom SDL mappings. Full
 support has been added for these controllers and broken mapping of previously versions no longer needs to be
 applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
+
+
+### Native profile switching support
+
+The driver support native profile switching for
+
+- Profile support. All four profiles behave the same way currently, and there is no support for configuring them.
+
+
+### Emulated profile switching support
+
+The driver emulates profile switching for controllers without a hardware profile switch by pressing buttons A, B, X,
+or Y while holding down the Xbox logo button. However, the following caveats apply:
+
+- Profiles currently behave all the same, and there is no support for configuring them.
+- Full support will be available once the Xbox Elite Series 2 controller is fully supported.
 
 
 ## Getting started
