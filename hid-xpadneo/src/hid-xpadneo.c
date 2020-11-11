@@ -993,6 +993,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * Xbox Elite 2:
 	 * 0xB00 USB Windows and Linux mode
 	 * 0xB05 wireless Linux mode (Android mode)
+	 *
+	 * Xbox Series X/S:
+	 * 0xB12 USB Windows and Linux mode
+	 * 0xB13 wireless Linux mode (Android mode)
 	 */
 	switch (xdata->idev->id.product) {
 	case 0x02E0:
