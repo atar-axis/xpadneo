@@ -1,4 +1,4 @@
-# USB Descriptor for Xbox One S Wireless (Linux mode)
+# USB Descriptor for Xbox One Series S / X Wireless
 
 Hex dump of the controller descriptor:
 ```
