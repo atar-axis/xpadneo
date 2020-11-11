@@ -239,6 +239,8 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* fixup the Xbox logo button */
 	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
+
+	/* fixup the Share button */
 	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, KEY_RECORD),	/* Share */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
@@ -851,9 +853,9 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			rdesc[145] = 12; /* 15 buttons -> 12 buttons */
-			rdesc[153] = 12; /* 15 bits -> 12 bits buttons */
-			rdesc[163] = 16 - 12; /* 1 bit -> 4 bits constants */
+			rdesc[145] = 12;	/* 15 buttons -> 12 buttons */
+			rdesc[153] = 12;	/* 15 bits -> 12 bits buttons */
+			rdesc[163] = 16 - 12;	/* 1 bit -> 4 bits constants */
 		}
 	}
 
@@ -913,7 +915,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
 		bits |= (data[15] & BIT(4)) << 6;	/* Xbox */
 		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
-			bits |= (data[16] & BIT(0)) << 11; /* Share */
+			bits |= (data[16] & BIT(0)) << 11;	/* Share */
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);
 		data[16] = 0;
@@ -1222,18 +1224,18 @@ static void xpadneo_remove(struct hid_device *hdev)
 
 static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
 
 	/* XBOX ONE Elite Series 2 */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
-	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES},
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
+	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES },
 
 	/* XBOX ONE Series X / S */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13)},
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13) },
 
 	/* SENTINEL VALUE, indicates the end */
-	{}
+	{ }
 };
 
 MODULE_DEVICE_TABLE(hid, xpadneo_devices);
