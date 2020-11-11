@@ -202,6 +202,7 @@ static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
+	DEVICE_OUI_QUIRK("44:16:22", XPADNEO_QUIRK_SHARE_BUTTON),
 };
 
 struct usage_map {
@@ -849,10 +850,6 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			if (hdev->product == 0x0B13) {
-				hid_notice(hdev, "fixing up share button mapping\n");
-				xdata->quirks |= XPADNEO_QUIRK_SHARE_BUTTON;
-			}
 			rdesc[145] = 12; /* 15 buttons -> 12 buttons */
 			rdesc[153] = 12; /* 15 bits -> 12 bits buttons */
 			rdesc[163] = 16 - 12; /* 1 bit -> 4 bits constants */
@@ -905,12 +902,11 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
 		bits |= (data[14] & (BIT(3) | BIT(4))) >> 1;	/* X, Y */
 		bits |= (data[14] & (BIT(6) | BIT(7))) >> 2;	/* LB, RB */
-		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON) {
-			/* correct button mapping of Xbox controllers with a share button */
-			bits |= (data[15] & BIT(2)) ? BIT(6) : 0; /* Back */
-		} else {
-			bits |= (data[16] & BIT(0)) << 6; /* Back */
-		}
+		/* Back */
+		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+			bits |= (data[15] & BIT(2)) << 4;
+		else
+			bits |= (data[16] & BIT(0)) << 6;
 		bits |= (data[15] & BIT(3)) << 4;	/* Menu */
 		bits |= (data[15] & BIT(5)) << 3;	/* LS */
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
@@ -1226,12 +1222,12 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD)},
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0)},
 
-	/* XBOX ONE Series X / S */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13)},
-
 	/* XBOX ONE Elite Series 2 */
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES},
+
+	/* XBOX ONE Series X / S */
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13)},
 
 	/* SENTINEL VALUE, indicates the end */
 	{}
