@@ -80,6 +80,7 @@ MODULE_PARM_DESC(disable_deadzones,
 #define XPADNEO_QUIRK_USE_HW_PROFILES   8
 #define XPADNEO_QUIRK_LINUX_BUTTONS     16
 #define XPADNEO_QUIRK_NINTENDO          32
+#define XPADNEO_QUIRK_SHARE_BUTTON      64
 
 static struct {
 	char *args[17];
@@ -94,7 +95,8 @@ MODULE_PARM_DESC(quirks,
 		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
 		 ", hardware profile switch = " __stringify(XPADNEO_QUIRK_USE_HW_PROFILES)
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
-		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO));
+		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
+		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -847,9 +849,14 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			rdesc[145] = 0x0B;	/* 15 buttons -> 11 buttons */
-			rdesc[153] = 0x0B;	/* 15 bits -> 11 bits buttons */
-			rdesc[163] = 0x05;	/* 1 bit -> 5 bits constants */
+			u8 button_count = hdev->product == 0x0B13 ? 12 : 11;
+			if(button_count == 12) {
+				hid_notice(hdev, "fixing up share button mapping\n");
+				xdata->quirks |= XPADNEO_QUIRK_SHARE_BUTTON;
+			}
+			rdesc[145] = button_count; /* 15 buttons -> 11 buttons */
+			rdesc[153] = button_count; /* 15 bits -> 11 bits buttons */
+			rdesc[163] = 16 - button_count; /* 1 bit -> 5 bits constants */
 		}
 	}
 
@@ -899,7 +906,12 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
 		bits |= (data[14] & (BIT(3) | BIT(4))) >> 1;	/* X, Y */
 		bits |= (data[14] & (BIT(6) | BIT(7))) >> 2;	/* LB, RB */
-		bits |= (data[16] & BIT(0)) << 6;	/* Back */
+		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON) {
+			/* correct button mapping of Xbox controllers with a share button */
+			bits |= (data[15] & BIT(2)) ? BIT(6) : 0; /* Back */
+		} else {
+			bits |= (data[16] & BIT(0)) << 6; /* Back */
+		}
 		bits |= (data[15] & BIT(3)) << 4;	/* Menu */
 		bits |= (data[15] & BIT(5)) << 3;	/* LS */
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
