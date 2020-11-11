@@ -849,14 +849,13 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			u8 button_count = hdev->product == 0x0B13 ? 12 : 11;
-			if(button_count == 12) {
+			if (hdev->product == 0x0B13) {
 				hid_notice(hdev, "fixing up share button mapping\n");
 				xdata->quirks |= XPADNEO_QUIRK_SHARE_BUTTON;
 			}
-			rdesc[145] = button_count; /* 15 buttons -> 11 buttons */
-			rdesc[153] = button_count; /* 15 bits -> 11 bits buttons */
-			rdesc[163] = 16 - button_count; /* 1 bit -> 5 bits constants */
+			rdesc[145] = 12; /* 15 buttons -> 12 buttons */
+			rdesc[153] = 12; /* 15 bits -> 12 bits buttons */
+			rdesc[163] = 16 - 12; /* 1 bit -> 4 bits constants */
 		}
 	}
 
