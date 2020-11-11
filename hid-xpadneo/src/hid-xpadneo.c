@@ -854,9 +854,9 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			rdesc[145] = 0x0B;	/* 15 buttons -> 11 buttons */
-			rdesc[153] = 0x0B;	/* 15 bits -> 11 bits buttons */
-			rdesc[163] = 0x05;	/* 1 bit -> 5 bits constants */
+			rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
+			rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
+			rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
 		}
 	}
 
