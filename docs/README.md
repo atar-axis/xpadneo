@@ -98,6 +98,13 @@ support has been added for these controllers and broken mapping of previously ve
 applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
 
 
+## Profile switching
+
+The driver supports switching between different profiles, either through emulation or by using the hardware
+switch that comes with some models. This switching can be done at any time even while in a game. The API for
+customizing each profile does not exist yet.
+
+
 ### Native profile switching support
 
 The driver support native profile switching for
@@ -169,13 +176,6 @@ You know that everything works fine when you feel the gamepad rumble ;)
 
 * If using DKMS: Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the
   available options.
-
-
-### Profile switching
-
-The driver supports switching between different profiles on the Xbox One S controller by holding down the Xbox logo
-button while pressing button A, B, X, or Y to select one of four profiles. This switching can be done at any time
-even while in a game. The API for customizing each profile does not exist yet.
 
 
 ### Update
