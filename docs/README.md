@@ -17,7 +17,7 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 ## Other Projects
 
 * [xow](https://github.com/medusalix/xow) is a driver for the Xbox One S controllers, too, and supports the native
-  dongles packaged with the controller. Kudos to @medusalix for working together on finding some work aorunds for
+  dongles packaged with the controller. Kudos to @medusalix for working together on finding some work-arounds for
   controller firmware bugs.
 * [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
 
