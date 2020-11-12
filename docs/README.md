@@ -83,6 +83,8 @@ Full support for the Xbox Series X / S controller is present including the share
 to keyboard event `KEY_RECORD` and may not work at all for any purpose. Thus, this implementation details may
 change during one of the next updates. This controller uses emulated profile switching support (see below).
 
+This controller uses BLE (Bluetooth low energy) and can only be supported if your Bluetooth dongle also supports BLE.
+
 
 ### 8BitDo controllers
 
