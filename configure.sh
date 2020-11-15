@@ -170,7 +170,7 @@ if [[ "$VERSION" != "${INSTALLED[0]}" ]];
 then
     echo "$NAME: Your version of xpadneo seems to be out of date."
     echo "$NAME: Please run ./update.sh from the git directory to update to the latest version."
-    echo "$NAME: Installed version is ${INSTALLED[0]}, but this script is for version $VERSION"
+    echo "$NAME: Installed version is ${INSTALLED[0]}, but this script is for version ${VERSION}"
     exit 2
 fi
 
