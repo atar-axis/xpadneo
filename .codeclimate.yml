@@ -1,0 +1,6 @@
+engines:
+  cppcheck:
+    enabled: true
+    checks:
+      ConfigurationNotChecked:
+        enabled: false
