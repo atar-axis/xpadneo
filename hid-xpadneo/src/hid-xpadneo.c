@@ -133,6 +133,9 @@ struct ff_data {
 	u8 pulse_release_10ms;
 	u8 loop_count;
 } __packed;
+#ifdef static_assert
+static_assert(sizeof(struct ff_data) == 8);
+#endif
 
 #define XPADNEO_XB1S_FF_REPORT 0x03
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)
@@ -141,6 +144,9 @@ struct ff_report {
 	u8 report_id;
 	struct ff_data ff;
 } __packed;
+#ifdef static_assert
+static_assert(sizeof(struct ff_report) == 9);
+#endif
 
 enum xpadneo_trigger_scale {
 	XBOX_TRIGGER_SCALE_FULL,
