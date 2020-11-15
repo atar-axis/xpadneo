@@ -9,26 +9,9 @@
  */
 
 #include <linux/delay.h>
-#include <linux/hid.h>
-#include <linux/input.h>
 #include <linux/module.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
-#include <linux/time.h>
 
-#include "hid-ids.h"
-#include "version.h"
-
-#ifndef hid_notice_once
-#define hid_notice_once(hid, fmt, ...)					\
-do {									\
-	static bool __print_once __read_mostly;				\
-	if (!__print_once) {						\
-		__print_once = true;					\
-		hid_notice(hid, fmt, ##__VA_ARGS__);			\
-	}								\
-} while (0)
-#endif
+#include "xpadneo.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
@@ -40,10 +23,6 @@ module_param_named(combined_z_axis, param_combined_z_axis, bool, 0444);
 MODULE_PARM_DESC(combined_z_axis,
 		 "(bool) Combine the triggers to form a single axis. "
 		 "1: combine, 0: do not combine.");
-
-#define PARAM_TRIGGER_RUMBLE_PRESSURE    0
-#define PARAM_TRIGGER_RUMBLE_DIRECTIONAL 1
-#define PARAM_TRIGGER_RUMBLE_DISABLE     2
 
 static u8 param_trigger_rumble_mode = 0;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
@@ -73,14 +52,6 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
-#define XPADNEO_QUIRK_NO_PULSE          1
-#define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
-#define XPADNEO_QUIRK_NO_MOTOR_MASK     4
-#define XPADNEO_QUIRK_USE_HW_PROFILES   8
-#define XPADNEO_QUIRK_LINUX_BUTTONS     16
-#define XPADNEO_QUIRK_NINTENDO          32
-#define XPADNEO_QUIRK_SHARE_BUTTON      64
-
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -108,100 +79,10 @@ static enum power_supply_property xpadneo_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 };
 
-#define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
-#define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
-
-enum xpadneo_rumble_motors {
-	FF_RUMBLE_NONE = 0x00,
-	FF_RUMBLE_WEAK = 0x01,
-	FF_RUMBLE_STRONG = 0x02,
-	FF_RUMBLE_MAIN = FF_RUMBLE_WEAK | FF_RUMBLE_STRONG,
-	FF_RUMBLE_RIGHT = 0x04,
-	FF_RUMBLE_LEFT = 0x08,
-	FF_RUMBLE_TRIGGERS = FF_RUMBLE_LEFT | FF_RUMBLE_RIGHT,
-	FF_RUMBLE_ALL = 0x0F
-} __packed;
-
-struct ff_data {
-	enum xpadneo_rumble_motors enable;
-	u8 magnitude_left;
-	u8 magnitude_right;
-	u8 magnitude_strong;
-	u8 magnitude_weak;
-	u8 pulse_sustain_10ms;
-	u8 pulse_release_10ms;
-	u8 loop_count;
-} __packed;
-#ifdef static_assert
-static_assert(sizeof(struct ff_data) == 8);
-#endif
-
-#define XPADNEO_XB1S_FF_REPORT 0x03
-#define XPADNEO_REPORT_0x01_LENGTH (55+1)
-
-struct ff_report {
-	u8 report_id;
-	struct ff_data ff;
-} __packed;
-#ifdef static_assert
-static_assert(sizeof(struct ff_report) == 9);
-#endif
-
-enum xpadneo_trigger_scale {
-	XBOX_TRIGGER_SCALE_FULL,
-	XBOX_TRIGGER_SCALE_HALF,
-	XBOX_TRIGGER_SCALE_DIGITAL,
-	XBOX_TRIGGER_SCALE_NUM
-} __packed;
-
-struct xpadneo_devdata {
-	/* unique physical device id (randomly assigned) */
-	int id;
-
-	/* logical device interfaces */
-	struct hid_device *hdev;
-	struct input_dev *idev;
-
-	/* quirk flags */
-	u32 quirks;
-
-	/* profile switching */
-	bool xbox_button_down, profile_switched;
-	u8 profile;
-
-	/* trigger scale */
-	struct {
-		u8 left, right;
-	} trigger_scale;
-
-	/* battery information */
-	struct {
-		bool initialized;
-		struct power_supply *psy;
-		struct power_supply_desc desc;
-		char *name;
-		char *name_pnc;
-		u8 report_id;
-		u8 flags;
-	} battery;
-
-	/* duplicate report buffers */
-	u8 input_report_0x01[XPADNEO_REPORT_0x01_LENGTH];
-
-	/* axis states */
-	u8 count_abs_z_rz;
-	s32 last_abs_z;
-	s32 last_abs_rz;
-
-	/* buffer for ff_worker */
-	spinlock_t ff_lock;
-	struct delayed_work ff_worker;
-	unsigned long ff_throttle_until;
-	bool ff_scheduled;
-	struct ff_data ff;
-	struct ff_data ff_shadow;
-	void *output_report_dmabuf;
-};
+#define DEVICE_NAME_QUIRK(n, f) \
+	{ .name_match = (n), .name_len = sizeof(n) - 1, .flags = (f) }
+#define DEVICE_OUI_QUIRK(o, f) \
+	{ .oui_match = (o), .flags = (f) }
 
 struct quirk {
 	char *name_match;
@@ -209,11 +90,6 @@ struct quirk {
 	u16 name_len;
 	u32 flags;
 };
-
-#define DEVICE_NAME_QUIRK(n, f) \
-	{ .name_match = (n), .name_len = sizeof(n) - 1, .flags = (f) }
-#define DEVICE_OUI_QUIRK(o, f) \
-	{ .oui_match = (o), .flags = (f) }
 
 static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
@@ -234,9 +110,6 @@ struct usage_map {
 		u16 input_code;	/* input code (BTN_A, ABS_X, ...) */
 	} ev;
 };
-
-#define BTN_SHARE KEY_RECORD
-#define BTN_XBOX  KEY_HOMEPAGE
 
 #define USAGE_MAP(u, b, e, i) \
 	{ .usage = (u), .behaviour = (b), .ev = { .event_type = (e), .input_code = (i) } }
