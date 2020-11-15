@@ -8,7 +8,7 @@ source "$(dirname "$0")/lib/installer.sh"
 
 DESTDIR="/usr/src/hid-xpadneo-${VERSION}"
 
-if [[ -z "$INSTALLED" ]]; then
+if [[ -z "${INSTALLED[*]}" ]]; then
 
     echo "* copying module to '${DESTDIR}'"
     cp --recursive "hid-xpadneo" "${DESTDIR}"
