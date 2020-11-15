@@ -24,7 +24,7 @@ function display_help {
 
 ## Print Version ##
 function display_version {
-  echo "$NAME: Installed xpadneo version: $INSTALLED"
+  echo "$NAME: Installed xpadneo version: ${INSTALLED[*]}"
 }
 
 ## Parameter Validation ##
@@ -159,18 +159,18 @@ function parse_args {
 PARAMETERS=( "$@" )
 
 # Check if xpadneo is installed
-if [[ -z "$INSTALLED" ]];
+if [[ -z "${INSTALLED[*]}" ]];
 then
     echo "$NAME: Installation not found. Did you run ./install.sh?"
     exit 1
 fi
 
 # Check if the correct version is installed
-if [[ "$VERSION" != "$INSTALLED" ]];
+if [[ "$VERSION" != "${INSTALLED[0]}" ]];
 then
     echo "$NAME: Your version of xpadneo seems to be out of date."
     echo "$NAME: Please run ./update.sh from the git directory to update to the latest version."
-    echo "$NAME: Installed version is $INSTALLED, but this script is for version $VERSION"
+    echo "$NAME: Installed version is ${INSTALLED[0]}, but this script is for version $VERSION"
     exit 2
 fi
 
