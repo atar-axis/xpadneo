@@ -1,3 +1,50 @@
+Changes since v0.8.4 up to v0.8.5
+
+This release adds a lot of small improvements from v0.9 which catch
+some errors in the installer, improve the documentation, fix the XBE2
+controller after updating it to a new firmware, and fine-tune the rumble
+worker.
+
+This is the final release of the v0.8 branch, only critical bug fixes
+would follow.
+
+
+## Headlines:
+
+  * installer: Change to base directory first
+
+```
+Kai Krakow (27):
+      installer: Fix white space
+      installer, dkms: Prevent showing readlink errors
+      installer: Add verbose mode
+      installer: Exit on unexpected errors
+      installer, dkms: Skip ERTM if setting is not writable
+      tests: Add verbose mode to Azure Pipeline
+      tests: Also test uninstallation in Azure Pipeline
+      tests: Dump make.log to stdout on verbose DKMS error
+      tests: Run Azure Pipeline on multiple Ubuntu LTS versions
+      hid-xpadneo: Ignore trigger scale switches
+      hid-xpadneo, rumble: Remove useless use of max()
+      hid-xpadneo: Optimize delay_work clamping
+      hid-xpadneo, rumble: Use proper integer rounding in calculations
+      hid-xpadneo, rumble: Limit command duration
+      hid-xpadneo: Fix kernel coding standards
+      docs: Do not misuse back-ticks
+      docs: Document broken packet format of XBE2 v1
+      hid-xpadneo: Handle XBE2 v2 packet format
+      docs: Fix collaboration referral
+      docs: Fix a typo
+      hid-xpadneo: Make assertions of hardware buffer sizes
+      hid-xpadneo: Make rumble motor bits a full enum type
+      installer: Remove excessive blank lines
+      installer: "INSTALLED" is an array
+      configure: Use braces around variables
+      installer: Change to base directory first
+      hid-xpadneo: Fix a comment about rumble timing
+```
+
+
 # Changes since v0.8.3 up to v0.8.4
 
 This release improves the rumble timing.
@@ -14,7 +61,7 @@ Kai Krakow (2):
 The previous release was missing an important commit to tell the
 different protocol modes of the controllers correctly apart.
 
-Headlines:
+## Headlines:
 
   * hid-xpadneo, quirks: Pass quirks from driver data
 
