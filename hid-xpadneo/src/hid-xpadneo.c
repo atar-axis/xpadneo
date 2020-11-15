@@ -311,9 +311,9 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0)) {
 		/*
 		 * ff-memless has a time resolution of 50ms but we pulse the
-		 * motors for 60s as the Windows driver does. To work around
-		 * a potential firmware crash, we filter out repeated motor
-		 * programming further below.
+		 * motors for 60 minutes as the Windows driver does. To work
+		 * around a potential firmware crash, we filter out repeated
+		 * motor programming further below.
 		 */
 		r->ff.pulse_sustain_10ms = 0xFF;
 		r->ff.loop_count = 0xEB;
