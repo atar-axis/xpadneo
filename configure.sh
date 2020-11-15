@@ -17,8 +17,6 @@ CONF_FILE=$(grep -sl '^options hid_xpadneo' /etc/modprobe.d/*.conf | tail -1)
 # Use getopt NOT getopts to parse arguments.
 OPTS=$(getopt -n "$NAME" -o hz:d:f:v:r: -l help,version,combined-z-axis:,disable-ff:,rumble-attenuation: -- "$@")
 
-
-
 ## Print Help ##
 function display_help {
   cat ./docs/config_help
