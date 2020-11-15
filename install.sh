@@ -16,7 +16,7 @@ if [[ -z "$INSTALLED" ]]; then
 	echo "* replacing version string if necessary"
 	(
 	 	cd "${DESTDIR}"
-		sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/hid-xpadneo.c
+		sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/version.h
 	)
 
     set -e

@@ -1,5 +1,3 @@
-#define DRV_VER "@DO_NOT_CHANGE@"
-
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *
@@ -19,6 +17,7 @@
 #include <linux/time.h>
 
 #include "hid-ids.h"
+#include "version.h"
 
 #ifndef hid_notice_once
 #define hid_notice_once(hid, fmt, ...)					\
