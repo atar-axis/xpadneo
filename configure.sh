@@ -1,8 +1,8 @@
 #!/bin/bash
 # Written by CodeCanna, refined by atar-axis
 
-# shellcheck disable=SC1090
-source "$(dirname "$0")/lib/installer.sh"
+cd "$(dirname "$0")" || exit 1
+source "lib/installer.sh"
 
 set -o posix
 
