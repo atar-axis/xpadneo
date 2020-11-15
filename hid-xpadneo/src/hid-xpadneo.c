@@ -235,7 +235,8 @@ struct usage_map {
 	} ev;
 };
 
-#define BTN_XBOX KEY_HOMEPAGE
+#define BTN_SHARE KEY_RECORD
+#define BTN_XBOX  KEY_HOMEPAGE
 
 #define USAGE_MAP(u, b, e, i) \
 	{ .usage = (u), .behaviour = (b), .ev = { .event_type = (e), .input_code = (i) } }
@@ -258,7 +259,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
 
 	/* fixup the Share button */
-	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, KEY_RECORD),	/* Share */
+	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, BTN_SHARE),	/* Share */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
 	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, BTN_XBOX),
