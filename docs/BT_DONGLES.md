@@ -3,6 +3,25 @@
 Please report your Dongles and how they work [here](https://github.com/atar-axis/xpadneo/issues/93)
 
 
+## Bluetooth Low Energy
+
+Some newer controller may work in Bluetooth low energy mode (BLE). One of
+those controllers is the XBOX Series X|S controller.
+
+If your distribution supports the command, run `btmgmt info` and look for
+`le` in supported and current settings, example:
+```
+# btmgmt info
+Index list with 1 item
+hci0:   Primary controller
+        addr 00:1A:7D:XX:XX:XX version 6 manufacturer 10 class 0x100104
+        supported settings: powered connectable fast-connectable discoverable bondable link-security ssp br/edr hs le advertising secure-conn debug-keys privacy static-addr phy-configuration
+        current settings: powered ssp br/edr le secure-conn
+        name jupiter
+        short name
+```
+
+
 ### Cambridge Silicon Radio
 
 * [Panda Bluetooth 4.0 USB Nano Adapter](https://www.amazon.com/gp/product/B00BCU4TZE/)
