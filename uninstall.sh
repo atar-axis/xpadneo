@@ -12,7 +12,6 @@ modprobe -r hid_xpadneo || true
 echo "* looking for registered instances"
 echo "found ${#INSTALLED[@]} registered instance(s) on your system"
 
-
 for instance in "${INSTALLED[@]}"
 do
     echo "* $instance"
