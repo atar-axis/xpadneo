@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# shellcheck disable=SC1090
-source "$(dirname "$0")/lib/installer.sh"
+cd "$(dirname "$0")" || exit 1
+source "lib/installer.sh"
 
 LATEST=$(get_upstream_version_latest)
 
 reinstall() {
-    if [[ "${VERSION}" == "${INSTALLED}" ]]; then
+    if [[ "${VERSION}" == "${INSTALLED[0]}" ]]; then
         echo "You have already installed ${VERSION}!"
     else
         echo "* uninstalling outdated modules"
@@ -25,7 +25,7 @@ elif __version_lte "${LATEST}" "${VERSION}"; then
     reinstall
 else
     echo "Latest stable version: ${LATEST}"
-    echo "Installed versions: ${INSTALLED}"
+    echo "Installed versions: ${INSTALLED[*]}"
     echo "Repository version: ${VERSION}"
 
     if [[ "${GIT_ROOT}" != "" ]]; then
@@ -33,5 +33,5 @@ else
     else
         echo "Please update this directory by downloading the latest version from https://github.com/atar-axis/xpadneo/archive/${LATEST}.tar.gz"
     fi
-    exit -4
+    exit 1
 fi
