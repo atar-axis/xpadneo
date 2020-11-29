@@ -876,24 +876,35 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * Xbox Series X/S:
 	 * 0xB12 Dongle, USB Windows and USB Linux mode
 	 * 0xB13 wireless Linux mode (Android mode)
+	 *
+	 * TODO: We should find a better way of doing this so SDL2 could
+	 * still detect our driver as the correct model. Currently this
+	 * maps all controllers to the same model.
 	 */
 	switch (xdata->idev->id.product) {
 	case 0x02E0:
-		if (xdata->idev->id.version == 0x00000903)
-			break;
-		hid_info(hdev,
-			 "pretending XB1S Linux firmware version "
-			 "(changed version from 0x%08X to 0x00000903)\n", xdata->idev->id.version);
 		xdata->idev->id.version = 0x00000903;
 		break;
 	case 0x02FD:
-	case 0x0B05:
-		hid_info(hdev,
-			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x02E0)\n", (u16)xdata->idev->id.product);
 		xdata->idev->id.product = 0x02E0;
 		break;
+	case 0x0B05:
+		xdata->idev->id.product = 0x02E0;
+		xdata->idev->id.version = 0x00000903;
+		break;
 	}
+
+	if (hdev->product != xdata->idev->id.product)
+		hid_info(hdev,
+			 "pretending XB1S Windows wireless mode "
+			 "(changed PID from 0x%04X to 0x%04X)\n", hdev->product,
+			 (u16)xdata->idev->id.product);
+
+	if (hdev->version != xdata->idev->id.product)
+		hid_info(hdev,
+			 "working around wrong SDL2 mappings "
+			 "(changed version from 0x%08X to 0x%08X)\n", hdev->version,
+			 xdata->idev->id.version);
 
 	if (param_disable_deadzones) {
 		hid_warn(hdev, "disabling dead zones\n");
