@@ -731,7 +731,11 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 
 	/* fixup reported button count for Xbox controllers in Linux mode */
 	if (*rsize >= 164) {
-		/* 11 buttons instead of 10: properly remap the Xbox button */
+		/*
+		 * 12 buttons instead of 10: properly remap the
+		 * Xbox button (button 11)
+		 * Share button (button 12)
+		 */
 		if (rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
@@ -889,6 +893,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		xdata->idev->id.product = 0x02E0;
 		break;
 	case 0x0B05:
+	case 0x0B13:
 		xdata->idev->id.product = 0x02E0;
 		xdata->idev->id.version = 0x00000903;
 		break;
