@@ -189,7 +189,7 @@ In order to update xpadneo, do the following
 
 ### Uninstallation
 
-* If using DKSM: Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
+* If using DKMS: Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
 * otherwise follow the steps above (generic distribution)
 
 
