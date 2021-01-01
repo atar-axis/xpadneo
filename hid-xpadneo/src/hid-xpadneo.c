@@ -513,8 +513,11 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	if (param_trigger_rumble_mode == PARAM_TRIGGER_RUMBLE_DISABLE)
 		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
 
-	if (param_ff_connect_notify)
+	if (param_ff_connect_notify) {
+		xpadneo_benchmark_start(xpadneo_welcome_rumble);
 		xpadneo_welcome_rumble(hdev);
+		xpadneo_benchmark_stop(xpadneo_welcome_rumble);
+	}
 
 	/* initialize our rumble command throttle */
 	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;

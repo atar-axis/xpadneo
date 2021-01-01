@@ -28,6 +28,15 @@ do {									\
 } while (0)
 #endif
 
+/* benchmark helper */
+#define xpadneo_benchmark_start(name) \
+do { \
+	unsigned long __##name_jiffies = jiffies; \
+	pr_info("xpadneo " #name " start\n")
+#define xpadneo_benchmark_stop(name) \
+	pr_info("xpadneo " #name " took %ldms\n", (jiffies - __##name_jiffies) * 1000 / HZ); \
+} while (0)
+
 /* button aliases */
 #define BTN_SHARE KEY_RECORD
 #define BTN_XBOX  KEY_HOMEPAGE
