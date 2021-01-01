@@ -1189,6 +1189,7 @@ static struct hid_driver xpadneo_driver = {
 
 static int __init xpadneo_init(void)
 {
+	pr_info("loaded hid-xpadneo %s\n", DRV_VER);
 	dbg_hid("xpadneo:%s\n", __func__);
 	xpadneo_rumble_wq = alloc_ordered_workqueue("xpadneo/rumbled", WQ_HIGHPRI);
 	if (xpadneo_rumble_wq) {
