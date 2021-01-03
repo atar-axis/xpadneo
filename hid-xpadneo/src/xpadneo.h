@@ -46,7 +46,7 @@ do { \
 #define PARAM_TRIGGER_RUMBLE_DIRECTIONAL 1
 #define PARAM_TRIGGER_RUMBLE_DISABLE     2
 
-/* module parameter "quriks" */
+/* module parameter "quirks" */
 #define XPADNEO_QUIRK_NO_PULSE          1
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     4
