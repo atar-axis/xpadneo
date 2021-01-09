@@ -908,7 +908,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 			 "(changed PID from 0x%04X to 0x%04X)\n", hdev->product,
 			 (u16)xdata->idev->id.product);
 
-	if (hdev->version != xdata->idev->id.product)
+	if (hdev->version != xdata->idev->id.version)
 		hid_info(hdev,
 			 "working around wrong SDL2 mappings "
 			 "(changed version from 0x%08X to 0x%08X)\n", hdev->version,
