@@ -110,6 +110,7 @@ struct xpadneo_devdata {
 	struct input_dev *idev;
 
 	/* quirk flags */
+	unsigned int original_rsize;
 	u32 quirks;
 
 	/* profile switching */
