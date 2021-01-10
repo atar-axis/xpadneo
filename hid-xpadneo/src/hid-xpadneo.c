@@ -95,7 +95,6 @@ static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
-	DEVICE_OUI_QUIRK("44:16:22", XPADNEO_QUIRK_SHARE_BUTTON),
 };
 
 struct usage_map {
@@ -1174,7 +1173,8 @@ static const struct hid_device_id xpadneo_devices[] = {
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES},
 
 	/* XBOX ONE Series X / S */
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13)},
+	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON},
 
 	/* SENTINEL VALUE, indicates the end */
 	{}
