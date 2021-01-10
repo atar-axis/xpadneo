@@ -702,11 +702,11 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	xdata->original_rsize = *rsize;
-	hid_notice(hdev, "descriptor size: %d bytes\n", *rsize);
+	hid_info(hdev, "report descriptor size: %d bytes\n", *rsize);
 
 	/* fixup trailing NUL byte */
 	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
-		hid_notice(hdev, "fixing up report size\n");
+		hid_notice(hdev, "fixing up report descriptor size\n");
 		*rsize -= 1;
 	}
 
