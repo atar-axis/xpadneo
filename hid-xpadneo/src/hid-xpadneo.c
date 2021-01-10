@@ -702,6 +702,11 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	xdata->original_rsize = *rsize;
+	hid_notice(hdev, "descriptor size: %d bytes\n", *rsize);
+
 	/* fixup trailing NUL byte */
 	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
 		hid_notice(hdev, "fixing up report size\n");
@@ -743,7 +748,6 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
-			struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 			hid_notice(hdev, "fixing up button mapping\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
 			rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
