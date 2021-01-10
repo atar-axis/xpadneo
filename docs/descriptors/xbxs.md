@@ -1,4 +1,4 @@
-# USB Descriptor for Xbox One Series S / X Wireless
+# USB Descriptor for Xbox One Series X|S Wireless
 
 Hex dump of the controller descriptor:
 ```
@@ -164,4 +164,54 @@ Parsed descriptor:
 // 283 bytes
 
 // best guess: USB HID Report Descriptor
+```
+
+btmon Logs:
+```
+Bluetooth monitor ver 5.55
+= Note: Linux version 5.10.5-arch1-1 (x86_64)                          0.182753
+= Note: Bluetooth subsystem version 2.22                               0.182760
+= New Index: 9C:FC:E8:B8:2C:A6 (Primary,USB,hci0)               [hci0] 0.182763
+= Open Index: 9C:FC:E8:B8:2C:A6                                 [hci0] 0.182765
+= Index Info: 9C:FC:E8:B8:2C:A6 (Intel Corp.)                   [hci0] 0.182767
+@ MGMT Open: bluetoothd (privileged) version 1.18             {0x0001} 0.182770
+> ACL Data RX: Handle 256 flags 0x02 dlen 14                 #1 [hci0] 0.254476
+      Channel: 65 len 10 [PSM 0 mode Basic (0x00)] {chan 65535}
+        a1 01 00 00 00 00 00 00 00 00                    ..........
+
+
+## select
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23                #2 [hci0] 3.043182
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000800
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23                #3 [hci0] 3.160076
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000800
+## share
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23               #27 [hci0] 5.140647
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000001
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23               #28 [hci0] 5.230076
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000001
+## back
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23               #43 [hci0] 6.535466
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000400
+> ACL Data RX: Handle 3586 flags 0x02 dlen 23               #44 [hci0] 6.580045
+      ATT: Handle Value Notification (0x1b) len 18
+        Handle: 0x001e
+          Data: eb7e5f80eb7f85800000000000000400
+                ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
+                1 2 3 4 5 6 7 8 9 10  12  14  16
+                                    11  13  15
+
+[15] = 0x04 Back
+[15] = 0x08 Select
+[16] = 0x01 Share
 ```
