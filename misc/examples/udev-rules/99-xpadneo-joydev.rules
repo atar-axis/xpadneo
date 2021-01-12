@@ -1,2 +1,2 @@
 # Auto-load your customized joydev mapping, needed for some emulators
-KERNEL=="js*", ACTION=="add", DRIVERS=="xpadneo", RUN+="/usr/bin/jscal-restore %E{DEVNAME}"
+KERNEL=="js*", ACTION=="add|change", DRIVERS=="xpadneo", RUN+="/usr/bin/jscal-restore %E{DEVNAME}"
