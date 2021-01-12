@@ -27,7 +27,7 @@ MODULE_PARM_DESC(combined_z_axis,
 static u8 param_trigger_rumble_mode = 0;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_mode,
-		 "(u8) Trigger rumble mode. 0: pressure, 1: directional, 2: disable.");
+		 "(u8) Trigger rumble mode. 0: pressure, 1: directional (deprecated), 2: disable.");
 
 static u8 param_rumble_attenuation[2];
 module_param_array_named(rumble_attenuation, param_rumble_attenuation, byte, NULL, 0644);
@@ -1195,6 +1195,10 @@ static int __init xpadneo_init(void)
 {
 	pr_info("loaded hid-xpadneo %s\n", DRV_VER);
 	dbg_hid("xpadneo:%s\n", __func__);
+
+	if (param_trigger_rumble_mode == 1)
+		pr_warn("hid-xpadneo trigger_rumble_mode=1 is deprecated\n");
+
 	xpadneo_rumble_wq = alloc_ordered_workqueue("xpadneo/rumbled", WQ_HIGHPRI);
 	if (xpadneo_rumble_wq) {
 		int ret = hid_register_driver(&xpadneo_driver);
