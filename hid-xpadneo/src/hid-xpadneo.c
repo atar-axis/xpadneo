@@ -94,7 +94,7 @@ struct quirk {
 static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
-			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
+			 XPADNEO_QUIRK_NO_MOTOR_MASK),
 };
 
 struct usage_map {

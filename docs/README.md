@@ -88,10 +88,20 @@ This controller uses BLE (Bluetooth low energy) and can only be supported if you
 
 ### 8BitDo controllers
 
-This driver respects the Nintendo layout of those controllers and exposes them correctly as button A, B, X, and Y
-as labelled on the device. This is swapped compared to the original Xbox controller layout. You can override that
-behavior with a quirk flag (by removing the Nintendo layout bit). This controller uses emulated profile switching
-support (see below).
+This driver supports the Nintendo layout of those controllers to exposes them correctly as button A, B, X, and Y
+as labelled on the device. This is swapped compared to the original Xbox controller layout. However, this feature is
+not enabled by default. If you want to use this feature, you have to add a quirk flag to the module options:
+
+```
+# /etc/modprobe.conf
+options hid_xpadneo quirks=E4:17:D8:xx:xx:xx:32
+```
+
+where you replace `xx:xx:xx` with the values from your controller MAC (as shown in `dmesg`). The value `32` enables
+Nintendo layout. If you'll want to add other quirk flags, simply add the values,
+e.g. `32` + `7` (default quirks for 8BitDo) = `39`. After changing this, reload the driver or reboot.
+
+This controller uses emulated profile switching support (see below).
 
 **Breaking change:** Users of previous versions of the driver may want to remove their custom SDL mappings. Full
 support has been added for these controllers and broken mapping of previously versions no longer needs to be
