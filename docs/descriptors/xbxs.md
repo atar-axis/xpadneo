@@ -1,4 +1,4 @@
-# USB Descriptor for Xbox One Series X|S Wireless
+# USB Descriptor for Xbox Series X|S Wireless
 
 Hex dump of the controller descriptor:
 ```
