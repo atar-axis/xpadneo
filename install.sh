@@ -11,11 +11,11 @@ if [[ -z "${INSTALLED[*]}" ]]; then
     echo "* copying module to '${DESTDIR}'"
     cp --recursive "hid-xpadneo" "${DESTDIR}"
 
-	echo "* replacing version string if necessary"
-	(
-	 	cd "${DESTDIR}"
-		sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/version.h
-	)
+    echo "* replacing version string if necessary"
+    (
+        cd "${DESTDIR}"
+        sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/version.h
+    )
 
     set -e
 
