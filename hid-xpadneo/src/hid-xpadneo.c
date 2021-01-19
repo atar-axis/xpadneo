@@ -883,7 +883,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * 0xB00 USB Windows and Linux mode
 	 * 0xB05 wireless Linux mode (Android mode)
 	 *
-	 * Xbox Series X/S:
+	 * Xbox Series X|S:
 	 * 0xB12 Dongle, USB Windows and USB Linux mode
 	 * 0xB13 wireless Linux mode (Android mode)
 	 *
@@ -1172,7 +1172,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES },
 
-	/* XBOX ONE Series X / S */
+	/* XBOX Series X|S */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
 	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 
