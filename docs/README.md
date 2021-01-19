@@ -77,9 +77,9 @@ The following features are missing:
 This controller uses native profile switching support (see below).
 
 
-### Xbox Series X / S Wireless controller
+### Xbox Series X|S Wireless controller
 
-Full support for the Xbox Series X / S controller is present including the share button. This is currently mapped
+Full support for the Xbox Series X|S controller is present including the share button. This is currently mapped
 to keyboard event `KEY_RECORD` and may not work at all for any purpose. Thus, this implementation details may
 change during one of the next updates. This controller uses emulated profile switching support (see below).
 
