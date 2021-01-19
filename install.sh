@@ -14,6 +14,7 @@ if [[ -z "${INSTALLED[*]}" ]]; then
     echo "* replacing version string if necessary"
     (
         cd "${DESTDIR}"
+        cp src/version.h.in src/version.h
         sed -i 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' dkms.conf src/version.h
     )
 
