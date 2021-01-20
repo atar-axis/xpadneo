@@ -501,7 +501,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 static int xpadneo_init_ff(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct input_dev *idev = xdata->idev;
+	struct input_dev *gamepad = xdata->gamepad;
 
 	INIT_DELAYED_WORK(&xdata->ff_worker, xpadneo_ff_worker);
 	xdata->output_report_dmabuf = devm_kzalloc(&hdev->dev,
@@ -521,8 +521,8 @@ static int xpadneo_init_ff(struct hid_device *hdev)
 	/* initialize our rumble command throttle */
 	xdata->ff_throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
 
-	input_set_capability(idev, EV_FF, FF_RUMBLE);
-	return input_ff_create_memless(idev, NULL, xpadneo_ff_play);
+	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
+	return input_ff_create_memless(gamepad, NULL, xpadneo_ff_play);
 }
 
 #define XPADNEO_PSY_ONLINE(data)     ((data&0x80)>0)
@@ -672,7 +672,7 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 {
 	int i = 0;
 
-	/* XBE2 reports a full keyboard, which we don't need */
+	/* XBE2 reports a full keyboard, which we don't support yet */
 	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_KEYBOARD)
 		return MAP_IGNORE;
 
@@ -865,7 +865,24 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	int deadzone = 3072, abs_min = 0, abs_max = 65535;
 
-	xdata->idev = hi->input;
+	switch (hi->application) {
+	case HID_GD_GAMEPAD:
+		hid_info(hdev, "gamepad detected\n");
+		xdata->gamepad = hi->input;
+		break;
+	case HID_GD_KEYBOARD:
+		hid_info(hdev, "keyboard detected\n");
+		xdata->keyboard = hi->input;
+		return 0;
+	case HID_CP_CONSUMER_CONTROL:
+		hid_info(hdev, "consumer controls detected\n");
+		xdata->consumer = hi->input;
+		input_set_capability(hi->input, EV_KEY, BTN_XBOX);
+		input_set_capability(hi->input, EV_KEY, BTN_SHARE);
+		return 0;
+	default:
+		hid_warn(hdev, "unhandled input application 0x%x\n", hi->application);
+	}
 
 	/*
 	 * Pretend that we are in Windows pairing mode as we are actually
@@ -891,31 +908,31 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	 * still detect our driver as the correct model. Currently this
 	 * maps all controllers to the same model.
 	 */
-	switch (xdata->idev->id.product) {
+	switch (xdata->gamepad->id.product) {
 	case 0x02E0:
-		xdata->idev->id.version = 0x00000903;
+		xdata->gamepad->id.version = 0x00000903;
 		break;
 	case 0x02FD:
-		xdata->idev->id.product = 0x02E0;
+		xdata->gamepad->id.product = 0x02E0;
 		break;
 	case 0x0B05:
 	case 0x0B13:
-		xdata->idev->id.product = 0x02E0;
-		xdata->idev->id.version = 0x00000903;
+		xdata->gamepad->id.product = 0x02E0;
+		xdata->gamepad->id.version = 0x00000903;
 		break;
 	}
 
-	if (hdev->product != xdata->idev->id.product)
+	if (hdev->product != xdata->gamepad->id.product)
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
 			 "(changed PID from 0x%04X to 0x%04X)\n", hdev->product,
-			 (u16)xdata->idev->id.product);
+			 (u16)xdata->gamepad->id.product);
 
-	if (hdev->version != xdata->idev->id.version)
+	if (hdev->version != xdata->gamepad->id.version)
 		hid_info(hdev,
 			 "working around wrong SDL2 mappings "
 			 "(changed version from 0x%08X to 0x%08X)\n", hdev->version,
-			 xdata->idev->id.version);
+			 xdata->gamepad->id.version);
 
 	if (param_disable_deadzones) {
 		hid_warn(hdev, "disabling dead zones\n");
@@ -928,16 +945,20 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		abs_max = 32767;
 	}
 
-	input_set_abs_params(xdata->idev, ABS_X, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->idev, ABS_Y, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->idev, ABS_RX, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->idev, ABS_RY, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->gamepad, ABS_X, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->gamepad, ABS_Y, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->gamepad, ABS_RX, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->gamepad, ABS_RY, abs_min, abs_max, 32, deadzone);
 
-	input_set_abs_params(xdata->idev, ABS_Z, 0, 1023, 4, 0);
-	input_set_abs_params(xdata->idev, ABS_RZ, 0, 1023, 4, 0);
+	input_set_abs_params(xdata->gamepad, ABS_Z, 0, 1023, 4, 0);
+	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, 1023, 4, 0);
 
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-	input_set_abs_params(xdata->idev, ABS_MISC, -1023, 1023, 3, 63);
+	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
+
+	/* do not report the consumer control buttons as part of the gamepad */
+	__clear_bit(BTN_XBOX, xdata->gamepad->keybit);
+	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
 
 	return 0;
 }
@@ -946,7 +967,8 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			 struct hid_usage *usage, __s32 value)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct input_dev *idev = xdata->idev;
+	struct input_dev *gamepad = xdata->gamepad;
+	struct input_dev *consumer = xdata->consumer;
 
 	if (usage->type == EV_ABS) {
 		switch (usage->code) {
@@ -956,7 +978,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		case ABS_RY:
 			/* Linux Gamepad Specification */
 			if (param_gamepad_compliance) {
-				input_report_abs(idev, usage->code, value - 32768);
+				input_report_abs(gamepad, usage->code, value - 32768);
 				/* no need to sync here */
 				goto stop_processing;
 			}
@@ -982,15 +1004,24 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->xbox_button_down = false;
 			if (xdata->profile_switched) {
 				xdata->profile_switched = false;
-			} else {
+			} else if (consumer) {
 				/* replay cached event */
-				input_report_key(idev, BTN_XBOX, 1);
-				input_sync(idev);
+				input_report_key(consumer, BTN_XBOX, 1);
+				input_sync(consumer);
 				/* synthesize the release to remove the scan code */
-				input_report_key(idev, BTN_XBOX, 0);
-				input_sync(idev);
+				input_report_key(consumer, BTN_XBOX, 0);
+				input_sync(consumer);
 			}
 		}
+		if (!consumer)
+			goto consumer_missing;
+		goto stop_processing;
+	} else if ((usage->type == EV_KEY) && (usage->code == BTN_SHARE)) {
+		/* move the Share button to the consumer control device */
+		if (consumer)
+			input_report_key(consumer, BTN_SHARE, value);
+		else
+			goto consumer_missing;
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
@@ -1021,9 +1052,12 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 combine_z_axes:
 	if (++xdata->count_abs_z_rz == 2) {
 		xdata->count_abs_z_rz = 0;
-		input_report_abs(idev, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
+		input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
 	}
 	return 0;
+
+consumer_missing:
+	hid_err(hdev, "consumer controls not detected\n");
 
 stop_processing:
 	return 1;
@@ -1034,16 +1068,21 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	int i, ret;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
+	if (!xdata->gamepad) {
+		hid_err(hdev, "gamepad not detected\n");
+		return -EINVAL;
+	}
+
 	xdata->battery.name =
-	    kasprintf(GFP_KERNEL, "%s [%s]", xdata->idev->name, xdata->idev->uniq);
+	    kasprintf(GFP_KERNEL, "%s [%s]", xdata->gamepad->name, xdata->gamepad->uniq);
 	if (!xdata->battery.name) {
 		ret = -ENOMEM;
 		goto err_free_name;
 	}
 
 	xdata->battery.name_pnc =
-	    kasprintf(GFP_KERNEL, "%s [%s] Play'n Charge Kit", xdata->idev->name,
-		      xdata->idev->uniq);
+	    kasprintf(GFP_KERNEL, "%s [%s] Play'n Charge Kit", xdata->gamepad->name,
+		      xdata->gamepad->uniq);
 	if (!xdata->battery.name_pnc) {
 		ret = -ENOMEM;
 		goto err_free_name;
@@ -1052,17 +1091,18 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	for (i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
 		const struct quirk *q = &xpadneo_quirks[i];
 
-		if (q->name_match && (strncmp(q->name_match, xdata->idev->name, q->name_len) == 0))
+		if (q->name_match
+		    && (strncmp(q->name_match, xdata->gamepad->name, q->name_len) == 0))
 			xdata->quirks |= q->flags;
 
-		if (q->oui_match && (strncasecmp(q->oui_match, xdata->idev->uniq, 8) == 0))
+		if (q->oui_match && (strncasecmp(q->oui_match, xdata->gamepad->uniq, 8) == 0))
 			xdata->quirks |= q->flags;
 	}
 
 	kernel_param_lock(THIS_MODULE);
 	for (i = 0; i < param_quirks.nargs; i++) {
-		int offset = strnlen(xdata->idev->uniq, 18);
-		if ((strncasecmp(xdata->idev->uniq, param_quirks.args[i], offset) == 0)
+		int offset = strnlen(xdata->gamepad->uniq, 18);
+		if ((strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], offset) == 0)
 		    && (param_quirks.args[i][offset] == ':')) {
 			char *quirks_arg = &param_quirks.args[i][offset + 1];
 			u32 quirks = 0;
@@ -1071,7 +1111,7 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
 				goto err_free_name;
 			} else {
-				hid_info(hdev, "quirks override: %s\n", xdata->idev->uniq);
+				hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
 				xdata->quirks = quirks;
 			}
 			break;
@@ -1107,6 +1147,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	xdata->quirks = id->driver_data;
 
 	xdata->hdev = hdev;
+	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
 	hid_set_drvdata(hdev, xdata);
 
 	ret = hid_parse(hdev);

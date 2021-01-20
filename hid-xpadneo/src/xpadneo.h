@@ -116,7 +116,7 @@ struct xpadneo_devdata {
 
 	/* logical device interfaces */
 	struct hid_device *hdev;
-	struct input_dev *idev;
+	struct input_dev *consumer, *gamepad, *keyboard;
 
 	/* quirk flags */
 	unsigned int original_rsize;
