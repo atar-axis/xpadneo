@@ -83,3 +83,13 @@ hci0:   Primary controller
 
 * Unspecified model (https://github.com/atar-axis/xpadneo/issues/180):
   * `btmon` logs showed very low input report rate and high input lag (300ms+)
+
+
+### Intel
+
+* Status: incompatible (https://github.com/atar-axis/xpadneo/issues/270)
+  * OUI: DC:1B:A1 (Intel)
+  * Used as on-board chipset: Gigabyte B450 Aorus Pro WiFi 1.0 with integrated Bluetooth
+* Status: bluetoothd logs "Request attribute has encountered an unlikely error"
+  * Chipset: AX200
+  * Used as on-board chipset: ASUS B550-i
