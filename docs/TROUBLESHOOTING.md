@@ -7,6 +7,16 @@
 If your Gamepad is stuck in a Connected / Disconnected loop, then it may be caused by ERTM.
 Usually the driver does disable this incompatible mode automatically, but sometimes things go wrong.
 
+Also, there seems to be a bug in the L2CAP handling of the kernel and you may need to force-disable
+this setting:
+```
+# cat /sys/module/bluetooth/parameters/disable_ertm
+Y
+```
+
+If it says `N`, write `Y` to the file and try again. You may need to remove your partially paired
+controller from your Bluetooth settings completely before pairing again.
+
 
 #### Incompatible Bluetooth Chipset
 
@@ -33,6 +43,9 @@ Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar
 
 If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
 or the gamepad is quirky and doesn't fully support the protocol.
+
+Check the output of the `dmesg` command to see whether xpadneo was loaded and logged your
+gamepad.
 
 
 ### Gamepad has quirks (i.e., wrong rumble behavior)
