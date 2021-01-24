@@ -44,6 +44,17 @@ driver and let's you try different combination of parameters. The utility is loc
 `misc/examples/c_hidraw`.
 
 
+### Gamepad does not connect at all, runs a reconnect loop, or immediately disconnects
+
+Check whether ERTM was disabled (see above). Also, some newer models use a different Bluetooth protocol "Bluetooth
+low energe" (BLE) which you may accidentally have disabled. Check the following settings in `/etc/bluetooth/main.conf`:
+```
+[General]
+ControllerMode = dual
+Privacy = device
+```
+
+
 ### Gamepad axes are swapped, seemingly unresponsive or strange behavior
 
 If you observe this problem with `jstest`, `systemsettings joystick` (KDE) or `jstest-gtk`, there's usually nothing
