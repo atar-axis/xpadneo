@@ -14,6 +14,7 @@ some of which are fixed now - others are not:
     * workaround: UDEV rule (see `src/etc-udev-rules.d`)
   * official way as from kernel 4.16: Specialized drivers are bound to the device [automatically](https://github.com/torvalds/linux/commit/e04a0442d33b8cf183bba38646447b891bb02123#diff-88d50bd989bbdf3bbd2f3c5dcd4edcb9)
 * Cambridge Silicon Radio (CSR) chipsets do have problems while reconnecting (OUI 00:1A:7D)
+  * Most of these problems may be fixed in kernel 5.10
 * Qualcomm chipsets may have performance and lag problems (OUI 9C:B6:D0)
 * Some Bluetooth dongles may need additional firmware for proper operation
   * Possible solution: try installing `linux-firmware` from your distribution
