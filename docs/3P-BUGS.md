@@ -5,9 +5,6 @@ some of which are fixed now - others are not:
 
 * Broken Battery Indicator in KDE
   fixed! https://www.kde.org/announcements/kde-frameworks-5.45.0.php
-* L2CAP Layer does not handle ERTM requests
-  * workaround: disable ERTM
-  * unofficially fixed: see kernel_patches folder
 * Binding of specialized drivers
   * before kernel 4.16
     * official way: Add driver to `hid_have_special_driver` an recompilation of HIDcore
