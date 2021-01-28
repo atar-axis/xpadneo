@@ -4,8 +4,7 @@
 
 #### Enhanced ReTransmission Mode is enabled
 
-If your Gamepad is stuck in a Connected / Disconnected loop, then it may be caused by ERTM.
-Usually the driver does disable this incompatible mode automatically, but sometimes things go wrong.
+**Obsolete:** This section is scheduled for removal. Future kernels will include the proper fix for this.
 
 Also, there seems to be a bug in the L2CAP handling of the kernel and you may need to force-disable
 this setting:
