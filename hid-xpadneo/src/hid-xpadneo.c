@@ -672,10 +672,6 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 {
 	int i = 0;
 
-	/* XBE2 reports a full keyboard, which we don't support yet */
-	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_KEYBOARD)
-		return MAP_IGNORE;
-
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
 		struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
