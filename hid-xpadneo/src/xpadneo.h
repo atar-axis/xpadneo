@@ -12,9 +12,14 @@
 #define XPADNEO_H_FILE
 
 #include <linux/hid.h>
+#include <linux/version.h>
 
 #include "hid-ids.h"
 #include "version.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,18,0)
+#error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
+#endif
 
 /* helper for printing a notice only once */
 #ifndef hid_notice_once

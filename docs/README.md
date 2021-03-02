@@ -30,7 +30,15 @@ Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller 
 These other projects may not support some of the advanced features of xpadneo.
 
 
-## SDL2 Breaking Changes
+## Breaking Changes
+
+### Kernel 4.18 or newer required
+
+As of xpadneo v0.10, we require kernel 4.18 or later to utilize `HID_QUIRK_INPUT_PER_APP` which splits the gamepad into
+multiple sub-devices to fix problems and incompatibilities at several layers.
+
+
+### SDL 2.0.12 Breakage
 
 As of SDL 2.0.12, SDL introduced a new HIDAPI which can read HID devices in raw mode, bypassing the drivers. Due to
 the way SDL works, and because xpadneo exposes hidraw devices as user-readable, SDL may see wrong button mappings
