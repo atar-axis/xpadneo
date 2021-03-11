@@ -114,6 +114,10 @@ enum xpadneo_trigger_scale {
 	XBOX_TRIGGER_SCALE_NUM
 } __packed;
 
+#define XPADNEO_MISSING_CONSUMER 1
+#define XPADNEO_MISSING_GAMEPAD  2
+#define XPADNEO_MISSING_KEYBOARD 4
+
 /* private driver instance data */
 struct xpadneo_devdata {
 	/* unique physical device id (randomly assigned) */
@@ -122,6 +126,7 @@ struct xpadneo_devdata {
 	/* logical device interfaces */
 	struct hid_device *hdev;
 	struct input_dev *consumer, *gamepad, *keyboard;
+	short int missing_reported;
 
 	/* quirk flags */
 	unsigned int original_rsize;

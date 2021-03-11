@@ -1053,7 +1053,10 @@ combine_z_axes:
 	return 0;
 
 consumer_missing:
-	hid_err(hdev, "consumer controls not detected\n");
+	if ((xdata->missing_reported && XPADNEO_MISSING_CONSUMER) == 0) {
+		xdata->missing_reported |= XPADNEO_MISSING_CONSUMER;
+		hid_err(hdev, "consumer controls not detected\n");
+	}
 
 stop_processing:
 	return 1;
@@ -1065,7 +1068,10 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	if (!xdata->gamepad) {
-		hid_err(hdev, "gamepad not detected\n");
+		if ((xdata->missing_reported && XPADNEO_MISSING_GAMEPAD) == 0) {
+			xdata->missing_reported |= XPADNEO_MISSING_GAMEPAD;
+			hid_err(hdev, "gamepad not detected\n");
+		}
 		return -EINVAL;
 	}
 
