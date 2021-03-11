@@ -57,7 +57,6 @@ MODULE_PARM_DESC(quirks,
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
 		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
 		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
-		 ", hardware profile switch = " __stringify(XPADNEO_QUIRK_USE_HW_PROFILES)
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
 		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
 		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON));
@@ -870,6 +869,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		input_set_capability(hi->input, EV_KEY, BTN_XBOX);
 		input_set_capability(hi->input, EV_KEY, BTN_SHARE);
 		return 0;
+	case 0xFF000005:
+		hid_info(hdev, "mapping profiles detected\n");
+		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
+		return 0;
 	default:
 		hid_warn(hdev, "unhandled input application 0x%x\n", hi->application);
 	}
@@ -1206,8 +1209,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
 
 	/* XBOX ONE Elite Series 2 */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
-	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05) },
 
 	/* XBOX Series X|S */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
