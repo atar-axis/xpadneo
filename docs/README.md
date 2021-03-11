@@ -14,9 +14,14 @@ Just leave a message if your donation is for a specific use (like a new hardware
 
 ![xpadneo Logo](img/xpadneo.png)
 
-This is the first driver for the Xbox One Wireless Gamepad (which is shipped with the Xbox One S). I wrote it for a student project at fortiss GmbH and it is fully functional but does only support the connection via Bluetooth as yet - more will follow.
+Quote from [@atar-arix (Florian Dollinger)](https://github.com/atar-axis), creator of the initial driver:
 
-Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless Adapter) and a pack of mouthwatering guarana cacao :coffee:
+> This is the first driver for the Xbox One Wireless Gamepad (which is shipped with the Xbox One S). I wrote it for a
+> student project at fortiss GmbH and it is fully functional but does only support the connection via Bluetooth as
+> yet - more will follow.
+>
+> Many thanks to *Kai Krakow* who **sponsored** me a Xbox One Wireless Controller :video_game: (including Wireless
+> Adapter) and a pack of mouthwatering guarana cacao :coffee:
 
 
 ## Other Projects
