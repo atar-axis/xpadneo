@@ -20,10 +20,10 @@ else
 fi
 
 echo "Installing modalias database..."
-install -D -t /etc/modprobe.d etc-modprobe.d/xpadneo.conf
+install -D -m 0644 -t /etc/modprobe.d etc-modprobe.d/xpadneo.conf
 
 echo "Installing udev rules..."
-install -D -t /etc/udev/rules.d etc-udev-rules.d/98-xpadneo.rules
+install -D -m 0644 -t /etc/udev/rules.d etc-udev-rules.d/98-xpadneo.rules
 
 echo "Reloading udev..."
 udevadm control --reload
