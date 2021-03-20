@@ -96,18 +96,18 @@ function set_param {
 
 ## Argument Parsing ##
 function parse_args {
+  if [[ $1 == "" ]];
+  then
+    display_help
+    exit 1
+  fi
+
   if ! grep -sq 'options hid_xpadneo' "${CONF_FILE}";
   then
     # If line doesn't exist echo all of the defaults.
     mkdir -p "$(dirname "${CONF_FILE}")"
     touch "${CONF_FILE}"
     echo "options hid_xpadneo disable_deadzones=0 rumble_attenuation=0 trigger_rumble_mode=0" >> "$CONF_FILE"
-  fi
-
-  if [[ $1 == "" ]];
-  then
-    display_help
-    exit 0
   fi
 
   eval set -- "$OPTS"
