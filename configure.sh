@@ -2,7 +2,6 @@
 # Written by CodeCanna, refined by atar-axis
 
 cd "$(dirname "$0")" || exit 1
-source "lib/installer.sh"
 
 set -o posix
 
@@ -20,11 +19,6 @@ OPTS=$(getopt -n "$NAME" -o h:m:r: -l help,version,trigger-rumble-mode:,rumble-a
 ## Print Help ##
 function display_help {
   cat ./docs/config_help
-}
-
-## Print Version ##
-function display_version {
-  echo "$NAME: Installed xpadneo version: ${INSTALLED[*]}"
 }
 
 ## Parameter Validation ##
@@ -120,11 +114,6 @@ function parse_args {
         shift
         ;;
 
-      --version)
-        display_version
-        shift
-        ;;
-
       -m | --trigger-rumble-mode)
         key='trigger_rumble_mode'
         value="${2#*=}"
@@ -158,21 +147,10 @@ function parse_args {
 
 PARAMETERS=( "$@" )
 
-# Check if xpadneo is installed
-if [[ -z "${INSTALLED[*]}" ]];
-then
-    echo "$NAME: Installation not found. Did you run ./install.sh?"
-    exit 1
-fi
-
-# Check if the correct version is installed
-if [[ "$VERSION" != "${INSTALLED[0]}" ]];
-then
-    echo "$NAME: Your version of xpadneo seems to be out of date."
-    echo "$NAME: Please run ./update.sh from the git directory to update to the latest version."
-    echo "$NAME: Installed version is ${INSTALLED[0]}, but this script is for version ${VERSION}"
-    exit 2
-fi
-
 parse_args "${PARAMETERS[@]}"
 
+# Check if xpadneo is installed
+if lsmod | grep -vq 'hid-xpadneo';
+then
+    >&2 echo -e "$0: WARNING: hid-xpadneo not loaded, configured anyways"
+fi
