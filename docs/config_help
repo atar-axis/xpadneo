@@ -7,8 +7,8 @@ NOTE: Short options don't require an equals sign, only long options.  EX. -r 3 v
 --version
 	Display version number of xpadneo
 
--f, --disable-ff
-	Disable the force feedback (Rumble).  [0 (enable all), 1 (disable main only), 2 (disable triggers only), 3 (disable all)]
+-m, --trigger-rumble-mode
+	Select the parameters for trigger rumble.  [0 (pressure controlled), 1 (directional, deprecated), 2 (disable trigger rumble)]
 
 -r, --rumble-attenuation
 	Attenuate the strength of the trigger force feedback. [0 (none, full rumble) to 100 (max, no rumble)]
