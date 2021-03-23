@@ -14,7 +14,7 @@ Just leave a message if your donation is for a specific use (like a new hardware
 
 ![xpadneo Logo](img/xpadneo.png)
 
-Quote from [@atar-arix (Florian Dollinger)](https://github.com/atar-axis), creator of the initial driver:
+Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creator of the initial driver:
 
 > This is the first driver for the Xbox One Wireless Gamepad (which is shipped with the Xbox One S). I wrote it for a
 > student project at fortiss GmbH and it is fully functional but does only support the connection via Bluetooth as
