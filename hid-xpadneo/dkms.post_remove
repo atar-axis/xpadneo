@@ -8,7 +8,7 @@ echo "Uninstalling modalias database..."
 rm -f /etc/modprobe.d/xpadneo.conf
 
 echo "Uninstalling udev rules..."
-rm -f /etc/udev/rules.d/98-xpadneo.rules
+rm -f /etc/udev/rules.d/60-xpadneo.rules
 
 echo "Reloading udev..."
 udevadm control --reload
