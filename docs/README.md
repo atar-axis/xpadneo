@@ -113,9 +113,11 @@ customizing each profile does not exist yet.
 
 ### Native profile switching support
 
-The driver support native profile switching for
+The driver support native profile switching for the Xbox Elite Series 2 controller. However, the feature is not
+finalized yet:
 
-- Profile support. All four profiles behave the same way currently, and there is no support for configuring them.
+- All four profiles behave the same way currently, and there is no support for configuring them. This may be
+  different if profiles have in configured in Windows already, that is still untested.
 
 
 ### Emulated profile switching support
