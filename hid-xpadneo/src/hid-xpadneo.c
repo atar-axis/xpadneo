@@ -52,7 +52,7 @@ static struct {
 } param_quirks;
 module_param_array_named(quirks, param_quirks.args, charp, &param_quirks.nargs, 0644);
 MODULE_PARM_DESC(quirks,
-		 "(string) Override device quirks, specify as: \"MAC1:quirks1[,...16]\""
+		 "(string) Override or change device quirks, specify as: \"MAC1{:,+,-}quirks1[,...16]\""
 		 ", MAC format = 11:22:33:44:55:66"
 		 ", no pulse parameters = " __stringify(XPADNEO_QUIRK_NO_PULSE)
 		 ", no trigger rumble = " __stringify(XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
@@ -1102,16 +1102,24 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	for (i = 0; i < param_quirks.nargs; i++) {
 		int offset = strnlen(xdata->gamepad->uniq, 18);
 		if ((strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], offset) == 0)
-		    && (param_quirks.args[i][offset] == ':')) {
+		    && ((param_quirks.args[i][offset] == ':')
+		    || (param_quirks.args[i][offset] == '+')
+		    || (param_quirks.args[i][offset] == '-'))) {
 			char *quirks_arg = &param_quirks.args[i][offset + 1];
 			u32 quirks = 0;
 			ret = kstrtou32(quirks_arg, 0, &quirks);
 			if (ret) {
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
 				goto err_free_name;
-			} else {
+			} else if (param_quirks.args[i][offset] == ':') {
 				hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
 				xdata->quirks = quirks;
+			} else if (param_quirks.args[i][offset] == '-') {
+				hid_info(hdev, "quirks removed: %s flag 0x%08X\n", xdata->gamepad->uniq, quirks);
+				xdata->quirks &= ~quirks;
+			} else {
+				hid_info(hdev, "quirks added: %s flags 0x%08X\n", xdata->gamepad->uniq, quirks);
+				xdata->quirks |= quirks;
 			}
 			break;
 		}

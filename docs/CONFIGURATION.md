@@ -23,7 +23,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Trigger-only rumble is not possible
 * `quirks` (default empty)
   * Let's you adjust the quirk mode of your controller
-  * Comma separated list of `address:flags` pairs
+  * Comma separated list of `address:flags` pairs (use `+flags` or `-flags` to change flags instead)
   * Specify your controller MAC address in the format `11:22:33:44:55:66`
   * Specify the flags as sum of the following:
     * `1` if your controller does not support pulse parameters (i.e., 8BitDo controllers)
