@@ -17,4 +17,4 @@ clean modules modules_install: src/version.h
 reinstall: modules
 	sudo make modules_install
 	sudo rmmod hid-xpadneo || true
-	sudo modprobe hid-xpadneo
+	sudo modprobe hid-xpadneo $(MOD_PARAMS)
