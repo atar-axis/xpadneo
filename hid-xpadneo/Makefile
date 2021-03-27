@@ -3,7 +3,7 @@ LD := ld.bfd
 
 all: modules
 
-.INTERMEDIATE: ../VERSION
+.INTERMEDIATE: ../VERSION src/version.h
 
 ../VERSION:
 	git describe --tags --dirty >$@
