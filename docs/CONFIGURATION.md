@@ -29,6 +29,10 @@ files in `/sys/module/hid_xpadneo/parameters`:
     * `1` if your controller does not support pulse parameters (i.e., 8BitDo controllers)
     * `2` if your controller does not support trigger rumble (most clones in compat-mode)
     * `4` if your controller does not support individual motor programming (i.e., 8BitDo controllers)
+    * `8` if your controller supports hardware profiles (auto-detected, do not set manually)
+    * `16` if your controller boots in Linux mode (auto-detected, do not change manually)
+    * `32` if you prefer to use Nintendo button mappings (i.e., 8BitDo controllers, defaults to off)
+    * `64` if your controller has a awkwardly mapped Share button (auto-detected, do not set manually)
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how
 that works:
