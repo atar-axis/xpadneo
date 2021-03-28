@@ -747,6 +747,20 @@ static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int
 	return rdesc;
 }
 
+static void xpadneo_toggle_mouse(struct xpadneo_devdata *xdata)
+{
+	if (xdata->mouse_mode) {
+		xdata->mouse_mode = false;
+		hid_info(xdata->hdev, "mouse mode disabled\n");
+	} else {
+		xdata->mouse_mode = true;
+		hid_info(xdata->hdev, "mouse mode enabled\n");
+	}
+
+	/* Indicate that a request was made */
+	xdata->profile_switched = true;
+}
+
 static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profile,
 				   const bool emulated)
 {
@@ -1034,6 +1048,10 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			case BTN_Y:
 				if (value == 1)
 					xpadneo_switch_profile(xdata, 3, true);
+				goto stop_processing;
+			case BTN_SELECT:
+				if (value == 1)
+					xpadneo_toggle_mouse(xdata);
 				goto stop_processing;
 			}
 		}

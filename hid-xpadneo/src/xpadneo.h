@@ -136,6 +136,9 @@ struct xpadneo_devdata {
 	bool xbox_button_down, profile_switched;
 	u8 profile;
 
+	/* mouse mode */
+	bool mouse_mode;
+
 	/* trigger scale */
 	struct {
 		u8 left, right;
