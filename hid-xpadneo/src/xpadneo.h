@@ -39,7 +39,7 @@ do { \
 	unsigned long __##name_jiffies = jiffies; \
 	pr_info("xpadneo " #name " start\n")
 #define xpadneo_benchmark_stop(name) \
-	pr_info("xpadneo " #name " took %ldms\n", (jiffies - __##name_jiffies) * 1000 / HZ); \
+	pr_info("xpadneo " #name " took %ums\n", jiffies_to_msecs(jiffies - __##name_jiffies)); \
 } while (0)
 
 /* button aliases */
@@ -61,7 +61,7 @@ do { \
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
 
 /* timing of rumble commands to work around firmware crashes */
-#define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
+#define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(10)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
 
 /* rumble motors enable bits */
