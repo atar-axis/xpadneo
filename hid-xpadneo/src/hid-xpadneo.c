@@ -1103,8 +1103,8 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		int offset = strnlen(xdata->gamepad->uniq, 18);
 		if ((strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], offset) == 0)
 		    && ((param_quirks.args[i][offset] == ':')
-		    || (param_quirks.args[i][offset] == '+')
-		    || (param_quirks.args[i][offset] == '-'))) {
+			|| (param_quirks.args[i][offset] == '+')
+			|| (param_quirks.args[i][offset] == '-'))) {
 			char *quirks_arg = &param_quirks.args[i][offset + 1];
 			u32 quirks = 0;
 			ret = kstrtou32(quirks_arg, 0, &quirks);
@@ -1115,10 +1115,12 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 				hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
 				xdata->quirks = quirks;
 			} else if (param_quirks.args[i][offset] == '-') {
-				hid_info(hdev, "quirks removed: %s flag 0x%08X\n", xdata->gamepad->uniq, quirks);
+				hid_info(hdev, "quirks removed: %s flag 0x%08X\n",
+					 xdata->gamepad->uniq, quirks);
 				xdata->quirks &= ~quirks;
 			} else {
-				hid_info(hdev, "quirks added: %s flags 0x%08X\n", xdata->gamepad->uniq, quirks);
+				hid_info(hdev, "quirks added: %s flags 0x%08X\n",
+					 xdata->gamepad->uniq, quirks);
 				xdata->quirks |= quirks;
 			}
 			break;
