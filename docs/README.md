@@ -49,8 +49,13 @@ multiple sub-devices to fix problems and incompatibilities at several layers.
 As of SDL 2.0.12, SDL introduced a new HIDAPI which can read HID devices in raw mode, bypassing the drivers. Due to
 the way SDL works, and because xpadneo exposes hidraw devices as user-readable, SDL may see wrong button mappings
 because it may make wrong assumptions about the protocol mode of Xbox and compatible controllers. If you see wrong
-button mappings / missing buttons in SDL applications, you may need to turn off this behavior by setting an
-environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
+button mappings / missing buttons in SDL applications, or rumble does not work, you may need to turn off this behavior
+by setting an environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
+
+Observed problems:
+
+* Wrong mappings when using newer SDL2 versions, should be fixed by latest xpadneo
+* Rumble doesn't work at all, needs to be fixed by SDL2
 
 
 ## Advantages of this driver
@@ -72,6 +77,7 @@ environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
 * Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users
 * Share button support on supported controllers
+* Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
 
 
 ### Xbox One S Wireless controller
