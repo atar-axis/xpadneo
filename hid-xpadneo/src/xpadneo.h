@@ -47,7 +47,7 @@ do {									\
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
 
 /* timing of rumble commands to work around firmware crashes */
-#define XPADNEO_RUMBLE_THROTTLE_DELAY   (10L * HZ / 1000)
+#define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(10)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
 
 /* rumble motors enable bits */
