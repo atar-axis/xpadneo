@@ -133,6 +133,7 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 
 - Profiles currently behave all the same, and there is no support for configuring them.
 - Full support will be available once the Xbox Elite Series 2 controller is fully supported.
+- If you hold the button for too long, the controller will turn off - we cannot prevent that.
 
 
 ## Getting started
