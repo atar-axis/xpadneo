@@ -141,7 +141,7 @@ The driver support native profile switching for the Xbox Elite Series 2 controll
 finalized yet:
 
 - All four profiles behave the same way currently, and there is no support for configuring them. This may be
-  different if profiles have in configured in Windows already, that is still untested.
+  different if profiles have been configured in Windows already, that is still untested.
 
 
 ### Emulated profile switching support
