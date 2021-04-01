@@ -1025,10 +1025,10 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		goto stop_processing;
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_SHARE)) {
 		/* move the Share button to the consumer control device */
-		if (consumer)
-			input_report_key(consumer, BTN_SHARE, value);
-		else
+		if (!consumer)
 			goto consumer_missing;
+		input_report_key(consumer, BTN_SHARE, value);
+		input_sync(consumer);
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
