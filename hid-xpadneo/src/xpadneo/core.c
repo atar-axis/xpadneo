@@ -55,6 +55,11 @@ extern void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 		xdata->keyboard_sync = false;
 		input_sync(xdata->keyboard);
 	}
+
+	if (xdata->mouse && xdata->mouse_sync) {
+		xdata->mouse_sync = false;
+		input_sync(xdata->mouse);
+	}
 }
 
 extern void xpadneo_core_missing(struct xpadneo_devdata *xdata, u32 flag)
@@ -64,6 +69,9 @@ extern void xpadneo_core_missing(struct xpadneo_devdata *xdata, u32 flag)
 	if ((xdata->missing_reported & flag) == 0) {
 		xdata->missing_reported |= flag;
 		switch (flag) {
+		case XPADNEO_MISSING_CONSUMER:
+			hid_err(hdev, "consumer control not detected\n");
+			break;
 		case XPADNEO_MISSING_GAMEPAD:
 			hid_err(hdev, "gamepad not detected\n");
 			break;

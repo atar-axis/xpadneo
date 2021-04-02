@@ -21,6 +21,14 @@ extern int xpadneo_init_keyboard(struct xpadneo_devdata *xdata)
 	/* enable key events for keyboard */
 	input_set_capability(xdata->keyboard, EV_KEY, BTN_SHARE);
 
+	/* enable key events for mouse mode */
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_ESC);
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_ENTER);
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_UP);
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_LEFT);
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_RIGHT);
+	input_set_capability(xdata->keyboard, EV_KEY, KEY_DOWN);
+
 	if (synth) {
 		ret = input_register_device(xdata->keyboard);
 		if (ret) {

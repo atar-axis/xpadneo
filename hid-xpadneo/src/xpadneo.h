@@ -13,6 +13,7 @@
 
 #include <linux/hid.h>
 #include <linux/input-event-codes.h>
+#include <linux/timer.h>
 #include <linux/version.h>
 
 #include "hid-ids.h"
@@ -25,6 +26,16 @@
 
 #if KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE
 #error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
+#endif
+
+/* v6.15: del_timer_sync() renamed to timer_delete_sync() */
+#if KERNEL_VERSION(6, 15, 0) > LINUX_VERSION_CODE
+#define timer_delete_sync(t) del_timer_sync(t)
+#endif
+
+/* v6.16: from_timer() renamed to timer_container_of() */
+#ifndef timer_container_of
+#define timer_container_of(v, c, t) from_timer(v, c, t)
 #endif
 
 #ifndef VERSION
@@ -165,8 +176,8 @@ struct xpadneo_devdata {
 
 	/* logical device interfaces */
 	struct hid_device *hdev;
-	struct input_dev *consumer, *gamepad, *keyboard;
-	bool consumer_sync, gamepad_sync, keyboard_sync;
+	struct input_dev *consumer, *gamepad, *keyboard, *mouse;
+	bool consumer_sync, gamepad_sync, keyboard_sync, mouse_sync;
 	short int missing_reported;
 
 	/* revert fixups on removal */
@@ -183,6 +194,14 @@ struct xpadneo_devdata {
 
 	/* mouse mode */
 	bool mouse_mode;
+	struct timer_list mouse_timer;
+	struct {
+		s32 rel_x, rel_y, wheel_x, wheel_y;
+		s32 rel_x_err, rel_y_err, wheel_x_err, wheel_y_err;
+		struct {
+			bool left, right;
+		} analog_button;
+	} mouse_state;
 
 	/* trigger scale */
 	struct {
@@ -220,8 +239,13 @@ struct xpadneo_devdata {
 
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
 extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
+extern int xpadneo_init_mouse(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
+extern int xpadneo_mouse_event(struct xpadneo_devdata *, struct hid_usage *, __s32);
+extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *, struct hid_report *, u8 *, int);
 extern void xpadneo_report(struct hid_device *, struct hid_report *);
 extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
+extern void xpadneo_mouse_report(struct timer_list *);
+extern void xpadneo_toggle_mouse(struct xpadneo_devdata *);
 
 #endif

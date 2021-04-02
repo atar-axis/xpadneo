@@ -786,20 +786,6 @@ static const __u8 *xpadneo_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	return rdesc;
 }
 
-static void xpadneo_toggle_mouse(struct xpadneo_devdata *xdata)
-{
-	if (xdata->mouse_mode) {
-		xdata->mouse_mode = false;
-		hid_info(xdata->hdev, "mouse mode disabled\n");
-	} else {
-		xdata->mouse_mode = true;
-		hid_info(xdata->hdev, "mouse mode enabled\n");
-	}
-
-	/* Indicate that a request was made */
-	xdata->profile_switched = true;
-}
-
 static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profile,
 				   const bool emulated)
 {
@@ -906,6 +892,9 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		}
 	}
 
+	if (xpadneo_mouse_raw_event(xdata, report, data, reportsize))
+		return -1;
+
 	return 0;
 }
 
@@ -938,6 +927,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		return 0;
 	default:
 		hid_warn(hdev, "unhandled input application 0x%x\n", hi->application);
+		return 0;
 	}
 
 	if (param_disable_deadzones) {
@@ -990,6 +980,9 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *gamepad = xdata->gamepad;
 	struct input_dev *keyboard = xdata->keyboard;
+
+	if (xpadneo_mouse_event(xdata, usage, value))
+		goto stop_processing;
 
 	if ((usage->type == EV_KEY) && (usage->code == BTN_GRIPL)) {
 		if (gamepad && xdata->profile == 0) {
@@ -1321,6 +1314,10 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (ret)
 		return ret;
 
+	ret = xpadneo_init_mouse(xdata);
+	if (ret)
+		return ret;
+
 	ret = xpadneo_init_hw(hdev);
 	if (ret) {
 		hid_err(hdev, "hw init failed: %d\n", ret);
@@ -1331,6 +1328,9 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	ret = xpadneo_init_ff(hdev);
 	if (ret)
 		hid_err(hdev, "could not initialize ff, continuing anyway\n");
+
+	timer_setup(&xdata->mouse_timer, xpadneo_mouse_report, 0);
+	mod_timer(&xdata->mouse_timer, jiffies);
 
 	hid_info(hdev, "%s connected\n", xdata->battery.name);
 
@@ -1367,6 +1367,7 @@ static void xpadneo_remove(struct hid_device *hdev)
 		hdev->product = xdata->original_product;
 	}
 
+	timer_delete_sync(&xdata->mouse_timer);
 	cancel_delayed_work_sync(&xdata->ff_worker);
 
 	kfree(xdata->battery.name);
