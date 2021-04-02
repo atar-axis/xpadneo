@@ -102,7 +102,7 @@ If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
 
 ### Broadcom
 
-* [Pluggable USB Bluetooth 4.0 Low Energy Micro Adapter](https://www.amazon.com/Plugable-Bluetooth-Adapter-Raspberry-Compatible/dp/B009ZIILLI/)
+* [Plugable USB Bluetooth 4.0 Low Energy Micro Adapter](https://www.amazon.com/Plugable-Bluetooth-Adapter-Raspberry-Compatible/dp/B009ZIILLI/)
   * Chip set: BCM20702A0
   * `ID 0a5c:21e8 Broadcom Corp. BCM20702A0 Bluetooth 4.0`
   * Performance:
