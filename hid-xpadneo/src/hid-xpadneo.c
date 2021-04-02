@@ -15,6 +15,7 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
+MODULE_AUTHOR("Kai Krakow <kai@kaishome.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
 MODULE_VERSION(XPADNEO_VERSION);
 
