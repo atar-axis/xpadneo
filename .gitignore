@@ -9,3 +9,6 @@ hid-xpadneo/src/*.ko*
 hid-xpadneo/src/*.mod*
 hid-xpadneo/src/*.o*
 hid-xpadneo/src/*.symvers*
+
+#FIXME(kakra) remove after source file split
+hid-xpadneo/src/xpadneo.c
