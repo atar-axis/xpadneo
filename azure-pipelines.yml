@@ -26,5 +26,5 @@ steps:
     sudo ./install.sh --verbose
   displayName: 'install'
 - script: |
-    sudo ./install.sh --verbose
+    sudo ./uninstall.sh --verbose
   displayName: 'uninstall'
