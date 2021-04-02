@@ -1,4 +1,5 @@
 #
 # Makefile for the HID driver
 #
-obj-m	+= hid-xpadneo.o
+ccflags-y += -DVERSION=$(VERSION)
+obj-m += hid-xpadneo.o

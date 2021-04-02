@@ -16,7 +16,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (BT), incl. FF");
-MODULE_VERSION(DRV_VER);
+MODULE_VERSION(XPADNEO_VERSION);
 
 static u8 param_trigger_rumble_mode = 0;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
@@ -1187,7 +1187,7 @@ static struct hid_driver xpadneo_driver = {
 
 static int __init xpadneo_init(void)
 {
-	pr_info("loaded hid-xpadneo %s\n", DRV_VER);
+	pr_info("loaded hid-xpadneo %s\n", XPADNEO_VERSION);
 	dbg_hid("xpadneo:%s\n", __func__);
 
 	if (param_trigger_rumble_mode == 1)

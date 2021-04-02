@@ -5,7 +5,6 @@
 docs/_site/**
 docs/Gemfile.lock
 hid-xpadneo/dkms.conf
-hid-xpadneo/src/version.h
 hid-xpadneo/src/*.ko*
 hid-xpadneo/src/*.mod*
 hid-xpadneo/src/*.o*

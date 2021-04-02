@@ -14,7 +14,12 @@
 #include <linux/hid.h>
 
 #include "hid-ids.h"
-#include "version.h"
+
+#ifndef VERSION
+#error "xpadneo version not defined"
+#endif
+
+#define XPADNEO_VERSION __stringify(VERSION)
 
 /* helper for printing a notice only once */
 #ifndef hid_notice_once
