@@ -8,3 +8,5 @@ obj-m += hid-xpadneo.o
 hid-xpadneo-y += xpadneo.o
 $(obj)/xpadneo.c: $(src)/hid-xpadneo.c
 	cp $< $@
+
+hid-xpadneo-y += xpadneo/core.o
