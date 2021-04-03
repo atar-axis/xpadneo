@@ -1,3 +1,99 @@
+# Changes since v0.9 up to v0.9.1
+
+This is a maintenance release of xpadneo v0.9 to fix several issues found
+in the current v0.10 development branch.
+
+Also, we've switched official maintainership to Kai Krakow and updated the
+donation links accordingly. Coffee donations now directly reach the current
+maintainer tho I may use it to buy hardware instead of coffee. :-)
+
+The highlights of this release are better compatibility with current Proton
+versions, fixes to Xbox One S|X controller support, removal of old dead
+configuration options, updated and improved documentation, better
+integration with DKMS, improved logging to aid issue resolving, future
+proofing the systemd and udev integration, and deprecating support for
+directional rumble which never properly worked.
+
+This should be a smooth release for everyone.
+
+
+## Configuration script
+
+The `configure.sh` script no longer requires DKMS to be installed. On the
+downside, it won't stop when the driver installation is missing but it
+will instead complain and warn if the xpadneo driver is not loaded. Also,
+supplying no options is evaluated as an error now.
+
+
+## Heads up for package maintainers
+
+This version handles DKMS installs and dynamic version file re-generation
+a little different, you may need to adjust to package install scripts.
+
+
+## Headlines:
+
+  * dev: Fix gitignore
+  * docs: Replace Ko-fi link to attribute donations to current maintainer (#274)
+  * hid-xpadneo: Move share button quirk to `xpadneo_devices` database
+  * installer, dkms: Fix trying to install the wrong udev filename
+
+```
+Kai Krakow (47):
+      Makefile: Create version.h on the fly
+      configure: Do not require dkms for configuration
+      configure: No options is an error, don't do anything
+      configure: Remove disable-ff in favor of trigger-rumble-mode
+      dev: Fix gitignore
+      dkms: Fix CI
+      dkms: Install files with proper permission
+      dkms: Simplify installation
+      docs: Add missing text about profile support
+      docs: Add note about holding the Guide button for too long
+      docs: Amend list of bugs with known fixes
+      docs: Document more of the quirk flags
+      docs: Document rumble behavior with SDL_JOYSTICK_HIDAPI
+      docs: Fix typo
+      docs: Improve troubleshooting instructions
+      docs: Link xow author
+      docs: List incompatible Bluetooth chipsets and settings
+      docs: Make original driver announcement a quote
+      docs: Put Ko-fi on a separate line
+      docs: Replace Ko-fi link to attribute donations to current maintainer (#274)
+      docs: Use Xbox Series X|S controller name consistently
+      hid-xpadneo, Makefile: Make version.h an intermediate target
+      hid-xpadneo, udev: Move udev rules up in rules priority
+      hid-xpadneo: Allow modparams for manual re-installation
+      hid-xpadneo: Deprecate directional rumble
+      hid-xpadneo: Drop dead module parameter `combined_z_axis`
+      hid-xpadneo: Fix SDL2 button mapping for XBXS
+      hid-xpadneo: Fix logging SDL2 work-around on wrong condition
+      hid-xpadneo: Fix typo in comment
+      hid-xpadneo: Ignore more files from current kernel tool chain
+      hid-xpadneo: Improve SDL2 work-arounds to fix XBE2 button mappings
+      hid-xpadneo: Improve descriptor logging
+      hid-xpadneo: Log and record the original descriptor size
+      hid-xpadneo: Move SDL work-arounds to parent device
+      hid-xpadneo: Move share button quirk to `xpadneo_devices` database
+      hid-xpadneo: Print version during load
+      hid-xpadneo: Send KEY_MODE for the Xbox button
+      hid-xpadneo: Use jiffies converter functions instead of HZ
+      installer, dkms: Fix trying to install the wrong udev filename
+      installer: Fix indentation
+      src: re-indent with newer indent version
+      udev: Update rules for upcoming systemd update
+      xpadneo, udev: Add Xbox One X|S PIDs to udev and modalias
+      xpadneo, udev: Properly re-order modalias
+      xpadneo: Add current maintainer to module authors
+      xpadneo: Drop dynamic version file handling
+
+Florian Dollinger (1):
+      Update README.md
+```
+
+*P.S.: Oh, and I mis-spelled "Atar-Axis" - Asche auf mein Haupt. Fixed.*
+
+
 # Changes since v0.8 up to v0.9
 
 *Quote of the day:*
