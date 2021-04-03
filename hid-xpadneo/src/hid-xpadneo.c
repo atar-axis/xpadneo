@@ -892,56 +892,6 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		hid_warn(hdev, "unhandled input application 0x%x\n", hi->application);
 	}
 
-	/*
-	 * Pretend that we are in Windows pairing mode as we are actually
-	 * exposing the Windows mapping. This prevents SDL and other layers
-	 * (probably browser game controller APIs) from treating our driver
-	 * unnecessarily with button and axis mapping fixups, and it seems
-	 * this is actually a firmware mode meant for Android usage only:
-	 *
-	 * Xbox One S:
-	 * 0x2E0 wireless Windows mode (non-Android mode)
-	 * 0x2EA USB Windows and Linux mode
-	 * 0x2FD wireless Linux mode (Android mode)
-	 *
-	 * Xbox Elite 2:
-	 * 0xB00 USB Windows and Linux mode
-	 * 0xB05 wireless Linux mode (Android mode)
-	 *
-	 * Xbox Series X|S:
-	 * 0xB12 Dongle, USB Windows and USB Linux mode
-	 * 0xB13 wireless Linux mode (Android mode)
-	 *
-	 * TODO: We should find a better way of doing this so SDL2 could
-	 * still detect our driver as the correct model. Currently this
-	 * maps all controllers to the same model.
-	 */
-	switch (xdata->gamepad->id.product) {
-	case 0x02E0:
-		xdata->gamepad->id.version = 0x00000903;
-		break;
-	case 0x02FD:
-		xdata->gamepad->id.product = 0x02E0;
-		break;
-	case 0x0B05:
-	case 0x0B13:
-		xdata->gamepad->id.product = 0x02E0;
-		xdata->gamepad->id.version = 0x00000903;
-		break;
-	}
-
-	if (hdev->product != xdata->gamepad->id.product)
-		hid_info(hdev,
-			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x%04X)\n", hdev->product,
-			 (u16)xdata->gamepad->id.product);
-
-	if (hdev->version != xdata->gamepad->id.version)
-		hid_info(hdev,
-			 "working around wrong SDL2 mappings "
-			 "(changed version from 0x%08X to 0x%08X)\n", hdev->version,
-			 xdata->gamepad->id.version);
-
 	if (param_disable_deadzones) {
 		hid_warn(hdev, "disabling dead zones\n");
 		deadzone = 0;
@@ -1166,6 +1116,8 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 {
 	int ret;
 	struct xpadneo_devdata *xdata;
+	u16 product;
+	u32 version;
 
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
 	if (xdata == NULL)
@@ -1177,6 +1129,58 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	xdata->hdev = hdev;
 	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
 	hid_set_drvdata(hdev, xdata);
+
+	/*
+	 * Pretend that we are in Windows pairing mode as we are actually
+	 * exposing the Windows mapping. This prevents SDL and other layers
+	 * (probably browser game controller APIs) from treating our driver
+	 * unnecessarily with button and axis mapping fixups, and it seems
+	 * this is actually a firmware mode meant for Android usage only:
+	 *
+	 * Xbox One S:
+	 * 0x2E0 wireless Windows mode (non-Android mode)
+	 * 0x2EA USB Windows and Linux mode
+	 * 0x2FD wireless Linux mode (Android mode)
+	 *
+	 * Xbox Elite 2:
+	 * 0xB00 USB Windows and Linux mode
+	 * 0xB05 wireless Linux mode (Android mode)
+	 *
+	 * Xbox Series X|S:
+	 * 0xB12 Dongle, USB Windows and USB Linux mode
+	 * 0xB13 wireless Linux mode (Android mode)
+	 *
+	 * TODO: We should find a better way of doing this so SDL2 could
+	 * still detect our driver as the correct model. Currently this
+	 * maps all controllers to the same model.
+	 */
+	product = hdev->product;
+	version = hdev->version;
+	switch (product) {
+	case 0x02E0:
+		hdev->version = 0x00000903;
+		break;
+	case 0x02FD:
+		hdev->product = 0x02E0;
+		break;
+	case 0x0B05:
+	case 0x0B13:
+		hdev->product = 0x02E0;
+		hdev->version = 0x00000903;
+		break;
+	}
+
+	if (hdev->product != product)
+		hid_info(hdev,
+			 "pretending XB1S Windows wireless mode "
+			 "(changed PID from 0x%04X to 0x%04X)\n", product,
+			 hdev->product);
+
+	if (hdev->version != version)
+		hid_info(hdev,
+			 "working around wrong SDL2 mappings "
+			 "(changed version from 0x%08X to 0x%08X)\n", version,
+			 hdev->version);
 
 	ret = hid_parse(hdev);
 	if (ret) {
