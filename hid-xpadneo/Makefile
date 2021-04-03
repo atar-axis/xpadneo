@@ -1,4 +1,4 @@
-KERNEL_SOURCE_DIR := /usr/src/linux
+KERNEL_SOURCE_DIR ?= /lib/modules/$(shell uname -r)/build
 LD := ld.bfd
 
 all: modules
