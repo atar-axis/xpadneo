@@ -133,8 +133,8 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	/* fixup code "AC Home" from Linux report descriptor */
 	USAGE_MAP(0xC0223, MAP_STATIC, EV_KEY, BTN_XBOX),
 
-	/* disable duplicate button */
-	USAGE_IGN(0xC0224),
+	/* fixup code "AC Back" from Linux report descriptor */
+	USAGE_MAP(0xC0224, MAP_STATIC, EV_KEY, BTN_SELECT),
 
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
