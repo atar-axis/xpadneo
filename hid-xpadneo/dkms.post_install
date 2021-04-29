@@ -3,7 +3,9 @@
 ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
 DISABLE_ERTM="/sys/module/bluetooth/parameters/disable_ertm"
 
-if [ "$(readlink "${ERTM_OVERRIDE}" 2>/dev/null)" = "/dev/null" ]; then
+if [ `uname -r | awk -F. '{ printf "%03d%03d",$1,$2 }'` -ge 005012 ]; then
+	echo "Not disabling ERTM, kernel version doesn't require it..."
+elif [ "$(readlink "${ERTM_OVERRIDE}" 2>/dev/null)" = "/dev/null" ]; then
 	echo "Not disabling ERTM, local override in place..."
 elif [ -L "${ERTM_OVERRIDE}" ]; then
 	echo >&2 "WARNING: '${ERTM_OVERRIDE}' is an arbitrary symlink, this is not supported."
