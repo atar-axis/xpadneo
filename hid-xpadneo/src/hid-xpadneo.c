@@ -881,8 +881,6 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	case HID_CP_CONSUMER_CONTROL:
 		hid_info(hdev, "consumer control detected\n");
 		xdata->consumer = hi->input;
-		input_set_capability(hi->input, EV_KEY, BTN_XBOX);
-		input_set_capability(hi->input, EV_KEY, BTN_SHARE);
 		return 0;
 	case 0xFF000005:
 		hid_info(hdev, "mapping profiles detected\n");
@@ -1193,6 +1191,10 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 		hid_err(hdev, "hw start failed\n");
 		return ret;
 	}
+
+	ret = xpadneo_init_consumer(xdata);
+	if (ret)
+		return ret;
 
 	ret = xpadneo_init_hw(hdev);
 	if (ret) {
