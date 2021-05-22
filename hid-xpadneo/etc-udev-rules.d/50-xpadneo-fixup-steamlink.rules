@@ -1,0 +1,2 @@
+#FIXME(issue-291) Work around Steamlink not properly detecting the mappings
+ACTION=="add|change", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", MODE:="0600"
