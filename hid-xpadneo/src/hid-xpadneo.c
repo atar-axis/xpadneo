@@ -879,7 +879,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		xdata->keyboard = hi->input;
 		return 0;
 	case HID_CP_CONSUMER_CONTROL:
-		hid_info(hdev, "consumer controls detected\n");
+		hid_info(hdev, "consumer control detected\n");
 		xdata->consumer = hi->input;
 		input_set_capability(hi->input, EV_KEY, BTN_XBOX);
 		input_set_capability(hi->input, EV_KEY, BTN_SHARE);
@@ -1021,7 +1021,7 @@ combine_z_axes:
 consumer_missing:
 	if ((xdata->missing_reported && XPADNEO_MISSING_CONSUMER) == 0) {
 		xdata->missing_reported |= XPADNEO_MISSING_CONSUMER;
-		hid_err(hdev, "consumer controls not detected\n");
+		hid_err(hdev, "consumer control not detected\n");
 	}
 
 stop_processing:
