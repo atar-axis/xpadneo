@@ -10,6 +10,7 @@ rm -f /etc/modprobe.d/xpadneo.conf
 
 echo "Uninstalling udev rules..."
 rm -f /etc/udev/rules.d/60-xpadneo.rules
+rm -f /etc/udev/rules.d/50-xpadneo-fixup-steamlink.rules
 
 echo "Reloading udev..."
 udevadm control --reload
