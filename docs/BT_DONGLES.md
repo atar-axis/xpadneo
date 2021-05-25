@@ -87,9 +87,10 @@ hci0:   Primary controller
 
 ### Intel
 
-* Status: incompatible (https://github.com/atar-axis/xpadneo/issues/270)
-  * OUI: DC:1B:A1 (Intel)
-  * Used as on-board chipset: Gigabyte B450 Aorus Pro WiFi 1.0 with integrated Bluetooth
-* Status: bluetoothd logs "Request attribute has encountered an unlikely error"
-  * Chipset: AX200
-  * Used as on-board chipset: ASUS B550-i
+* Chipset: AX200
+  * OUI: 50:E0:85 (Intel Corporation)
+  * Performance:
+    * Connection flawless
+    * Gameplay flawless
+  * Reported by @ryannathans [here](https://github.com/atar-axis/xpadneo/issues/270#issuecomment-847530465)
+
