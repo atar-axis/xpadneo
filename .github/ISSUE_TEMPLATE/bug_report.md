@@ -26,14 +26,18 @@ about: Report a bug
 ## Describe the bug
 <!-- A clear and concise description of what the bug is. -->
 
+
 ## Steps to Reproduce
 <!-- Steps to reproduce the behavior: -->
+
 
 ## Expected behavior
 <!-- A clear and concise description of what you expected to happen. -->
 
+
 ## Screenshots/Gifs
 <!-- If applicable, add screenshots or animated gifs to help explain your problem. -->
+
 
 ## System information
 <!-- Please add at least the following outputs: -->
