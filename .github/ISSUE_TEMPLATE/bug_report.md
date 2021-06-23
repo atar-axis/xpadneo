@@ -8,6 +8,18 @@ about: Report a bug
 <!-- Please let us know the version number of xpadneo, either the one shown
      during install (preferred) or the one you downloaded (releases). -->
 
+## Controller Model
+<!-- Please identify your controller model. -->
+
+* [ ] Xbox One S controller
+* [ ] Xbox Elite 2 controller
+* [ ] Xbox Series X|S controller
+* [ ] Other:
+
+* [ ] Bluetooth connection
+* [ ] Xbox Dongle connection (not yet supported)
+* [ ] USB cable (not yet supported)
+
 ## Severity / Impact
 <!-- Give us some impression of the importance of this bug report. You can
      easily check these after submitting the bug report. -->
