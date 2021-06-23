@@ -23,7 +23,7 @@ about: Report a bug
 * [ ] Fantastic work but ... <!-- describe below -->
 * [ ] I can code and I want to help
 
-## Describe the bug
+## Describe the Bug
 <!-- A clear and concise description of what the bug is. -->
 
 
@@ -31,15 +31,16 @@ about: Report a bug
 <!-- Steps to reproduce the behavior: -->
 
 
-## Expected behavior
+## Expected Behavior
 <!-- A clear and concise description of what you expected to happen. -->
 
 
-## Screenshots/Gifs
-<!-- If applicable, add screenshots or animated gifs to help explain your problem. -->
+## Screenshots / GIFs / Videos
+<!-- If applicable, add screenshots or screen recordings to help explain
+     your problem. -->
 
 
-## System information
+## System Information
 <!-- Please add at least the following outputs: -->
 
 <!-- Paste the output below the line prepended with # -->
@@ -54,7 +55,7 @@ about: Report a bug
 
 ```
 
-## Controller and Bluetooth information
+## Controller and Bluetooth Information
 <!-- Also follow these steps to create addition information
      about your Bluetooth dongle and connection: -->
 
@@ -74,5 +75,5 @@ about: Report a bug
      and drop the files below. -->
 
 
-## Additional context
+## Additional Context
 <!-- Add any other context about the problem here. -->
