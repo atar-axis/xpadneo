@@ -20,6 +20,18 @@ about: Report a bug
 * [ ] Xbox Dongle connection (not yet supported)
 * [ ] USB cable (not yet supported)
 
+## Installed Software
+<!-- Some software may interfere with functionality or detection, or may
+     introduce unwanted side-effects. Please check which software you're
+     running. -->
+
+* [ ] Steam Input (enabled by default via Steam Desktop client)
+* [ ] Steam Link (usually via Raspberry Pi or other micro computers)
+* [ ] xow (alternative driver using the Xbox dongle)
+* [ ] Anti-Micro (may affect button mappings)
+* [ ] netstick (shares input devices via network similar to Steam Link)
+* [ ] xboxdrv (user-space gamepad driver)
+
 ## Severity / Impact
 <!-- Give us some impression of the importance of this bug report. You can
      easily check these after submitting the bug report. -->
