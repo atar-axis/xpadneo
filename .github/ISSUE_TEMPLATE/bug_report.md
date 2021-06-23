@@ -13,6 +13,7 @@ about: Report a bug
      easily check these after submitting the bug report. -->
 
 * [ ] I've read the docs and the bug reporting instructions
+* [ ] I've applied the latest firmware update to the controller
 * [ ] It does not work at all
 * [ ] It used to work in a previous version
 * [ ] It mostly works but sometimes it doesn't
