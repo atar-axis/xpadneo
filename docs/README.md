@@ -97,6 +97,9 @@ change during one of the next updates. This controller uses emulated profile swi
 
 This controller uses BLE (Bluetooth low energy) and can only be supported if your Bluetooth dongle also supports BLE.
 
+**Known problems:** The controller may not properly set its connection parameters, resulting in laggy and choppy
+input experience. See also: [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting).
+
 
 ### 8BitDo controllers
 
