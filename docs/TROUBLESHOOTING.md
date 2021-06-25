@@ -17,6 +17,42 @@ If it says `N`, write `Y` to the file and try again. You may need to remove your
 controller from your Bluetooth settings completely before pairing again.
 
 
+#### High Latency or Lost Button Events with Bluetooth LE
+
+**Affected models:** Xbox controllers using Bluetooth LE (Xbox Series X\|S or later)
+
+While using new Xbox Series X\|S controller, you may experience laggy or choppy input, also button presses may be
+lost or delayed. This problem only affects Bluetooth LE controllers, the older models are not affected by these
+settings even if you think you may see such a problem.
+
+A proper solution is still missing but we isolated it to the Bluetooth LE connection parameters for latency and
+intervals. The bluez developers say that the connected device should suggest the best settings, the bluez daemon only
+ships sensible default settings. It looks like the new Xbox controllers do not properly suggest their preferred
+connection parameters, some BLE mice show the same problem. You can work around it by changing the bluez defaults
+instead. This change is not recommended by the bluez developers but as long as you only use a very specific set of BLE
+devices, this change should be fine.
+
+The controller uses 100 Hz internally for its protocol, so we decided to use intervals of 8.75..11.25ms. Each tick is
+1.25ms, so we end up with `MinConnectionInterval=7` and `MaxConnectionInterval=9`. If you already use a similar
+work-around for other devices, you may need to adjust your settings to the proper bounds, i.e. do not increase the
+min value, do not lower the max value.
+
+Edit the following file and restart the Bluetooth service or reboot:
+```
+# /etc/bluetooth/main.conf
+[LE]
+MinConnectionInterval=7
+MaxConnectionInterval=9
+ConnectionLatency=0
+```
+
+References:
+
+* https://www.novelbits.io/ble-connection-intervals/
+* https://github.com/bluez/bluez/issues/156
+* https://wiki.archlinux.org/title/Bluetooth_mouse#Mouse_lag
+
+
 #### Incompatible Bluetooth Chipset
 
 Some chipsets, e.g. the CSR 85xx, do have problems when you try to reconnect the Gamepad.
