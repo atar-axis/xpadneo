@@ -99,7 +99,7 @@ low energe" (BLE) which you may accidentally have disabled. Check the following 
 ```
 [General]
 ControllerMode = dual
-Privacy = device
+JustWorksRepairing = confirm
 ```
 
 
