@@ -163,6 +163,14 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 
 ## Getting started
 
+### Distribution packages
+
+If your distribution has a maintained package, you can just use that and do not need to follow the manual install
+instructions below:
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/xpadneo.svg)](https://repology.org/project/xpadneo/versions)
+
+
 ### Prerequisites
 
 Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their dependencies.
