@@ -16,6 +16,8 @@ about: Report a bug
 * [ ] Xbox Series X|S controller
 * [ ] Other:
 
+### Connection mode
+
 * [ ] Bluetooth connection
 * [ ] Xbox Dongle connection (not yet supported)
 * [ ] USB cable (not yet supported)
