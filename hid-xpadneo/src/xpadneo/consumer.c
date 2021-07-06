@@ -18,7 +18,7 @@ extern int xpadneo_init_consumer(struct xpadneo_devdata *xdata)
 			return ret;
 	}
 
-	/* enable button events for mouse emulation */
+	/* enable key events for consumer control */
 	input_set_capability(xdata->consumer, EV_KEY, BTN_XBOX);
 	input_set_capability(xdata->consumer, EV_KEY, BTN_SHARE);
 
