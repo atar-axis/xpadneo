@@ -1,2 +1,5 @@
 ACTION=="add", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*|0005:045E:0B05.*|0005:045E:0B13.*", SUBSYSTEM=="hid", DRIVER!="xpadneo", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
 ACTION=="add|change", DRIVERS=="xpadneo", SUBSYSTEM=="input", TAG+="uaccess"
+
+#FIXME(issue-291) Work around Steamlink not properly detecting the mappings
+ACTION=="add|change", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", MODE:="0000"
