@@ -21,6 +21,7 @@ extern int xpadneo_init_consumer(struct xpadneo_devdata *xdata)
 	/* enable key events for consumer control */
 	input_set_capability(xdata->consumer, EV_KEY, BTN_XBOX);
 	input_set_capability(xdata->consumer, EV_KEY, BTN_SHARE);
+	input_set_capability(xdata->consumer, EV_KEY, KEY_KEYBOARD);
 
 	if (synth) {
 		ret = input_register_device(xdata->consumer);

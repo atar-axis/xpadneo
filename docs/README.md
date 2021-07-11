@@ -161,6 +161,21 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 - If you hold the button for too long, the controller will turn off - we cannot prevent that.
 
 
+### Mouse profile support
+
+The driver can switch to emulating a mouse (and limited keyboard) on all supported controllers. Press
+<key>Guide</key>+<key>Select</key> to switch to mouse mode or back to controller mode:
+
+- Left stick moves the mouse pointer
+- Right stick can be used as a scrolling wheel/ball
+- Triggers for left and right mouse button
+- Shoulder buttons for back and forward button
+- D-pad for cursor movement
+- Menu to show on-screen keyboard (FIXME possible? KEY_KEYBOARD)
+- A for <key>Enter</key>
+- B for <key>Escape</key>
+
+
 ## Getting started
 
 ### Distribution packages

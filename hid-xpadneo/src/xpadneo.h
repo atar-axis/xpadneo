@@ -12,6 +12,7 @@
 #define XPADNEO_H_FILE
 
 #include <linux/hid.h>
+#include <linux/timer.h>
 #include <linux/version.h>
 
 #include "hid-ids.h"
@@ -130,7 +131,7 @@ struct xpadneo_devdata {
 
 	/* logical device interfaces */
 	struct hid_device *hdev;
-	struct input_dev *consumer, *gamepad, *keyboard;
+	struct input_dev *consumer, *gamepad, *keyboard, *mouse;
 	short int missing_reported;
 
 	/* quirk flags */
@@ -143,6 +144,13 @@ struct xpadneo_devdata {
 
 	/* mouse mode */
 	bool mouse_mode;
+	struct timer_list mouse_timer;
+	struct {
+		s32 rel_x, rel_y, wheel_x, wheel_y;
+		struct {
+			bool left, right;
+		} analog_button;
+	} mouse_state;
 
 	/* trigger scale */
 	struct {
@@ -179,6 +187,11 @@ struct xpadneo_devdata {
 };
 
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
+extern int xpadneo_init_mouse(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
+extern int xpadneo_mouse_event(struct xpadneo_devdata *, struct hid_usage *, __s32);
+extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *, struct hid_report *, u8 *, int);
+extern void xpadneo_mouse_report(struct timer_list *);
+extern void xpadneo_toggle_mouse(struct xpadneo_devdata *);
 
 #endif
