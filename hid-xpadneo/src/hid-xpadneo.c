@@ -47,6 +47,12 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
+static bool param_xpad_emulation = 0;
+module_param_named(xpad_emulation, param_xpad_emulation, bool, 0444);
+MODULE_PARM_DESC(xpad_emulation,
+		 "(bool) Enable emulation of original Xpad360 USB controller, disables most advanced features. "
+		 "0: disable, 1: enable.");
+
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -350,8 +356,13 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 		break;
 	case PARAM_TRIGGER_RUMBLE_PRESSURE:
 		fraction_MAIN = percent_MAIN;
-		fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 511) / 1023;
-		fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 511) / 1023;
+		if (param_xpad_emulation) {
+			fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 127) / 255;
+			fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 127) / 255;
+		} else {
+			fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 511) / 1023;
+			fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 511) / 1023;
+		}
 		break;
 	default:
 		fraction_MAIN = percent_MAIN;
@@ -664,15 +675,25 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 				 struct hid_field *field,
 				 struct hid_usage *usage, unsigned long **bit, int *max)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	int i = 0;
 
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
-		struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 		xdata->battery.report_id = field->report->id;
 		hid_info(hdev, "battery detected\n");
 
 		return MAP_IGNORE;
+	}
+
+	/* force emulation of original USB Xpad360 */
+	if (param_xpad_emulation) {
+		switch (usage->hid) {
+		case 0x10085:
+		case 0xC0223:
+		case 0x9000B:
+			hid_map_usage_clear(hi, usage, bit, max, EV_KEY, BTN_MODE);
+			return MAP_STATIC;
+		}
 	}
 
 	for (i = 0; i < ARRAY_SIZE(xpadneo_usage_maps); i++) {
@@ -796,6 +817,7 @@ static void xpadneo_switch_triggers(struct xpadneo_devdata *xdata, const u8 mode
 	}
 }
 
+#define AXIS(o) ((((u16)data[o+1])<<8)+data[o])
 #define SWAP_BITS(v,b1,b2) \
 	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
@@ -842,6 +864,21 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[16] = 0;
 	}
 
+	/* trigger emulation of Xpad360
+	 * FIXME(kakra) both 8-bit values may need to be combined into one 16-bit field
+	 */
+	if (param_xpad_emulation && reportsize >= 13) {
+		u16 axis;
+		/* left trigger */
+		axis = AXIS(9) >> 2;
+		data[9] = (u8)(axis & 0xFF);
+		data[10] = (u8)(axis >> 8);
+		/* right trigger */
+		axis = AXIS(11) >> 2;
+		data[11] = (u8)(axis & 0xFF);
+		data[12] = (u8)(axis >> 8);
+	}
+
 	/* swap button A with B and X with Y for Nintendo style controllers */
 	if ((xdata->quirks & XPADNEO_QUIRK_NINTENDO) && report->id == 1 && reportsize >= 15) {
 		data[14] = SWAP_BITS(data[14], 0, 1);
@@ -867,7 +904,7 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *hi)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	int deadzone = 3072, abs_min = 0, abs_max = 65535;
+	int deadzone = 3072, abs_min = 0, abs_max = 65535, abs_trigger = 1023, fuzz_trigger = 4;
 
 	switch (hi->application) {
 	case HID_GD_GAMEPAD:
@@ -901,16 +938,22 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		abs_max = 32767;
 	}
 
+	if (param_xpad_emulation) {
+		hid_info(hdev, "emulating original Xpad360 controller\n");
+		abs_trigger = 255;
+		fuzz_trigger = 1;
+	}
+
 	input_set_abs_params(xdata->gamepad, ABS_X, abs_min, abs_max, 32, deadzone);
 	input_set_abs_params(xdata->gamepad, ABS_Y, abs_min, abs_max, 32, deadzone);
 	input_set_abs_params(xdata->gamepad, ABS_RX, abs_min, abs_max, 32, deadzone);
 	input_set_abs_params(xdata->gamepad, ABS_RY, abs_min, abs_max, 32, deadzone);
 
-	input_set_abs_params(xdata->gamepad, ABS_Z, 0, 1023, 4, 0);
-	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, 1023, 4, 0);
+	input_set_abs_params(xdata->gamepad, ABS_Z, 0, abs_trigger, fuzz_trigger, 0);
+	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, abs_trigger, fuzz_trigger, 0);
 
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
+	input_set_abs_params(xdata->gamepad, ABS_MISC, -abs_trigger, abs_trigger, fuzz_trigger, 0);
 
 	/* do not report the consumer control buttons as part of the gamepad */
 	__clear_bit(BTN_XBOX, xdata->gamepad->keybit);
@@ -946,6 +989,9 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->last_abs_rz = value;
 			goto combine_z_axes;
 		}
+	} else if (param_xpad_emulation && (usage->type == EV_KEY) && (usage->code == BTN_MODE)) {
+		/* emulating Xpad360 */
+		return 0;
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
 		/*
 		 * Handle the Xbox logo button: We want to cache the button
@@ -1154,31 +1200,40 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 */
 	product = hdev->product;
 	version = hdev->version;
-	switch (product) {
-	case 0x02E0:
-		hdev->version = 0x00000903;
-		break;
-	case 0x02FD:
-		hdev->product = 0x02E0;
-		break;
-	case 0x0B05:
-	case 0x0B13:
-		hdev->product = 0x02E0;
-		hdev->version = 0x00000903;
-		break;
+	if (param_xpad_emulation) {
+		hdev->bus = BUS_USB;
+		hdev->product = 0x028E;
+		hdev->version = 0x00000110;
+		hid_info(hdev, "emulating as Xpad360 USB device (0003:045E:028E:0110)");
+		hid_warn(hdev, "most advanced features are disabled");
+	} else {
+		switch (product) {
+		case 0x02E0:
+			hdev->version = 0x00000903;
+			break;
+		case 0x02FD:
+			hdev->product = 0x02E0;
+			break;
+		case 0x0B05:
+		case 0x0B13:
+			hdev->product = 0x02E0;
+			hdev->version = 0x00000903;
+			break;
+		}
+
+		if (hdev->product != product) {
+			hid_info(hdev,
+				 "pretending XB1S Windows wireless mode "
+				 "(changed PID from 0x%04X to 0x%04X)\n", product, hdev->product);
+		}
+
+		if (hdev->version != version) {
+			hid_info(hdev,
+				 "working around wrong SDL2 mappings "
+				 "(changed version from 0x%08X to 0x%08X)\n", version,
+				 hdev->version);
+		}
 	}
-
-	if (hdev->product != product)
-		hid_info(hdev,
-			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x%04X)\n", product,
-			 hdev->product);
-
-	if (hdev->version != version)
-		hid_info(hdev,
-			 "working around wrong SDL2 mappings "
-			 "(changed version from 0x%08X to 0x%08X)\n", version,
-			 hdev->version);
 
 	ret = hid_parse(hdev);
 	if (ret) {
