@@ -120,7 +120,7 @@ Pressing the connection button sends a new packet, but there's nothing in the pa
 
 (via https://eleccelerator.com/usbdescreqparser/)
 
-````
+```
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
 0x09, 0x05,        // Usage (Game Pad)
 0xA1, 0x01,        // Collection (Application)

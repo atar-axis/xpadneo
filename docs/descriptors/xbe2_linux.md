@@ -60,7 +60,7 @@ c0 06 00 ff 09 05 a1 01 85 0a 09 10 15 00 27 ff ff ff 7f 75
 
 Parsed descriptor:
 (via https://eleccelerator.com/usbdescreqparser/)
-````
+```
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
 0x09, 0x05,        // Usage (Game Pad)
 0xA1, 0x01,        // Collection (Application)
