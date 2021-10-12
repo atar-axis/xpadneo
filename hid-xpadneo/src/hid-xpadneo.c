@@ -1082,6 +1082,9 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 * 0xB12 Dongle, USB Windows and USB Linux mode
 	 * 0xB13 wireless Linux mode (Android mode)
 	 *
+	 * Xbox Controller BLE mode:
+	 * 0xB20 wireless BLE mode
+	 *
 	 * TODO: We should find a better way of doing this so SDL2 could
 	 * still detect our driver as the correct model. Currently this
 	 * maps all controllers to the same model.
@@ -1097,6 +1100,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 		break;
 	case 0x0B05:
 	case 0x0B13:
+	case 0x0B20:
 		hdev->product = 0x02E0;
 		hdev->version = 0x00000903;
 		break;
@@ -1188,6 +1192,8 @@ static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B20),
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
