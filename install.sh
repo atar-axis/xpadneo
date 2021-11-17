@@ -14,7 +14,7 @@ if [[ -z "${INSTALLED[*]}" ]]; then
     # TODO: Works around https://github.com/dell/dkms/issues/177 for DKMS 3
     echo "* adding hid-xpadneo-${VERSION} folder to /usr/src"
     mkdir -p "/usr/src/hid-xpadneo-${VERSION}"
-    cp --recursive hid-xpadneo/. "/usr/src/hid-xpadneo-${VERSION}/."
+    cp --recursive "${V[@]}" hid-xpadneo/. "/usr/src/hid-xpadneo-${VERSION}/."
 
     echo "* installing module (using DKMS)"
     dkms install "${V[*]}" "hid-xpadneo/${VERSION}" --force || cat_dkms_make_log
