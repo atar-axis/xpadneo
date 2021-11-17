@@ -20,5 +20,5 @@ do
     dkms remove "${V[*]}" "hid-xpadneo/${instance}" --all
 
     echo "  * removing $instance folder from /usr/src"
-    rm --recursive "/usr/src/hid-xpadneo-$instance/"
+    rm --recursive "${V[@]}" "/usr/src/hid-xpadneo-$instance/"
 done
