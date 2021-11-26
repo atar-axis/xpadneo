@@ -84,6 +84,12 @@ Observed problems:
 * Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
 
 
+## Unavailable Features
+
+Across all models, xpadneo won't support audio features of the controllers because the firmware doesn't support audio
+in Bluetooth mode. In the future, xpadneo may support audio when USB and dongle support will be added.
+
+
 ### Xbox One S Wireless controller
 
 This is the initial controller supported from the first version of xpadneo. All features are fully supported. This
