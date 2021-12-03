@@ -165,6 +165,8 @@ Make sure you have installed *dkms*, *linux headers* and a bluetooth implementat
   ``sudo dnf install dkms make bluez bluez-tools kernel-devel-`uname -r` kernel-headers-`uname -r` ``
 * On **Manjaro** try
   `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
+* On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
+  `sudo zypper install dkms make bluez bluez-tools kernel-devel kernel-source`
 * On **OSMC** you will have to run the following commands
   ``sudo apt-get install dkms rbp2-headers-`uname -r` ``
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
