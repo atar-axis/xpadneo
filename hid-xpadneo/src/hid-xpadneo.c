@@ -848,15 +848,20 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 	}
 
 	/* XBE2: track the current controller settings */
-	if (report->id == 1 && reportsize >= 21) {
+	if (report->id == 1 && reportsize >= 20) {
 		if (reportsize == 55) {
 			hid_notice_once(hdev,
 					"detected broken XBE2 v1 packet format, please update the firmware");
 			xpadneo_switch_profile(xdata, data[35] & 0x03, false);
 			xpadneo_switch_triggers(xdata, data[36] & 0x0F);
-		} else {
+		} else if (reportsize >= 21) {
+			/* firmware 4.x style packet */
 			xpadneo_switch_profile(xdata, data[19] & 0x03, false);
 			xpadneo_switch_triggers(xdata, data[20] & 0x0F);
+		} else {
+			/* firmware 5.x style packet */
+			xpadneo_switch_profile(xdata, data[17] & 0x03, false);
+			xpadneo_switch_triggers(xdata, data[18] & 0x0F);
 		}
 	}
 
@@ -1198,6 +1203,8 @@ static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
+	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES | XPADNEO_QUIRK_SHARE_BUTTON },
 
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
