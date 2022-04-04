@@ -1193,7 +1193,7 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_USE_HW_PROFILES },
 
-	/* XBOX Series X|S */
+	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
 	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 
