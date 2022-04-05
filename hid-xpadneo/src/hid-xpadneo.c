@@ -136,6 +136,9 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	/* fixup code "AC Back" from Linux report descriptor */
 	USAGE_MAP(0xC0224, MAP_STATIC, EV_KEY, BTN_SELECT),
 
+	/* map special buttons without HID bitmaps, corrected in event handler */
+	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_PADDLES(0)),	/* Four paddles */
+
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
 	USAGE_IGN(0xC0099),	/* Trigger scale switches */
@@ -160,9 +163,6 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_IGN(0x9001D),	/* copy of LS */
 	USAGE_IGN(0x9001E),	/* copy of RS */
 	USAGE_IGN(0xC0082),	/* copy of Select button */
-
-	/* XBE2: Disable extra features until proper support is implemented */
-	USAGE_IGN(0xC0081),	/* Four paddles */
 
 	/* XBE2: Disable unused buttons */
 	USAGE_IGN(0x90012),	/* 6 "TRIGGER_HAPPY" buttons */
@@ -932,6 +932,13 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	__clear_bit(BTN_XBOX, xdata->gamepad->keybit);
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
 
+	/* add paddles as part of the gamepad */
+	__set_bit(BTN_TRIGGER_HAPPY, xdata->gamepad->keybit);	/* workaround for Steam */
+	__set_bit(BTN_PADDLES(0), xdata->gamepad->keybit);
+	__set_bit(BTN_PADDLES(1), xdata->gamepad->keybit);
+	__set_bit(BTN_PADDLES(2), xdata->gamepad->keybit);
+	__set_bit(BTN_PADDLES(3), xdata->gamepad->keybit);
+
 	return 0;
 }
 
@@ -942,7 +949,16 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct input_dev *gamepad = xdata->gamepad;
 	struct input_dev *consumer = xdata->consumer;
 
-	if (usage->type == EV_ABS) {
+	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
+		if (gamepad && xdata->profile == 0) {
+			/* report the paddles individually */
+			input_report_key(gamepad, BTN_PADDLES(0), value & 1 ? 1 : 0);
+			input_report_key(gamepad, BTN_PADDLES(1), value & 2 ? 1 : 0);
+			input_report_key(gamepad, BTN_PADDLES(2), value & 4 ? 1 : 0);
+			input_report_key(gamepad, BTN_PADDLES(3), value & 8 ? 1 : 0);
+		}
+		goto stop_processing;
+	} else if (usage->type == EV_ABS) {
 		switch (usage->code) {
 		case ABS_X:
 		case ABS_Y:
@@ -1181,6 +1197,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	case 0x0B05:
 	case 0x0B13:
 	case 0x0B20:
+	case 0x0B22:
 		hdev->product = 0x02E0;
 		hdev->version = 0x00000903;
 		break;
