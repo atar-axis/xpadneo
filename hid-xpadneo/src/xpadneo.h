@@ -114,6 +114,10 @@ struct xpadneo_devdata {
 	struct hid_device *hdev;
 	struct input_dev *idev;
 
+	/* revert fixups on removal */
+	u16 original_product;
+	u32 original_version;
+
 	/* quirk flags */
 	unsigned int original_rsize;
 	u32 quirks;
