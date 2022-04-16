@@ -133,6 +133,10 @@ struct xpadneo_devdata {
 	struct input_dev *consumer, *gamepad, *keyboard;
 	short int missing_reported;
 
+	/* revert fixups on removal */
+	u16 original_product;
+	u32 original_version;
+
 	/* quirk flags */
 	unsigned int original_rsize;
 	u32 quirks;

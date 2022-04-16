@@ -1125,8 +1125,6 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 {
 	int ret;
 	struct xpadneo_devdata *xdata;
-	u16 product;
-	u32 version;
 
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
 	if (xdata == NULL)
@@ -1166,9 +1164,9 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 * still detect our driver as the correct model. Currently this
 	 * maps all controllers to the same model.
 	 */
-	product = hdev->product;
-	version = hdev->version;
-	switch (product) {
+	xdata->original_product = hdev->product;
+	xdata->original_version = hdev->version;
+	switch (xdata->original_product) {
 	case 0x02E0:
 		hdev->version = 0x00000903;
 		break;
@@ -1183,16 +1181,16 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 		break;
 	}
 
-	if (hdev->product != product)
+	if (hdev->product != xdata->original_product)
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x%04X)\n", product,
+			 "(changed PID from 0x%04X to 0x%04X)\n", xdata->original_product,
 			 hdev->product);
 
-	if (hdev->version != version)
+	if (hdev->version != xdata->original_version)
 		hid_info(hdev,
 			 "working around wrong SDL2 mappings "
-			 "(changed version from 0x%08X to 0x%08X)\n", version,
+			 "(changed version from 0x%08X to 0x%08X)\n", xdata->original_version,
 			 hdev->version);
 
 	ret = hid_parse(hdev);
@@ -1240,6 +1238,22 @@ static void xpadneo_remove(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	hid_hw_close(hdev);
+
+	if (hdev->version != xdata->original_version) {
+		hid_info(hdev,
+			 "reverting to original version "
+			 "(changed version from 0x%08X to 0x%08X)\n",
+			 hdev->version, xdata->original_version);
+		hdev->version = xdata->original_version;
+	}
+
+	if (hdev->product != xdata->original_product) {
+		hid_info(hdev,
+			 "reverting to original product "
+			 "(changed PID from 0x%04X to 0x%04X)\n",
+			 hdev->product, xdata->original_product);
+		hdev->product = xdata->original_product;
+	}
 
 	cancel_delayed_work_sync(&xdata->ff_worker);
 
