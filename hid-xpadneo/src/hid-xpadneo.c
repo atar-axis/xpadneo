@@ -21,8 +21,7 @@ MODULE_VERSION(XPADNEO_VERSION);
 
 static u8 param_trigger_rumble_mode = 0;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
-MODULE_PARM_DESC(trigger_rumble_mode,
-		 "(u8) Trigger rumble mode. 0: pressure, 1: directional (deprecated), 2: disable.");
+MODULE_PARM_DESC(trigger_rumble_mode, "(u8) Trigger rumble mode. 0: pressure, 2: disable.");
 
 static u8 param_rumble_attenuation[2];
 module_param_array_named(rumble_attenuation, param_rumble_attenuation, byte, NULL, 0644);
@@ -268,18 +267,10 @@ static void xpadneo_ff_worker(struct work_struct *work)
 #define update_magnitude(m, v) m = (v) > 0 ? max(m, v) : 0
 static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
-	enum {
-		DIRECTION_DOWN = 0x0000UL,
-		DIRECTION_LEFT = 0x4000UL,
-		DIRECTION_UP = 0x8000UL,
-		DIRECTION_RIGHT = 0xC000UL,
-		QUARTER = DIRECTION_LEFT,
-	};
-
 	unsigned long flags, ff_run_at, ff_throttle_until;
 	long delay_work;
 	int fraction_TL, fraction_TR, fraction_MAIN, percent_TRIGGERS, percent_MAIN;
-	s32 weak, strong, direction, max_main;
+	s32 weak, strong, max_main;
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -300,70 +291,16 @@ static int xpadneo_ff_play(struct input_dev *dev, void *data, struct ff_effect *
 	percent_TRIGGERS = percent_TRIGGERS * percent_MAIN / 100;
 
 	switch (param_trigger_rumble_mode) {
-	case PARAM_TRIGGER_RUMBLE_DIRECTIONAL:
-		/*
-		 * scale the main rumble lineary within each half of the cirlce,
-		 * so we can completely turn off the main rumble while still doing
-		 * trigger rumble alone
-		 */
-		direction = effect->direction;
-		if (direction <= DIRECTION_UP) {
-			/* scale the main rumbling between 0x0000..0x8000 (100%..0%) */
-			fraction_MAIN = ((DIRECTION_UP - direction) * percent_MAIN) / DIRECTION_UP;
-		} else {
-			/* scale the main rumbling between 0x8000..0xffff (0%..100%) */
-			fraction_MAIN = ((direction - DIRECTION_UP) * percent_MAIN) / DIRECTION_UP;
-		}
-
-		/*
-		 * scale the trigger rumble lineary within each quarter:
-		 *        _ _
-		 * LT = /     \
-		 * RT = _ / \ _
-		 *      1 2 3 4
-		 *
-		 * This gives us 4 different modes of operation (with smooth transitions)
-		 * to get a mostly somewhat independent control over each motor:
-		 *
-		 *                DOWN .. LEFT ..  UP  .. RGHT .. DOWN
-		 * left rumble  =   0% .. 100% .. 100% ..   0% ..   0%
-		 * right rumble =   0% ..   0% .. 100% .. 100% ..   0%
-		 * main rumble  = 100% ..  50% ..   0% ..  50% .. 100%
-		 *
-		 * For completely independent control, we'd need a sphere instead of a
-		 * circle but we only have one direction. We could decouple the
-		 * direction from the main rumble but that seems to be outside the spec
-		 * of the rumble protocol (direction without any magnitude should do
-		 * nothing).
-		 */
-		if (direction <= DIRECTION_LEFT) {
-			/* scale the left trigger between 0x0000..0x4000 (0%..100%) */
-			fraction_TL = (direction * percent_TRIGGERS) / QUARTER;
-			fraction_TR = 0;
-		} else if (direction <= DIRECTION_UP) {
-			/* scale the right trigger between 0x4000..0x8000 (0%..100%) */
-			fraction_TL = 100;
-			fraction_TR = ((direction - DIRECTION_LEFT) * percent_TRIGGERS) / QUARTER;
-		} else if (direction <= DIRECTION_RIGHT) {
-			/* scale the right trigger between 0x8000..0xC000 (100%..0%) */
-			fraction_TL = 100;
-			fraction_TR = ((DIRECTION_RIGHT - direction) * percent_TRIGGERS) / QUARTER;
-		} else {
-			/* scale the left trigger between 0xC000...0xFFFF (0..100%) */
-			fraction_TL =
-			    100 - ((direction - DIRECTION_RIGHT) * percent_TRIGGERS) / QUARTER;
-			fraction_TR = 0;
-		}
-		break;
-	case PARAM_TRIGGER_RUMBLE_PRESSURE:
-		fraction_MAIN = percent_MAIN;
-		fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 511) / 1023;
-		fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 511) / 1023;
-		break;
-	default:
+	case PARAM_TRIGGER_RUMBLE_DISABLE:
 		fraction_MAIN = percent_MAIN;
 		fraction_TL = 0;
 		fraction_TR = 0;
+		break;
+	case PARAM_TRIGGER_RUMBLE_PRESSURE:
+	default:
+		fraction_MAIN = percent_MAIN;
+		fraction_TL = (xdata->last_abs_z * percent_TRIGGERS + 511) / 1023;
+		fraction_TR = (xdata->last_abs_rz * percent_TRIGGERS + 511) / 1023;
 		break;
 	}
 
@@ -1326,7 +1263,7 @@ static int __init xpadneo_init(void)
 	dbg_hid("xpadneo:%s\n", __func__);
 
 	if (param_trigger_rumble_mode == 1)
-		pr_warn("hid-xpadneo trigger_rumble_mode=1 is deprecated\n");
+		pr_warn("hid-xpadneo trigger_rumble_mode=1 is unknown, defaulting to 0\n");
 
 	xpadneo_rumble_wq = alloc_ordered_workqueue("xpadneo/rumbled", WQ_HIGHPRI);
 	if (xpadneo_rumble_wq) {

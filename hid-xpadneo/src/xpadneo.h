@@ -53,9 +53,9 @@ do { \
 #define BTN_XBOX       BTN_MODE
 
 /* module parameter "trigger_rumble_mode" */
-#define PARAM_TRIGGER_RUMBLE_PRESSURE    0
-#define PARAM_TRIGGER_RUMBLE_DIRECTIONAL 1
-#define PARAM_TRIGGER_RUMBLE_DISABLE     2
+#define PARAM_TRIGGER_RUMBLE_PRESSURE 0
+#define PARAM_TRIGGER_RUMBLE_RESERVED 1
+#define PARAM_TRIGGER_RUMBLE_DISABLE  2
 
 /* module parameter "quirks" */
 #define XPADNEO_QUIRK_NO_PULSE          1
