@@ -79,9 +79,8 @@ Observed problems:
 * Easy Installation
 * Agile Support and Development
 * Supports customization through profiles (work in progress)
-* Optional high-precision mode for Wine/Proton users
+* Optional high-precision mode for Wine/Proton users (disables dead zones so games don't apply an additional one)
 * Share button support on supported controllers
-* Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
 
 
 ## Unavailable Features
