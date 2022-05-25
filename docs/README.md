@@ -93,7 +93,6 @@ controller uses emulated profile switching support (see below).
 Basic support for the Xbox Elite Series 2 Wireless controller is present, covering all the features of the driver.
 The following features are missing:
 
-- The four paddles at the bottom are currently not supported.
 - Upload of profile mappings and sensitivity curves is currently not supported.
 
 This controller uses native profile switching support (see below).
@@ -135,7 +134,8 @@ customizing each profile does not exist yet.
 The driver support native profile switching for the Xbox Elite Series 2 controller. However, the feature is not
 finalized yet:
 
-- All four profiles behave the same way currently, and there is no support for configuring them. This may be
+- The default profile (no LED) exposes the paddles as extra buttons.
+- The other three profiles behave the same way currently, and there is no support for configuring them. This may be
   different if profiles have been configured in Windows already, that is still untested.
 
 
