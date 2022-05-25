@@ -1165,6 +1165,10 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (ret)
 		return ret;
 
+	ret = xpadneo_init_keyboard(xdata);
+	if (ret)
+		return ret;
+
 	ret = xpadneo_init_hw(hdev);
 	if (ret) {
 		hid_err(hdev, "hw init failed: %d\n", ret);

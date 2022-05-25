@@ -184,6 +184,7 @@ struct xpadneo_devdata {
 };
 
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
+extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
 
 #endif
