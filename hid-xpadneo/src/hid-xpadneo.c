@@ -865,7 +865,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
 	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
 
-	/* do not report the consumer control buttons as part of the gamepad */
+	/* do not report the keyboard buttons as part of the gamepad */
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
 
 	/* add paddles as part of the gamepad */
@@ -882,7 +882,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *gamepad = xdata->gamepad;
-	struct input_dev *consumer = xdata->consumer;
+	struct input_dev *keyboard = xdata->keyboard;
 
 	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
 		if (gamepad && xdata->profile == 0) {
@@ -938,11 +938,11 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		}
 		goto stop_processing;
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_SHARE)) {
-		/* move the Share button to the consumer control device */
-		if (!consumer)
-			goto consumer_missing;
-		input_report_key(consumer, BTN_SHARE, value);
-		input_sync(consumer);
+		/* move the Share button to the keyboard device */
+		if (!keyboard)
+			goto keyboard_missing;
+		input_report_key(keyboard, BTN_SHARE, value);
+		input_sync(keyboard);
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
@@ -981,10 +981,10 @@ combine_z_axes:
 	}
 	return 0;
 
-consumer_missing:
-	if ((xdata->missing_reported && XPADNEO_MISSING_CONSUMER) == 0) {
-		xdata->missing_reported |= XPADNEO_MISSING_CONSUMER;
-		hid_err(hdev, "consumer control not detected\n");
+keyboard_missing:
+	if ((xdata->missing_reported && XPADNEO_MISSING_KEYBOARD) == 0) {
+		xdata->missing_reported |= XPADNEO_MISSING_KEYBOARD;
+		hid_err(hdev, "keyboard not detected\n");
 	}
 
 stop_processing:

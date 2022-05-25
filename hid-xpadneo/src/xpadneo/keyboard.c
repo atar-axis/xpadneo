@@ -18,6 +18,9 @@ extern int xpadneo_init_keyboard(struct xpadneo_devdata *xdata)
 			return ret;
 	}
 
+	/* enable key events for keyboard */
+	input_set_capability(xdata->keyboard, EV_KEY, BTN_SHARE);
+
 	if (synth) {
 		ret = input_register_device(xdata->keyboard);
 		if (ret) {
