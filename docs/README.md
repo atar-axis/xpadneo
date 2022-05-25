@@ -125,7 +125,7 @@ not enabled by default. If you want to use this feature, you have to add a quirk
 
 ```
 # /etc/modprobe.conf
-options hid_xpadneo quirks=E4:17:D8:xx:xx:xx:32
+options hid_xpadneo quirks=E4:17:D8:xx:xx:xx+32
 ```
 
 where you replace `xx:xx:xx` with the values from your controller MAC (as shown in `dmesg`). The value `32` enables
