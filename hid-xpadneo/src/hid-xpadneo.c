@@ -1083,6 +1083,20 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	xdata->hdev = hdev;
 	hid_set_drvdata(hdev, xdata);
 
+	if (hdev->version == 0x00000903)
+		hid_warn(hdev, "buggy firmware detected, please upgrade to the latest version\n");
+	else if (hdev->version < 0x00000500)
+		hid_warn(hdev,
+			 "classic Bluetooth firmware version %x.%02x, please upgrade for better stability\n",
+			 hdev->version >> 8, (u8)hdev->version);
+	else if (hdev->version < 0x00000512)
+		hid_warn(hdev,
+			 "BLE firmware version %x.%02x, please upgrade for better stability\n",
+			 hdev->version >> 8, (u8)hdev->version);
+	else
+		hid_info(hdev, "BLE firmware version %x.%02x\n",
+			 hdev->version >> 8, (u8)hdev->version);
+
 	/*
 	 * Pretend that we are in Windows pairing mode as we are actually
 	 * exposing the Windows mapping. This prevents SDL and other layers
