@@ -9,7 +9,13 @@ fi
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 
 __version() {
-	git describe --tags --dirty 2>/dev/null || sed -re's/v?(.*)/v\1/' "$(dirname "${BASH_SOURCE[0]}")/../VERSION"
+	git describe --tags --dirty 2>/dev/null || sed -re's/v?(.*)/v\1/' "$(dirname "${BASH_SOURCE[0]}")/../VERSION" || {
+		echo >&2 "ERROR: If you install from a git repository, you may need to run"
+		echo >&2 "ERROR: sudo git config --global --add safe.directory \$PWD"
+		echo >&2 "ERROR: to trust this git checkout for the root user."
+		echo >&2 "ERROR: See https://github.com/atar-axis/xpadneo/issues/346"
+		exit 3
+	}
 }
 
 __version_lte() {
