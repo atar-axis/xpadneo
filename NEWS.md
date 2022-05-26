@@ -1,3 +1,110 @@
+# Changes since v0.9.1 up to v0.9.2
+
+This is a maintenance release of xpadneo v0.9 to fix several issues found in
+the current v0.10 development branch.
+
+Thanks to contributors Emil Velikov, @PetitMote, @Mikaka27 and @rdrms, we now
+have better compatibility with kernels 5.12 or later, latest DKMS versions, and
+improved documentation.
+
+We also fixed an issue conforming to the Linux input spec better which improves
+compatibility with jinput and probably also the Chrome browser by not exposing
+keyboard mapping bits on a joystick device. Thanks to @markpaters for pointing
+that out.
+
+Also, the current firmware generation seems to be unstable with our previous
+rumble throttling interval and we had to increase this to 50ms. This actually
+matches what the kernel is supposed to use for ff-memless emulation (but
+apparently it may still send rumble commands faster). Thus, it's recommended
+that anybody updates to this driver version.
+
+Current kernels seem to cache devices when rebinding drivers. This affects our
+udev rules, and needed fixups won't be properly applied because the original
+VID/PID is no longer visible to us. We fixed this by reverting to the original
+VID/PID on device unbinding.
+
+Due to the various compatibility fixes, this is a highly recommended update.
+
+
+## Compatibility issues
+
+We found an issue with the OpenRGB and QMK Firmware projects which enabled
+world read/write permissions on rawhid devices unconditionally. While this may
+be a security issue on its own, it also enabled SDL to access our hidraw device
+in an incompatible way, leading to mapping problems for both axes and buttons,
+and also rumble instabilities. Both projects seem to have fixed this issue
+meanwhile but you may want to double-check you're updated to the latest
+versions, especially if you're experiencing issues with Steam Proton games.
+
+
+## Heads-up for package maintainers
+
+Distributions shipping kernels 5.12 or later should no longer disable Bluetooth
+ERTM unconditionally. In fact, it may even harm connection stability when
+rumble is in use. For better stability, it's generally recommended to upgrade
+controllers to the new BLE firmware variant (version 5.x and above) for
+improved connection stability. To ease support, the firmware version will now
+be logged to dmesg with a warning if an old unstable firmware is found.
+
+You should also inform users who experience input or rumble latency issues to
+adjust the Bluetooth latency parameters but this may be fixed in later bluez
+versions.
+
+
+## Headlines:
+
+  * dkms: Explicitly add version to the install phase
+  * dkms: Suggest trusting the git directory if version detection failed
+  * docs: Document Bluetooth LE issues and work-arounds
+  * docs: Document workarounds for the Xbox Wireless controller
+  * xpadneo: Revert fixups on device removal
+  * xpadneo, rumble: Fix rumble throttling for modern firmware
+  * xpadneo v0.9, hid: Fix event ids to not fall into the keyboard range
+  * xpadneo: Work around invalid mapping in Steam Link
+
+```
+Kai Krakow (27):
+      docs: Update pairing instruction to mitigate stability issues
+      misc, docs: Remove ERTM patches and update docs
+      hid-xpadneo: Map instead of disable duplicate button "AC Back"
+      docs: Document Bluetooth LE issues and work-arounds
+      docs: Remove `Privacy=device` in favor of JustWorks re-pairing
+      docs: Mention the xone project which has gone public now
+      docs: List distribution packages
+      hid-xpadneo, rumble: Do not lose rumble strength while throttled
+      docs: Fix report descriptor syntax errors
+      xpadneo: Work around invalid mapping in Steam Link
+      xpadneo, hidraw: Also work around SDL2 hidraw mode conflicts
+      dkms: Create version instance in DKMS source archives
+      dkms: Explicitly add version to the install phase
+      dkms, installer: Increase verbosity
+      xpadneo: Drop CI for Ubuntu 16.04
+      docs: Add note about audio support
+      xpadneo: Revert fixups on device removal
+      xpadneo: Update devices db for PID 0x0B13
+      xpadneo: Add support for XB1S BLE firmware update
+      xpadneo: Add XBE2 firmware 5.13 support
+      xpadneo: Add paddles support
+      xpadneo, rumble: Fix rumble throttling for modern firmware
+      xpadneo v0.9, hid: Fix event ids to not fall into the keyboard range
+      xpadneo, core: Warn about old firmware version with stability issues
+      dkms: Suggest trusting the git directory if version detection failed
+      dkms: Add another status line variant to split module and version
+      docs: Update documentation about the XBE2 paddles
+
+Emil Velikov (1):
+      dkms: remove REMAKE_INITRD
+
+Moté (1):
+      docs: Document workarounds for the Xbox Wireless controller
+
+mikaka (1):
+      Don't disable ERTM if kernel 5.12 or later
+
+ryanrms (1):
+      Adding openSUSE to readme.md
+```
+
 # Changes since v0.9 up to v0.9.1
 
 This is a maintenance release of xpadneo v0.9 to fix several issues found
