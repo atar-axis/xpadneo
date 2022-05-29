@@ -897,8 +897,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
 	input_set_abs_params(xdata->idev, ABS_MISC, -1023, 1023, 3, 63);
 
+	/* do not report the consumer control buttons as part of the gamepad */
+	__clear_bit(BTN_SHARE, xdata->idev->keybit);
+
 	/* add paddles as part of the gamepad */
-	__set_bit(BTN_TRIGGER_HAPPY, xdata->idev->keybit);	/* workaround for Steam */
 	__set_bit(BTN_PADDLES(0), xdata->idev->keybit);
 	__set_bit(BTN_PADDLES(1), xdata->idev->keybit);
 	__set_bit(BTN_PADDLES(2), xdata->idev->keybit);
@@ -1126,8 +1128,8 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 */
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
-	hdev->product = 0x02E0;
-	hdev->version = 0x00000903;
+	hdev->product = 0x02FD;
+	hdev->version = 0x00001130;
 
 	if (hdev->product != xdata->original_product)
 		hid_info(hdev,
