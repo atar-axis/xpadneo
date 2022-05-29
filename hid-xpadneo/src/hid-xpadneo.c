@@ -929,11 +929,9 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
 
 	/* do not report the consumer control buttons as part of the gamepad */
-	__clear_bit(BTN_XBOX, xdata->gamepad->keybit);
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
 
 	/* add paddles as part of the gamepad */
-	__set_bit(BTN_TRIGGER_HAPPY, xdata->gamepad->keybit);	/* workaround for Steam */
 	__set_bit(BTN_PADDLES(0), xdata->gamepad->keybit);
 	__set_bit(BTN_PADDLES(1), xdata->gamepad->keybit);
 	__set_bit(BTN_PADDLES(2), xdata->gamepad->keybit);
@@ -992,17 +990,15 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->xbox_button_down = false;
 			if (xdata->profile_switched) {
 				xdata->profile_switched = false;
-			} else if (consumer) {
+			} else {
 				/* replay cached event */
-				input_report_key(consumer, BTN_XBOX, 1);
-				input_sync(consumer);
+				input_report_key(gamepad, BTN_XBOX, 1);
+				input_sync(gamepad);
 				/* synthesize the release to remove the scan code */
-				input_report_key(consumer, BTN_XBOX, 0);
-				input_sync(consumer);
+				input_report_key(gamepad, BTN_XBOX, 0);
+				input_sync(gamepad);
 			}
 		}
-		if (!consumer)
-			goto consumer_missing;
 		goto stop_processing;
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_SHARE)) {
 		/* move the Share button to the consumer control device */
@@ -1201,8 +1197,8 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 */
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
-	hdev->product = 0x02E0;
-	hdev->version = 0x00000903;
+	hdev->product = 0x02FD;
+	hdev->version = 0x00001130;
 
 	if (hdev->product != xdata->original_product)
 		hid_info(hdev,
