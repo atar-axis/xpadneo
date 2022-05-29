@@ -37,6 +37,31 @@ about: Report a bug
 - [ ] xone (kernel-space gamepad driver using the Xbox dongle or USB)
 - [ ] xow (alternative driver using the Xbox dongle)
 
+## Protocol Information
+<!-- This helps us identifying the problematic software layer and running
+     the tools may improve your bug report. If you don't have some of the
+     tools, simply skip those tests. -->
+
+Please help us identify at which layer the problem can be found if you want
+to report mapping errors or if the controller fails to be detected:
+
+- [ ] Steam Proton games are having issues
+- [ ] Steam Linux-native games are having issues
+    - [ ] I don't use Steam or did not try
+- [ ] games running through Lutris, wine and/or Bottles are having issues
+    - [ ] I don't use Lutris, Bottles, wine or did not try
+- [ ] Linux-native games are having issues
+    - [ ] I don't use native games or did not try
+- [ ] Other software is having issues (describe software and issues below)
+- [ ] Running `evtest` is showing issues (describe the issues below)
+    - Keep in mind that `BTN_NORTH` and `BTN_WEST` are intentionally swapped
+- [ ] Running `jstest` is showing issues (describe the issues below)
+    - [ ] I don't have this tool or don't know how to use it
+- [ ] Running `gamepad-tool` is showing issues (post console output below)
+    - [ ] I don't have this tool
+
+Please describe how it is failing below in the next sections.
+
 ## Severity / Impact
 <!-- Give us some impression of the importance of this bug report. You can
      easily check these after submitting the bug report. -->
