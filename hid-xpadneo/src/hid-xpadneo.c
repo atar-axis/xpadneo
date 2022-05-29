@@ -1126,21 +1126,8 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	 */
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
-	switch (xdata->original_product) {
-	case 0x02E0:
-		hdev->version = 0x00000903;
-		break;
-	case 0x02FD:
-		hdev->product = 0x02E0;
-		break;
-	case 0x0B05:
-	case 0x0B13:
-	case 0x0B20:
-	case 0x0B22:
-		hdev->product = 0x02E0;
-		hdev->version = 0x00000903;
-		break;
-	}
+	hdev->product = 0x02E0;
+	hdev->version = 0x00000903;
 
 	if (hdev->product != xdata->original_product)
 		hid_info(hdev,
