@@ -28,10 +28,13 @@ about: Report a bug
      running. -->
 
 - [ ] Anti-Micro (may affect button mappings)
+- [ ] OpenRGB (may mess up mappings and rumble stability)
 - [ ] Steam Input (enabled by default via Steam Desktop client)
 - [ ] Steam Link (usually via Raspberry Pi or other micro computers)
+- [ ] devices with QMK firmware (may affect udev rules, similar to OpenRGB)
 - [ ] netstick (shares input devices via network similar to Steam Link)
 - [ ] xboxdrv (user-space gamepad driver)
+- [ ] xone (kernel-space gamepad driver using the Xbox dongle or USB)
 - [ ] xow (alternative driver using the Xbox dongle)
 
 ## Severity / Impact
@@ -40,6 +43,7 @@ about: Report a bug
 
 - [ ] I've read the docs and the bug reporting instructions
 - [ ] I've applied the latest firmware update to the controller
+- [ ] I've tried disabling or running without above mentioned software
 - [ ] It does not work at all
 - [ ] It used to work in a previous version
 - [ ] It mostly works but sometimes it doesn't
