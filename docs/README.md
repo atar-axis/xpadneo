@@ -182,7 +182,7 @@ dependencies.
 * On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
   `cd hid-xpadneo && make modules && sudo make modules_install`
 
-Please feel free to add other Distributions as well!
+Please feel free to add other distributions as well!
 
 
 ### Installation
