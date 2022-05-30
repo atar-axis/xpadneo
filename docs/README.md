@@ -159,7 +159,8 @@ instructions below:
 
 ### Prerequisites
 
-Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their dependencies.
+Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their
+dependencies.
 
 * On **Arch** and Arch-based distros (like **Antergos**), try
   `sudo pacman -S dkms linux-headers bluez bluez-utils`
@@ -176,7 +177,8 @@ Make sure you have installed *dkms*, *linux headers* and a bluetooth implementat
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
 * On **Raspbian**, it is
   `sudo apt-get install dkms raspberrypi-kernel-headers`
-  If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for your kernel. Please follow the steps described [here](https://github.com/notro/rpi-source/wiki) in this case.
+  If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for
+  your kernel. Please follow the steps described [here](https://github.com/notro/rpi-source/wiki) in this case.
 * On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
   `cd hid-xpadneo && make modules && sudo make modules_install`
 
