@@ -31,9 +31,7 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
   finding some work-arounds for controller firmware bugs.
 * [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
 * [xone](https://github.com/medusalix/xone) is a driver aiming for fully supporting all Microsoft GIP devices thus
-  replacing the xpad driver in the kernel while adding support for additional types of hardware but it's currently
-  still lacking support for dongle, only wired devices are supported by now. It will replace xow at some time in the
-  future and is a kernel driver instead of running in user space.
+  replacing the xpad driver in the kernel while adding support for additional types of hardware.
 * [MissionControl](https://github.com/ndeadly/MissionControl) aims to support the controller on Nintendo Switch via
   Bluetooth.
 
