@@ -4,6 +4,12 @@ cd "$(dirname "$0")" || exit 1
 source "lib/verbose.sh"
 source "lib/installer.sh"
 
+if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
+
+    >&2 echo "WARNING: kernel uhid module not found, controller firmware 5.x will not be supported"
+
+fi
+
 if [[ -z "${INSTALLED[*]}" ]]; then
 
     set -e
