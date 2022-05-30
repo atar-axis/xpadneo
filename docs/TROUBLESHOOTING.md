@@ -77,7 +77,12 @@ Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar
 ### Gamepad Is Connected but Did not Rumble
 
 If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
-or the gamepad is quirky and doesn't fully support the protocol.
+or the gamepad is quirky and doesn't fully support the protocol. Your kernel may also be missing the `uhid` module
+which is needed by all Bluetooth LE devices for input capabilities because the bluez daemon will handle HID data in
+user-space. Most distributions include  `uhid` but if in doubt, ask your distribution kernel maintainers.
+
+Check the output of `zgrep UHID /proc/config.gz` to check whether your kernel has uhid support. This is only required
+for Xbox controllers with firmware 5.x or higher.
 
 Check the output of the `dmesg` command to see whether xpadneo was loaded and logged your
 gamepad.
