@@ -1,4 +1,4 @@
-## Third party Bugs
+## Third Party Bugs
 
 While developing this driver we recognized some bugs in KDE and linux itself,
 some of which are fixed now - others are not:
