@@ -1,3 +1,19 @@
+# Changes since v0.9.2 up to v0.9.3
+
+This is a hotfix release to fix the Xbox button which broke in v0.9.2.
+
+
+## Headlines:
+
+  * xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
+
+```
+Kai Krakow (2):
+      xpadneo, fixups: Apply SDL fixups unconditionally
+      xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
+```
+
+
 # Changes since v0.9.1 up to v0.9.2
 
 This is a maintenance release of xpadneo v0.9 to fix several issues found in
@@ -104,6 +120,7 @@ mikaka (1):
 ryanrms (1):
       Adding openSUSE to readme.md
 ```
+
 
 # Changes since v0.9 up to v0.9.1
 
