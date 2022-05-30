@@ -2,21 +2,6 @@
 
 ### Gamepad Does Not Connect Properly
 
-#### Enhanced ReTransmission Mode is enabled
-
-**Obsolete:** This section is scheduled for removal. Future kernels will include the proper fix for this.
-
-Also, there seems to be a bug in the L2CAP handling of the kernel and you may need to force-disable
-this setting:
-```
-# cat /sys/module/bluetooth/parameters/disable_ertm
-Y
-```
-
-If it says `N`, write `Y` to the file and try again. You may need to remove your partially paired
-controller from your Bluetooth settings completely before pairing again.
-
-
 #### High Latency or Lost Button Events with Bluetooth LE
 
 **Affected models:** Xbox controllers using Bluetooth LE (Xbox Series X\|S or later)
