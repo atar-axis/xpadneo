@@ -32,7 +32,7 @@ Do whatever you think does not behave correctly (e.g. move the sticks from left 
 is wrong) and upload the output.
 
 
-### HID device descriptor (including checksum)
+### HID Device Descriptor (including checksum)
 
 If we ask you to supply the device descriptor, please post the output of the following command:
 ```bash
