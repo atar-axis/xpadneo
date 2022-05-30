@@ -1,6 +1,6 @@
 ## Troubleshooting
 
-### Gamepad does not connect properly
+### Gamepad Does Not Connect Properly
 
 #### Enhanced ReTransmission Mode is enabled
 
@@ -74,7 +74,7 @@ Instructions for both of these options are available
 Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar-axis.github.io/xpadneo/#debugging).
 
 
-### Gamepad is connected but did not rumble
+### Gamepad Is Connected but Did not Rumble
 
 If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
 or the gamepad is quirky and doesn't fully support the protocol.
@@ -83,7 +83,7 @@ Check the output of the `dmesg` command to see whether xpadneo was loaded and lo
 gamepad.
 
 
-### Gamepad has quirks (i.e., wrong rumble behavior)
+### Gamepad Has Quirks (i.e., wrong rumble behavior)
 
 You may want to try serveral combinations of quirk flags added to the module paramters.
 See [Configuration](https://atar-axis.github.io/xpadneo/#configuration) and `modinfo hid-xpadneo`
@@ -92,7 +92,7 @@ driver and let's you try different combination of parameters. The utility is loc
 `misc/examples/c_hidraw`.
 
 
-### Gamepad does not connect at all, runs a reconnect loop, or immediately disconnects
+### Gamepad Does not Connect at All, Runs A Reconnect Loop, or Immediately Disconnects
 
 Check whether ERTM was disabled (see above). Also, some newer models use a different Bluetooth protocol "Bluetooth
 low energe" (BLE) which you may accidentally have disabled. Check the following settings in `/etc/bluetooth/main.conf`:
@@ -103,7 +103,7 @@ JustWorksRepairing = confirm
 ```
 
 
-#### Xbox Wireless controller
+#### Xbox Wireless Controller
 
 The newest wireless controllers from Microsoft (Xbox One and Xbox Series X\|S) are known to cause a reconnect loop and
 not pairing with Bluez. There are some specific workarounds:
@@ -125,7 +125,7 @@ not pairing with Bluez. There are some specific workarounds:
   to xpadneo.
 
 
-### Gamepad axes are swapped, seemingly unresponsive or strange behavior
+### Gamepad Axes Are Swapped, Seemingly Unresponsive or Strange Behavior
 
 If you observe this problem with `jstest`, `systemsettings joystick` (KDE) or `jstest-gtk`, there's usually nothing
 to do as these test programs use the old `joydev` API while most (modern) games use the `evdev` API. Some emulators,

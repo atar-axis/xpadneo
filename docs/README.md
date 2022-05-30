@@ -52,7 +52,7 @@ Observed problems:
 * Rumble doesn't work at all, needs to be fixed by SDL2
 
 
-## Advantages of this driver
+## Advantages of this Driver
 
 * Supports Bluetooth
 * Supports all Force Feedback/Rumble effects through Linux `ff-memless` effect emulation
@@ -80,13 +80,13 @@ Across all models, xpadneo won't support audio features of the controllers becau
 in Bluetooth mode. In the future, xpadneo may support audio when USB and dongle support will be added.
 
 
-### Xbox One S Wireless controller
+### Xbox One S Wireless Controller
 
 This is the initial controller supported from the first version of xpadneo. All features are fully supported. This
 controller uses emulated profile switching support (see below).
 
 
-### Xbox Elite Series 2 Wireless controller
+### Xbox Elite Series 2 Wireless Controller
 
 Basic support for the Xbox Elite Series 2 Wireless controller is present, covering all the features of the driver.
 The following features are missing:
@@ -96,7 +96,7 @@ The following features are missing:
 This controller uses native profile switching support (see below).
 
 
-### Xbox Series X|S Wireless controller
+### Xbox Series X|S Wireless Controller
 
 Full support for the Xbox Series X|S controller is present including the share button. This is currently mapped
 to keyboard event `KEY_RECORD` and may not work at all for any purpose. Thus, this implementation details may
@@ -108,7 +108,7 @@ This controller uses BLE (Bluetooth low energy) and can only be supported if you
 input experience. See also: [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting).
 
 
-### 8BitDo controllers
+### 8BitDo Controllers
 
 This driver respects the Nintendo layout of those controllers and exposes them correctly as button A, B, X, and Y
 as labelled on the device. This is swapped compared to the original Xbox controller layout. You can override that
@@ -120,14 +120,14 @@ support has been added for these controllers and broken mapping of previously ve
 applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
 
 
-## Profile switching
+## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
 switch that comes with some models. This switching can be done at any time even while in a game. The API for
 customizing each profile does not exist yet.
 
 
-### Native profile switching support
+### Native Profile Switching Support
 
 The driver support native profile switching for the Xbox Elite Series 2 controller. However, the feature is not
 finalized yet:
@@ -137,7 +137,7 @@ finalized yet:
   different if profiles have been configured in Windows already, that is still untested.
 
 
-### Emulated profile switching support
+### Emulated Profile Switching Support
 
 The driver emulates profile switching for controllers without a hardware profile switch by pressing buttons A, B, X,
 or Y while holding down the Xbox logo button. However, the following caveats apply:
@@ -147,9 +147,9 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 - If you hold the button for too long, the controller will turn off - we cannot prevent that.
 
 
-## Getting started
+## Getting Started
 
-### Distribution packages
+### Distribution Packages
 
 If your distribution has a maintained package, you can just use that and do not need to follow the manual install
 instructions below:
@@ -230,7 +230,7 @@ In order to update xpadneo, do the following
 * otherwise follow the steps above (generic distribution)
 
 
-## Further information
+## Further Information
 
 For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated
 automatically from the content of the `/docs` folder.

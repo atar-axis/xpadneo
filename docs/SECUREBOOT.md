@@ -21,7 +21,7 @@ After choosing either of these two options, Secure Boot should be disabled. You 
 One gamepad.
 
 
-### Signing xpadneo with your own keys
+### Signing xpadneo with Your Own Keys
 
 If you do not wish to disable Secure Boot, you will need to get the Shim to trust xpadneo. The process goes this way:
 
