@@ -162,6 +162,10 @@ instructions below:
 Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their
 dependencies.
 
+Kernel maintainers should also include the `uhid` module (`CONFIG_UHID`) because otherwise Bluetooth LE devices (all
+models with firmware 5.x or higher) cannot create the HID input device which is handled in user-space by the bluez
+daemon.
+
 * On **Arch** and Arch-based distros (like **Antergos**), try
   `sudo pacman -S dkms linux-headers bluez bluez-utils`
 * On **Debian** based systems (like Ubuntu) you can install those packages by running
