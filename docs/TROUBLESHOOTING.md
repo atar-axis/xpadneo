@@ -46,19 +46,6 @@ Some chipsets may need additional driver firmware to work correctly. Try install
 `linux-firmware` from your distribution.
 
 
-#### Secure Boot
-
-Secure Boot may be enabled on your computer. On most Linux distribution, running `mokutil --sb-state` will tell you if
-it is the case. When Secure Boot is enabled, unsigned kernel module cannot be loaded. Two options are available:
-
-1. Disable Secure Boot.
-2. Sign the module yourself.
-
-Instructions for both of these options are available
-[here](https://atar-axis.github.io/xpadneo/#working-with-secure-boot).
-Secure Boot is not enabled and pairing still fails? See [Debugging](https://atar-axis.github.io/xpadneo/#debugging).
-
-
 ### Gamepad Is Connected but Did not Rumble
 
 If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
