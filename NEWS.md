@@ -1,3 +1,18 @@
+# Changes since v0.9.4 up to v0.9.5
+
+## Headlines:
+
+  * xpadneo: Evade SDL-mismapping once again
+
+```
+Aniket (1):
+      Remove outdated secure boot docs
+
+Kai Krakow (1):
+      xpadneo: Evade SDL-mismapping once again
+```
+
+
 # Changes since v0.9.2 up to v0.9.3
 
 This is a hotfix release to fix the Xbox button which broke in v0.9.2.
