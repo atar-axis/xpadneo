@@ -61,7 +61,8 @@ MODULE_PARM_DESC(quirks,
 		 ", hardware profile switch = " __stringify(XPADNEO_QUIRK_USE_HW_PROFILES)
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
 		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
-		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON));
+		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON)
+		 ", reversed motor masking = " __stringify(XPADNEO_QUIRK_REVERSE_MASK));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -87,6 +88,9 @@ struct quirk {
 };
 
 static const struct quirk xpadneo_quirks[] = {
+	DEVICE_OUI_QUIRK("98:B6:EA",
+			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
+			 XPADNEO_QUIRK_REVERSE_MASK),
 	DEVICE_OUI_QUIRK("E4:17:D8",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
@@ -260,6 +264,10 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	/* do not send these bits if not supported */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
 		r->ff.enable = 0;
+
+	/* reverse the bits for trigger and main motors */
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
+		r->ff.enable = SWAP_BITS(SWAP_BITS(r->ff.enable, 1, 2), 0, 3);
 
 	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
@@ -448,6 +456,8 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	save = ff_pck.ff.magnitude_weak;
 	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
 		ff_pck.ff.magnitude_weak = 40;
+	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_LEFT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_WEAK;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
@@ -463,6 +473,8 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	save = ff_pck.ff.magnitude_strong;
 	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
 		ff_pck.ff.magnitude_strong = 20;
+	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_RIGHT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_STRONG;
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
@@ -481,6 +493,8 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 			ff_pck.ff.magnitude_left = 10;
 			ff_pck.ff.magnitude_right = 10;
+		} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK) {
+			ff_pck.ff.enable = FF_RUMBLE_MAIN;
 		} else {
 			ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
 		}
