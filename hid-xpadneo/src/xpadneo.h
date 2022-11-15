@@ -65,6 +65,7 @@ do { \
 #define XPADNEO_QUIRK_LINUX_BUTTONS     16
 #define XPADNEO_QUIRK_NINTENDO          32
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
+#define XPADNEO_QUIRK_REVERSE_MASK      128
 
 /* timing of rumble commands to work around firmware crashes */
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)

@@ -137,6 +137,32 @@ support has been added for these controllers and broken mapping of previously ve
 applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
 
 
+## GuliKit KingKong Controller Family
+
+This driver supports the GuliKit King Kong controller family, the driver was tested with model NS09 (using firmware
+v2.0) but should work just fine for the older models, too. If in doubt, follow the firmware upgrade guides on the
+GuliKit home page to receive the latest firmware. Both the Android mode and the X-Input mode are supported but it may
+depend on your Bluetooth stack which mode works better for you (Android mode didn't pair for me).
+
+This driver supports the Nintendo layout of those controllers to exposes them correctly as button A, B, X, and Y
+as labelled on the device. This is swapped compared to the original Xbox controller layout. However, this feature is
+not enabled by default. If you want to use this feature, you have to add a quirk flag to the module options:
+
+```
+# /etc/modprobe.conf
+options hid_xpadneo quirks=98:B6:EA:xx:xx:xx+32
+```
+
+where you replace `xx:xx:xx` with the values from your controller MAC (as shown in `dmesg`). The value `32` enables
+Nintendo layout. If you'll want to add other quirk flags, simply add the values,
+e.g. `32` + `131` (default quirks for GuliKit) = `163`. After changing this, reload the driver or reboot.
+
+However, alternatively the controller supports swapping the buttons on the fly, too: Just press and hold the settings
+button, the click the plus button. Thus, the quirks flag is just a matter of setting the defaults.
+
+This controller uses emulated profile switching support (see below).
+
+
 ## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
