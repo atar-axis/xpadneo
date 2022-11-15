@@ -795,8 +795,6 @@ static void xpadneo_switch_triggers(struct xpadneo_devdata *xdata, const u8 mode
 	}
 }
 
-#define SWAP_BITS(v,b1,b2) \
-	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
 static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 			     u8 *data, int reportsize)
 {
