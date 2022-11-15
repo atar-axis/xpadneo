@@ -56,6 +56,10 @@ do {									\
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
 
+/* helpers */
+#define SWAP_BITS(v,b1,b2) \
+	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
+
 /* rumble motors enable bits */
 enum xpadneo_rumble_motors {
 	FF_RUMBLE_NONE = 0x00,
