@@ -214,7 +214,7 @@ daemon.
 * On **Debian** based systems (like Ubuntu) you can install those packages by running
   ``sudo apt-get install dkms linux-headers-`uname -r` ``
 * On **Fedora**, it is
-  ``sudo dnf install dkms make bluez bluez-tools kernel-devel-`uname -r` kernel-headers-`uname -r` ``
+  ``sudo dnf install dkms make bluez bluez-tools kernel-devel-`uname -r` kernel-headers ``
 * On **Manjaro** try
   `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
 * On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
