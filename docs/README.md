@@ -209,7 +209,7 @@ Kernel maintainers should also include the `uhid` module (`CONFIG_UHID`) because
 models with firmware 5.x or higher) cannot create the HID input device which is handled in user-space by the bluez
 daemon.
 
-* On **Arch** and Arch-based distros (like **Antergos**), try
+* On **Arch** and Arch-based distros (like **EndeavourOS**), try
   `sudo pacman -S dkms linux-headers bluez bluez-utils`
 * On **Debian** based systems (like Ubuntu) you can install those packages by running
   ``sudo apt-get install dkms linux-headers-`uname -r` ``
