@@ -137,7 +137,7 @@ support has been added for these controllers and broken mapping of previously ve
 applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sdl).
 
 
-## GuliKit KingKong Controller Family
+### GuliKit KingKong Controller Family
 
 This driver supports the GuliKit King Kong controller family, the driver was tested with model NS09 (using firmware
 v2.0) but should work just fine for the older models, too. If in doubt, follow the firmware upgrade guides on the
