@@ -12,6 +12,8 @@ strategy:
       imageName: 'ubuntu-18.04'
     Ubuntu 20.04 LTS:
       imageName: 'ubuntu-20.04'
+    Ubuntu 22.04 LTS:
+      imageName: 'ubuntu-22.04'
 
 pool:
   vmImage: $(imageName)
