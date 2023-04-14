@@ -366,6 +366,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct ff_report ff_pck;
+	u8 save, lsave, rsave;
 
 	memset(&ff_pck.ff, 0, sizeof(ff_pck.ff));
 
@@ -388,6 +389,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	 * that doesn't compromise the testing nature of this
 	 */
 
+	save = ff_pck.ff.magnitude_weak;
 	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
 		ff_pck.ff.magnitude_weak = 40;
 	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
@@ -397,7 +399,6 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(300);
 	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		u8 save = ff_pck.ff.magnitude_weak;
 		ff_pck.ff.magnitude_weak = 0;
 		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		ff_pck.ff.magnitude_weak = save;
@@ -405,6 +406,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	ff_pck.ff.enable = 0;
 	mdelay(30);
 
+	save = ff_pck.ff.magnitude_strong;
 	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
 		ff_pck.ff.magnitude_strong = 20;
 	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
@@ -414,7 +416,6 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 	mdelay(300);
 	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		u8 save = ff_pck.ff.magnitude_strong;
 		ff_pck.ff.magnitude_strong = 0;
 		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		ff_pck.ff.magnitude_strong = save;
@@ -422,6 +423,8 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	ff_pck.ff.enable = 0;
 	mdelay(30);
 
+	lsave = ff_pck.ff.magnitude_left;
+	rsave = ff_pck.ff.magnitude_right;
 	if ((xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE) == 0) {
 		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 			ff_pck.ff.magnitude_left = 10;
@@ -434,8 +437,6 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
 		mdelay(300);
 		if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-			u8 lsave = ff_pck.ff.magnitude_left;
-			u8 rsave = ff_pck.ff.magnitude_right;
 			ff_pck.ff.magnitude_left = 0;
 			ff_pck.ff.magnitude_right = 0;
 			hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
