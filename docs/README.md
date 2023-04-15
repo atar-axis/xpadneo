@@ -235,7 +235,7 @@ Please feel free to add other distributions as well!
 ### Installation
 
 * Download the Repository to your local machine
-  `git clone https://github.com/atar-axis/xpadneo.git`
+  `git clone --depth=1 https://github.com/atar-axis/xpadneo.git`
 * `cd xpadneo`
 * If using DKMS, run `sudo ./install.sh`
 * If not using DKMS, follow steps above (generic distribution)
