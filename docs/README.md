@@ -105,9 +105,9 @@ This controller uses native profile switching support (see below).
 
 ### Xbox Series X|S Wireless Controller
 
-Full support for the Xbox Series X|S controller is present including the share button. This is currently mapped
-to keyboard event `KEY_RECORD` and may not work at all for any purpose. Thus, this implementation details may
-change during one of the next updates. This controller uses emulated profile switching support (see below).
+Full support for the Xbox Series X|S controller is present including the share button. This is currently statically
+mapped to keyboard event `KEY_F12` to take screenshots with Steam. It will be configurable in the future. This
+controller uses emulated profile switching support (see below).
 
 This controller uses BLE (Bluetooth low energy) and can only be supported if your Bluetooth dongle also supports BLE.
 
