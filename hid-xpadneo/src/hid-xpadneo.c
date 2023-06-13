@@ -1000,6 +1000,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		__set_bit(BTN_PADDLES(3), xdata->idev->keybit);
 	}
 
+	/* expose current profile as axis */
+	input_set_abs_params(xdata->idev, ABS_PROFILE, 0, XPADNEO_XBE2_PROFILES_MAX - 1, 0, 0);
+	input_report_abs(xdata->idev, ABS_PROFILE, 0);
+
 	return 0;
 }
 
@@ -1097,6 +1101,14 @@ combine_z_axes:
 	return 0;
 
 stop_processing:
+	/* report the profile change */
+	if (xdata->profile >= XPADNEO_XBE2_PROFILES_MAX) {
+		hid_notice_once(hdev, "unexpected profile value %d", xdata->profile);
+	} else if (xdata->last_profile != xdata->profile) {
+		input_report_abs(idev, ABS_PROFILE, xdata->profile);
+		xdata->last_profile = xdata->profile;
+	}
+
 	return 1;
 }
 

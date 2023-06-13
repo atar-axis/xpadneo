@@ -78,6 +78,7 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 * Supports battery level indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
 * Easy installation
+* Exposes the currently selected profile to user-space (Xbox Elite 2 controllers, or emulated)
 * Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users
 * Share button support on supported controllers
@@ -194,6 +195,12 @@ This manufacturer uses random MAC addresses, so we cannot rely on known OUIs. He
 The driver supports switching between different profiles, either through emulation or by using the hardware
 switch that comes with some models. This switching can be done at any time even while in a game. The API for
 customizing each profile does not exist yet.
+
+The currently selected profile is exposed to user-space as an additional axis `ABS_PROFILE` (supported since kernel
+6.0-rc1) with 4 positions, indicating which profile has currently been selected. For user-space to make full use of
+this knowledge, one would need to remap the paddles to distinctive, unique buttons in each profile. Otherwise you are
+limited to the generic gamepad buttons. Thus, the "profile axis" can be used as a shift operator in software that
+supports it.
 
 
 ### Native Profile Switching Support
