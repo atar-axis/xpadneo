@@ -48,9 +48,10 @@ do { \
 } while (0)
 
 /* button aliases */
-#define BTN_PADDLES(b) (BTN_TRIGGER_HAPPY5+(b))
-#define BTN_SHARE      KEY_F12
-#define BTN_XBOX       BTN_MODE
+#define BTN_PROFILES(b) (BTN_TRIGGER_HAPPY33+(b))
+#define BTN_PADDLES(b)  (BTN_TRIGGER_HAPPY5+(b))
+#define BTN_SHARE       KEY_F12
+#define BTN_XBOX        BTN_MODE
 
 /* module parameter "trigger_rumble_mode" */
 #define PARAM_TRIGGER_RUMBLE_PRESSURE 0
@@ -152,7 +153,7 @@ struct xpadneo_devdata {
 
 	/* profile switching */
 	bool xbox_button_down, profile_switched;
-	u8 profile;
+	u8 last_profile, profile;
 
 	/* mouse mode */
 	bool mouse_mode;
