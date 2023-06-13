@@ -874,11 +874,12 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	/* do not report the keyboard buttons as part of the gamepad */
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
 
-	/* add paddles as part of the gamepad */
-	__set_bit(BTN_PADDLES(0), xdata->gamepad->keybit);
-	__set_bit(BTN_PADDLES(1), xdata->gamepad->keybit);
-	__set_bit(BTN_PADDLES(2), xdata->gamepad->keybit);
-	__set_bit(BTN_PADDLES(3), xdata->gamepad->keybit);
+	/* ensure all four paddles exist as part of the gamepad */
+	if (test_bit(BTN_PADDLES(0), xdata->gamepad->keybit)) {
+		__set_bit(BTN_PADDLES(1), xdata->gamepad->keybit);
+		__set_bit(BTN_PADDLES(2), xdata->gamepad->keybit);
+		__set_bit(BTN_PADDLES(3), xdata->gamepad->keybit);
+	}
 
 	return 0;
 }
