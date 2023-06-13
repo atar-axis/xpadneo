@@ -52,6 +52,12 @@ do { \
 #define BTN_SHARE      KEY_F12
 #define BTN_XBOX       BTN_MODE
 
+/* XBE2 controllers support four profiles */
+#define XPADNEO_XBE2_PROFILES_MAX 4
+
+/* Profile usage code for kernel < 6.0-rc1 */
+#define ABS_PROFILE 0x21
+
 /* module parameter "trigger_rumble_mode" */
 #define PARAM_TRIGGER_RUMBLE_PRESSURE 0
 #define PARAM_TRIGGER_RUMBLE_RESERVED 1
@@ -159,7 +165,7 @@ struct xpadneo_devdata {
 
 	/* profile switching */
 	bool xbox_button_down, profile_switched;
-	u8 profile;
+	u8 last_profile, profile;
 
 	/* mouse mode */
 	bool mouse_mode;
