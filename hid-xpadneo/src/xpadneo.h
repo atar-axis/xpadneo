@@ -34,7 +34,7 @@ do {									\
 #endif
 
 /* button aliases */
-#define BTN_PADDLES(b) (BTN_TRIGGER_HAPPY37+(b))
+#define BTN_PADDLES(b) (BTN_TRIGGER_HAPPY5+(b))
 #define BTN_SHARE      BTN_TRIGGER_HAPPY1
 #define BTN_XBOX       BTN_MODE
 
