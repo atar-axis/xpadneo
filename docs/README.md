@@ -46,18 +46,19 @@ As of xpadneo v0.10, we require kernel 4.18 or later to utilize `HID_QUIRK_INPUT
 multiple sub-devices to fix problems and incompatibilities at several layers.
 
 
-### SDL 2.0.12 Breakage
+### SDL2 2.28 Compatibility
 
-As of SDL 2.0.12, SDL introduced a new HIDAPI which can read HID devices in raw mode, bypassing the drivers. Due to
-the way SDL works, and because xpadneo exposes hidraw devices as user-readable, SDL may see wrong button mappings
-because it may make wrong assumptions about the protocol mode of Xbox and compatible controllers. If you see wrong
-button mappings / missing buttons in SDL applications, or rumble does not work, you may need to turn off this behavior
-by setting an environment variable in your profile: `SDL_JOYSTICK_HIDAPI=0`
+Thanks to [@slouken](https://github.com/slouken) from SDL2, xpadneo mappings are now auto-detected in the upcoming
+SDL2 2.28 release. This will fix long-standing problems with Steam Input and SDL2 games. With this release, we will
+also have full paddle support.
 
-Observed problems:
+If you still see problems, ensure that you didn't create custom controllerdb entries. See also:
+- https://github.com/atar-axis/xpadneo/issues/428
+- https://github.com/libsdl-org/SDL/commit/9567989eb3ce9c858f0fe76806c5ccad69da89ba
+- https://github.com/libsdl-org/SDL/commit/0f4b15e16b7f07a46db6dc8e651f8c1849d658c5
 
-* Wrong mappings when using newer SDL2 versions, should be fixed by latest xpadneo
-* Rumble doesn't work at all, needs to be fixed by SDL2
+Known issues:
+- The Share button will currently not be recognized by SDL2, scheduled to be fixed in xpadneo v0.11
 
 
 ## Advantages of this Driver
@@ -71,6 +72,7 @@ Observed problems:
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
 * Working Select, Start, Mode buttons
+* Working paddles (buttons on the backside of the controller)
 * Correct Axis Range (signed, important for e.g. RPCS3)
 * Supports Battery Level Indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
