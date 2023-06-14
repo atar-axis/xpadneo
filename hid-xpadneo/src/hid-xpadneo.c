@@ -904,7 +904,8 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	input_set_abs_params(xdata->idev, ABS_MISC, -1023, 1023, 3, 63);
 
 	/* do not report the consumer control buttons as part of the gamepad */
-	__clear_bit(BTN_SHARE, xdata->idev->keybit);
+	__clear_bit(KEY_RECORD, xdata->idev->keybit);
+	__clear_bit(KEY_UNKNOWN, xdata->idev->keybit);
 
 	/* ensure all four paddles exist as part of the gamepad */
 	if (test_bit(BTN_PADDLES(0), xdata->idev->keybit)) {
