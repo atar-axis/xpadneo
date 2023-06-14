@@ -61,6 +61,18 @@ Known issues:
 - The Share button will currently not be recognized by SDL2, scheduled to be fixed in xpadneo v0.11
 
 
+### Quirks by Design
+
+With BLE firmware, all models switched to a unified HID report descriptor, only the XBE2 controller identifies with
+PID 0x0B22 while the other models identify with PID 0x0B13. This has some known consequences:
+
+- All non-XBE2 controllers will claim to have a Share button no matter if it physically exists. As HID doesn't report
+  the internal model number, xpadneo cannot fix it currently. The button is currently mapped to F12, so this has no
+  consequences.
+- All XBE2 controllers will claim to have a full keyboard and the Share button is actually the Profile button. Since
+  Share is currently mapped to F12, this will have no consequences.
+
+
 ## Advantages of this Driver
 
 * Supports Bluetooth

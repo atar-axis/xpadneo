@@ -804,6 +804,10 @@ static int xpadneo_raw_event(struct hid_device *hdev, struct hid_report *report,
 
 	/* XBE2: track the current controller settings */
 	if (report->id == 1 && reportsize >= 20) {
+		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
+			hid_info(hdev, "mapping profiles detected\n");
+			xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
+		}
 		if (reportsize == 55) {
 			hid_notice_once(hdev,
 					"detected broken XBE2 v1 packet format, please update the firmware");
@@ -846,6 +850,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		xdata->consumer = hi->input;
 		return 0;
 	case 0xFF000005:
+		/* FIXME: this is no longer in the current firmware */
 		hid_info(hdev, "mapping profiles detected\n");
 		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
 		return 0;
