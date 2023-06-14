@@ -911,6 +911,12 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	__clear_bit(KEY_RECORD, xdata->idev->keybit);
 	__clear_bit(KEY_UNKNOWN, xdata->idev->keybit);
 
+	/* do not report the Share button for models with HW profile switching */
+	if (xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES) {
+		hid_info(hdev, "unmapping bogus buttons\n");
+		__clear_bit(BTN_SHARE, xdata->idev->keybit);
+	}
+
 	/* ensure all four paddles exist as part of the gamepad */
 	if (test_bit(BTN_PADDLES(0), xdata->idev->keybit)) {
 		__set_bit(BTN_PADDLES(1), xdata->idev->keybit);
