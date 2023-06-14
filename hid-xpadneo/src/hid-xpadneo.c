@@ -836,6 +836,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	case HID_GD_KEYBOARD:
 		hid_info(hdev, "keyboard detected\n");
 		xdata->keyboard = hi->input;
+
+		/* do not report bogus keys as part of the keyboard */
+		__clear_bit(KEY_UNKNOWN, xdata->keyboard->keybit);
+
 		return 0;
 	case HID_CP_CONSUMER_CONTROL:
 		hid_info(hdev, "consumer control detected\n");
