@@ -190,8 +190,9 @@ The driver support native profile switching for the Xbox Elite Series 2 controll
 finalized yet:
 
 - The default profile (no LED) exposes the paddles as extra buttons.
-- The other three profiles behave the same way currently, and there is no support for configuring them. This may be
-  different if profiles have been configured in Windows already, that is still untested.
+- The other three profiles behave the same way by default. While there is no support for modifying them currently,
+  configurations set in the [Xbox Accessories app (Windows only)](https://apps.microsoft.com/store/detail/xbox-accessories/9NBLGGH30XJ3)
+  will carry over and operate as intended.
 
 
 ### Emulated Profile Switching Support
