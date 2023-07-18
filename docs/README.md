@@ -217,6 +217,9 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 - Full support will be available once the Xbox Elite Series 2 controller is fully supported.
 - If you hold the button for too long, the controller will turn off - we cannot prevent that.
 
+**Important:** Emulated profile switching won't work if you disabled the shift-mode of the Xbox logo button (module
+parameter `disable_shift_mode`).
+
 
 ## Getting Started
 

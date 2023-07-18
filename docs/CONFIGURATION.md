@@ -33,6 +33,10 @@ files in `/sys/module/hid_xpadneo/parameters`:
     * `16` if your controller boots in Linux mode (auto-detected, do not change manually)
     * `32` if you prefer to use Nintendo button mappings (i.e., 8BitDo controllers, defaults to off)
     * `64` if your controller has a awkwardly mapped Share button (auto-detected, do not set manually)
+* 'disable_shift_mode' (default 0)
+  * Let's you disable Xbox logo button shift behavior
+  * '0' Xbox logo button will be used as shift
+  * '1' will pass through the Xbox logo button as is
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how
 that works:
