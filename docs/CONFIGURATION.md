@@ -34,7 +34,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
     * `32` if you prefer to use Nintendo button mappings (i.e., 8BitDo controllers, defaults to off)
     * `64` if your controller has a awkwardly mapped Share button (auto-detected, do not set manually)
 * 'disable_shift_mode' (default 0)
-  * Let's you disable the button chords used with the XBOX button
+  * Let's you disable Xbox logo button shift behavior
   * '0' Xbox logo button will be used as shift
   * '1' will pass through the Xbox logo button as is
 
