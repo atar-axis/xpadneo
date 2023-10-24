@@ -59,6 +59,12 @@ hci0:   Primary controller
     * Re-Connection Problems
     * Reliable once connected
   * Reported by @NoXPhasma [here](https://github.com/atar-axis/xpadneo/issues/91#issuecomment-484815264)
+* [TP-Link USB Bluetooth Adapter Bluetooth 4.0 (UB400)](https://www.amazon.com/gp/product/B07V1SZCY6)
+  * Chipset: CSR ???
+  * `ID 0a12:0001 Cambridge Silicon Radio, Ltd Bluetooth Dongle (HCI mode)`
+  * Performance:
+    * Connection flawless
+  * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
 
 
 ### Broadcom
@@ -93,3 +99,12 @@ hci0:   Primary controller
 * Status: bluetoothd logs "Request attribute has encountered an unlikely error"
   * Chipset: AX200
   * Used as on-board chipset: ASUS B550-i
+
+### TP-Link
+* [TP-Link USB Bluetooth Adapter Bluetooth 5.0 (UB500)](https://www.amazon.com/gp/product/B09DMP6T22)
+  * Chipset: CSR ???
+  * `ID 2357:0604 TP-Link TP-Link UB500 Adapter`
+  * Performance:
+    * Disconnects after some random interval and reconnects
+    * When it's connected, It's good
+  * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
