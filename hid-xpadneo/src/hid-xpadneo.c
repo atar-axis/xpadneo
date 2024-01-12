@@ -112,23 +112,33 @@ struct usage_map {
 #define USAGE_IGN(u) USAGE_MAP(u, MAP_IGNORE, 0, 0)
 
 static const struct usage_map xpadneo_usage_maps[] = {
+  // 90009 and 9000a, sent when trigger fully released
 	/* fixup buttons to Linux codes */
 	USAGE_MAP(0x90001, MAP_STATIC, EV_KEY, BTN_A),	/* A */
 	USAGE_MAP(0x90002, MAP_STATIC, EV_KEY, BTN_B),	/* B */
-	USAGE_MAP(0x90003, MAP_STATIC, EV_KEY, BTN_X),	/* X */
-	USAGE_MAP(0x90004, MAP_STATIC, EV_KEY, BTN_Y),	/* Y */
-	USAGE_MAP(0x90005, MAP_STATIC, EV_KEY, BTN_TL),	/* LB */
-	USAGE_MAP(0x90006, MAP_STATIC, EV_KEY, BTN_TR),	/* RB */
-	USAGE_MAP(0x90007, MAP_STATIC, EV_KEY, BTN_SELECT),	/* Back */
-	USAGE_MAP(0x90008, MAP_STATIC, EV_KEY, BTN_START),	/* Menu */
-	USAGE_MAP(0x90009, MAP_STATIC, EV_KEY, BTN_THUMBL),	/* LS */
-	USAGE_MAP(0x9000A, MAP_STATIC, EV_KEY, BTN_THUMBR),	/* RS */
+	// USAGE_MAP(0x90003, MAP_STATIC, EV_KEY, BTN_X),	/* X */
+	USAGE_MAP(0x90004, MAP_STATIC, EV_KEY, BTN_X),	/* Y */
+	USAGE_MAP(0x90005, MAP_STATIC, EV_KEY, BTN_Y),	/* Y */
+
+  // The Flydigi Vader3 button set is different here
+	USAGE_MAP(0x90007, MAP_STATIC, EV_KEY, BTN_TL),	/* LB */
+	USAGE_MAP(0x90008, MAP_STATIC, EV_KEY, BTN_TR),	/* RB */
+	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_SELECT),	/* Back */
+	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, BTN_START),	/* Menu */
+
+	/* USAGE_MAP(0x90005, MAP_STATIC, EV_KEY, BTN_TL),	/\* LB *\/ */
+	/* USAGE_MAP(0x90006, MAP_STATIC, EV_KEY, BTN_TR),	/\* RB *\/ */
+	/* USAGE_MAP(0x90007, MAP_STATIC, EV_KEY, BTN_SELECT),	/\* Back *\/ */
+	/* USAGE_MAP(0x90008, MAP_STATIC, EV_KEY, BTN_START),	/\* Menu *\/ */
+
+	USAGE_MAP(0x9000E, MAP_STATIC, EV_KEY, BTN_THUMBL),	/* LS */
+	USAGE_MAP(0x9000F, MAP_STATIC, EV_KEY, BTN_THUMBR),	/* RS */
 
 	/* fixup the Xbox logo button */
-	USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
+	// USAGE_MAP(0x9000B, MAP_STATIC, EV_KEY, BTN_XBOX),	/* Xbox */
 
 	/* fixup the Share button */
-	USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, BTN_SHARE),	/* Share */
+	// USAGE_MAP(0x9000C, MAP_STATIC, EV_KEY, BTN_SHARE),	/* Share */
 
 	/* fixup code "Sys Main Menu" from Windows report descriptor */
 	USAGE_MAP(0x10085, MAP_STATIC, EV_KEY, BTN_XBOX),
@@ -141,6 +151,16 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 	/* map special buttons without HID bitmaps, corrected in event handler */
 	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_PADDLES(0)),	/* Four paddles */
+
+  // Flydigi Vader3 C and Z buttons
+	USAGE_MAP(0xC0036, MAP_STATIC, EV_KEY, BTN_C),
+	USAGE_MAP(0xC0084, MAP_STATIC, EV_KEY, BTN_Z),
+
+  // From left to right, the flydigi paddles
+	USAGE_MAP(0xC009C, MAP_STATIC, EV_KEY, BTN_TRIGGER_HAPPY1),	/* Four paddles */
+	USAGE_MAP(0xC0089, MAP_STATIC, EV_KEY, BTN_TRIGGER_HAPPY2),	/* Four paddles */
+	USAGE_MAP(0xC009D, MAP_STATIC, EV_KEY, BTN_TRIGGER_HAPPY3),	/* Four paddles */
+	USAGE_MAP(0xC00B8, MAP_STATIC, EV_KEY, BTN_TRIGGER_HAPPY4),	/* Four paddles */
 
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
@@ -865,20 +885,23 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 
 	if (param_gamepad_compliance) {
 		hid_info(hdev, "enabling compliance with Linux Gamepad Specification\n");
-		abs_min = -32768;
-		abs_max = 32767;
+    deadzone = 0;
+		/* abs_min = -32768; */
+		/* abs_max = 32767; */
+    abs_min = -127;
+    abs_max = 128;
 	}
 
 	input_set_abs_params(xdata->gamepad, ABS_X, abs_min, abs_max, 32, deadzone);
 	input_set_abs_params(xdata->gamepad, ABS_Y, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->gamepad, ABS_RX, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->gamepad, ABS_RY, abs_min, abs_max, 32, deadzone);
+	/* input_set_abs_params(xdata->gamepad, ABS_RX, abs_min, abs_max, 32, deadzone); */
+	/* input_set_abs_params(xdata->gamepad, ABS_RY, abs_min, abs_max, 32, deadzone); */
 
-	input_set_abs_params(xdata->gamepad, ABS_Z, 0, 1023, 4, 0);
-	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, 1023, 4, 0);
+	input_set_abs_params(xdata->gamepad, ABS_Z, abs_min, abs_max, 32, deadzone);
+	input_set_abs_params(xdata->gamepad, ABS_RZ, abs_min, abs_max, 32, deadzone);
 
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
+	// input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
 
 	/* do not report the keyboard buttons as part of the gamepad */
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
@@ -919,7 +942,8 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		case ABS_RY:
 			/* Linux Gamepad Specification */
 			if (param_gamepad_compliance) {
-				input_report_abs(gamepad, usage->code, value - 32768);
+				// input_report_abs(gamepad, usage->code, value - 32768);
+				input_report_abs(gamepad, usage->code, value);
 				/* no need to sync here */
 				goto stop_processing;
 			}
@@ -1254,6 +1278,9 @@ static const struct hid_device_id xpadneo_devices[] = {
 
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05) },
+
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_FLYDIGI, 0x0041)},
+
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
 	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 

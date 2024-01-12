@@ -2,5 +2,6 @@
 #define HID_IDS_H_FILE
 
 #define USB_VENDOR_ID_MICROSOFT 0x045e
+#define USB_VENDOR_ID_FLYDIGI 0xD7D7
 
 #endif
