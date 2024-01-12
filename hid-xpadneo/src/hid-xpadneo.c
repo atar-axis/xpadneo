@@ -885,7 +885,7 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 
 	if (param_gamepad_compliance) {
 		hid_info(hdev, "enabling compliance with Linux Gamepad Specification\n");
-    deadzone = 0;
+    deadzone = 12;
 		/* abs_min = -32768; */
 		/* abs_max = 32767; */
     abs_min = -127;
