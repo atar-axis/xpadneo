@@ -46,6 +46,12 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
+static bool param_disable_shift_mode = 0;
+module_param_named(disable_shift_mode, param_disable_shift_mode, bool, 0644);
+MODULE_PARAM_DESC(disable_shift_mode,
+		"(bool) Disable use Xbox logo button as shift. Will prohibit profile switching when enabled. "
+		"0: disable, 1: enable.");
+
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -931,7 +937,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->last_abs_rz = value;
 			goto combine_z_axes;
 		}
-	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
+	} else if (!param_disable_shift_mode && (usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
 		/*
 		 * Handle the Xbox logo button: We want to cache the button
 		 * down event to allow for profile switching. The button will
