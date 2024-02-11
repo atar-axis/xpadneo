@@ -158,6 +158,21 @@ button, the click the plus button. Thus, the quirks flag is just a matter of set
 This controller uses emulated profile switching support (see below).
 
 
+### GameSir T4 Cyclone Family
+
+This driver supports the GameSir T4 Cyclone controller family, tested by the community. The Pro-models also support
+trigger rumble but since we cannot distinguish both models by the Bluetooth MAC OUI, we simply enable the trigger
+rumble protocol for both variants. This should not introduce any problems but if it does, and your model does not have
+trigger rumble support, you can explicitly tell the driver to not use the trigger rumble motors by adding a quirk flag:
+
+```
+# /etc/modprobe.conf
+options hid_xpadneo quirks=A0:5A:5D:xx:xx:xx+2
+```
+
+This controller uses emulated profile switching support (see below).
+
+
 ## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
