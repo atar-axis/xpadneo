@@ -1,3 +1,44 @@
+# Changes since v0.9.5 up to v0.9.6
+
+## Headlines:
+
+  * docs: Elite S2 Profiles carry over
+  * xpadneo: Add support for GuliKit KingKong2 PRO controllers
+  * xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
+  * xpadneo, init: Actually save rumble test values before we replace them
+  * xpadneo: Support GameSir T4 Cyclone models
+  * xpadneo v0.9, hid: Fix documentation about Share button
+
+```
+Kai Krakow (16):
+      xpadneo: Move bit swap helper to include file
+      xpadneo, init: Fix rumble testing logic on connect
+      xpadneo, init: Actually save rumble test values before we replace them
+      xpadneo: Add support for GuliKit KingKong2 PRO controllers
+      docs: Fix headline for GuliKit controllers
+      xpadneo: Upgrade CI to Ubuntu 22.04
+      xpadneo: Remove Ubuntu 18.04 from CI
+      Makefile: Use kernel build symlink from `/lib/modules`
+      xpadneo v0.9, hid: Fix documentation about Share button
+      xpadneo, init: Do not report paddles unconditionally
+      xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
+      xpadneo, init: Really exclude the keyboard event from the HID bitmap
+      xpadneo, init: Detect HW profile support on current firmwares
+      xpadneo v0.9, init: Disable bogus buttons replaced by known features
+      xpadneo: Support GameSir T4 Cyclone models
+      xpadneo, docs: Reintroduce hint about using SDL_JOYSTICK_HIDAPI=0
+
+Kevin Locke (1):
+      Add BUILD_EXCLUSIVE_CONFIG to dkms.conf
+
+Willster Johnson (1):
+      docs: Elite S2 Profiles carry over
+
+thiccaxe (1):
+      Update TROUBLESHOOTING.md
+```
+
+
 # Changes since v0.9.4 up to v0.9.5
 
 ## Headlines:
