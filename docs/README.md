@@ -59,6 +59,8 @@ If you still see problems, ensure that you didn't create custom controllerdb ent
 
 Known issues:
 - The Share button will currently not be recognized by SDL2, scheduled to be fixed in xpadneo v0.11
+- If SDL2 uses hidraw, mappings will be wrong, export `SDL_JOYSTICK_HIDAPI=0` in your profile or find which software
+  enabled hidraw device access to all drivers
 
 
 ### Quirks by Design
