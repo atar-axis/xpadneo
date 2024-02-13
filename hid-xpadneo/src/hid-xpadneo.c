@@ -46,6 +46,12 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
+static bool param_enable_rolling_axis = 0;
+module_param_named(enable_rolling_axis, param_enable_rolling_axis, bool, 0444);
+MODULE_PARM_DESC(enable_rolling_axis,
+		 "(bool) Enable rolling axis by combining both triggers, out of spec for many games. (deprecated) "
+		 "0: disable, 1: enable.");
+
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -878,7 +884,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, 1023, 4, 0);
 
 	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-	input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
+	if (param_enable_rolling_axis) {
+		hid_info(hdev, "enabling rolling axis is deprecated\n");
+		input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
+	}
 
 	/* do not report the keyboard buttons as part of the gamepad */
 	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
@@ -995,7 +1004,8 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 combine_z_axes:
 	if (++xdata->count_abs_z_rz == 2) {
 		xdata->count_abs_z_rz = 0;
-		input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
+		if (param_enable_rolling_axis)
+			input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
 	}
 	return 0;
 
