@@ -63,7 +63,7 @@ hci0:   Primary controller
   * Chipset: CSR ???
   * `ID 0a12:0001 Cambridge Silicon Radio, Ltd Bluetooth Dongle (HCI mode)`
   * Performance:
-    * Connection flawless
+    * Connection is flawless
   * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
 
 
@@ -106,5 +106,5 @@ hci0:   Primary controller
   * `ID 2357:0604 TP-Link TP-Link UB500 Adapter`
   * Performance:
     * Disconnects after some random interval and reconnects
-    * When it's connected, It's good
+    * When it's connected, it's good
   * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
