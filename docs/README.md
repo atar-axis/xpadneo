@@ -78,17 +78,17 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 ## Advantages of this Driver
 
 * Supports Bluetooth
-* Supports all Force Feedback/Rumble effects through Linux `ff-memless` effect emulation
+* Supports most force feedback and all rumble effects through Linux `ff-memless` effect emulation
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
   pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
-* Supports disabling FF
+* Supports adjusting rumble intensity including disabling rumble
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
 * Working paddles (buttons on the backside of the controller)
-* Correct Axis Range (signed, important for e.g. RPCS3)
-* Supports Battery Level Indication (including the Play 'n Charge Kit)
+* Correct axis range (signed, important for e.g. RPCS3)
+* Supports battery level indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
-* Easy Installation
+* Easy installation
 * Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users (disables dead zones so games don't apply an additional one)
 * Share button support on supported controllers
