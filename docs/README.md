@@ -72,16 +72,13 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
   pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
 * Supports disabling FF
-* Supports multiple Gamepads at the same time (not even supported in Windows)
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
-* Working Select, Start, Mode buttons
 * Working paddles (buttons on the backside of the controller)
 * Correct Axis Range (signed, important for e.g. RPCS3)
 * Supports Battery Level Indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
 * Easy Installation
-* Agile Support and Development
 * Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users
 * Share button support on supported controllers
