@@ -1256,8 +1256,8 @@ static void xpadneo_remove(struct hid_device *hdev)
 
 static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B20),
 	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 
