@@ -928,7 +928,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			/* Linux Gamepad Specification */
 			if (param_gamepad_compliance) {
 				input_report_abs(gamepad, usage->code, value - 32768);
-				/* no need to sync here */
 				goto stop_processing;
 			}
 			break;
@@ -968,7 +967,6 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		if (!keyboard)
 			goto keyboard_missing;
 		input_report_key(keyboard, BTN_SHARE, value);
-		input_sync(keyboard);
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
