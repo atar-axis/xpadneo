@@ -40,10 +40,23 @@ References:
 
 #### Incompatible Bluetooth Chipset
 
-Some chipsets, e.g. the CSR 85xx, do have problems when you try to reconnect the Gamepad.
+Some chipsets, e.g. the CSR 85xx or Intel AX200 (and variants like 3xxx), do have problems when you try to reconnect
+the gamepad.
 
 Some chipsets may need additional driver firmware to work correctly. Try installing
 `linux-firmware` from your distribution.
+
+See below, if this happens since a firmware upgrade of the controller.
+
+
+#### Gamepad Connects and Immediately Disconnects since Firmware Upgrade
+
+After upgrading the controller firmware, it is essential to fully remove/forget the device from your Bluetooth device
+list, then reboot to ensure a clean state, then re-pair the controller.
+
+Reference:
+
+* https://github.com/atar-axis/xpadneo/issues/439
 
 
 #### Gamepad Asks for a PIN During Pairing
