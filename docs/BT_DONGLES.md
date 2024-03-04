@@ -100,6 +100,7 @@ hci0:   Primary controller
   * Chipset: AX200
   * Used as on-board chipset: ASUS B550-i
 
+
 ### TP-Link
 * [TP-Link USB Bluetooth Adapter Bluetooth 5.0 (UB500)](https://www.amazon.com/gp/product/B09DMP6T22)
   * Chipset: CSR ???
