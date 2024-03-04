@@ -228,6 +228,12 @@ instructions below:
 [![Packaging status](https://repology.org/badge/vertical-allrepos/xpadneo.svg)](https://repology.org/project/xpadneo/versions)
 
 
+### Notes for Package Maintainers
+
+To properly support module signing and UEFI secure boot, `openssl` and `mokutil` are required additionally to the
+prerequisites below. The [DKMS readme](https://github.com/dell/dkms/blob/master/README.md) has more instructions.
+
+
 ### Prerequisites
 
 Make sure you have installed *dkms*, *linux headers* and a bluetooth implementation (e.g. *bluez*) and their
@@ -256,6 +262,8 @@ daemon.
   your kernel. Please follow the steps described [here](https://github.com/notro/rpi-source/wiki) in this case.
 * On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
   `cd hid-xpadneo && make modules && sudo make modules_install`
+* **Module singing and UEFI secure boot:** If installing yourself, you may need to follow the instructions above for
+  package maintainers.
 
 Please feel free to add other distributions as well!
 
