@@ -109,3 +109,12 @@ hci0:   Primary controller
     * Disconnects after some random interval and reconnects
     * When it's connected, it's good
   * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
+
+
+### Simplecom
+
+* [Simplecom NB409 Bluetooth 5.0 USB Wireless Dongle with A2DP EDR](https://www.mwave.com.au/product/simplecom-nb409-bluetooth-50-usb-wireless-dongle-with-a2dp-edr-ac38550)
+  * Chipset: Realtek Semiconductor Corp. ???
+  * `ID 0bda:8771 Realtek Semiconductor Corp. Bluetooth Radio`
+  * Status: it works straight out of the box for a user on Manjaro KDE with kernel 5.15 and 6.1
+  * Reported by @mscharley [here](https://github.com/atar-axis/xpadneo/issues/406)
