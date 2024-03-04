@@ -61,6 +61,33 @@ Some chipsets may need additional driver firmware to work correctly. Try install
 `linux-firmware` from your distribution.
 
 
+#### Gamepad Asks for a PIN During Pairing
+
+A user found that with genuine Xbox controllers, the fix is often to use an external USB dongle instead of the internal
+chipset for pairing the controller (recommended to try first).
+
+If it still asks for a PIN, try `0000` to connect the controller. It should happen just once.
+
+Some third-party controllers and clones will still show the issue on later connects. The issue should be reported to
+the Bluez project to fix it, we only provide a work-around here.
+
+To work around the issue, this solution was found. It may affect other devices and reduces security, use at your own
+risk:
+
+```ini
+# /etc/bluetooth/input.conf
+
+[General]
+UserspaceHID=true
+ClassicBondedOnly=false
+LEAutoSecurity=false
+```
+
+Reference:
+
+* https://github.com/atar-axis/xpadneo/issues/262#issuecomment-1913918332
+
+
 ### Gamepad Is Connected but Did not Rumble
 
 If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
