@@ -917,6 +917,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			input_report_key(gamepad, BTN_PADDLES(1), value & 2 ? 1 : 0);
 			input_report_key(gamepad, BTN_PADDLES(2), value & 4 ? 1 : 0);
 			input_report_key(gamepad, BTN_PADDLES(3), value & 8 ? 1 : 0);
+			xdata->gamepad_sync = true;
 		}
 		goto stop_processing;
 	} else if (usage->type == EV_ABS) {
@@ -928,6 +929,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			/* Linux Gamepad Specification */
 			if (param_gamepad_compliance) {
 				input_report_abs(gamepad, usage->code, value - 32768);
+				xdata->gamepad_sync = true;
 				goto stop_processing;
 			}
 			break;
@@ -967,6 +969,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		if (!keyboard)
 			goto keyboard_missing;
 		input_report_key(keyboard, BTN_SHARE, value);
+		xdata->keyboard_sync = true;
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
@@ -996,13 +999,16 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	}
 
 	/* Let hid-core handle the event */
+	xdata->gamepad_sync = true;
 	return 0;
 
 combine_z_axes:
 	if (++xdata->count_abs_z_rz == 2) {
 		xdata->count_abs_z_rz = 0;
-		if (param_enable_rolling_axis)
+		if (param_enable_rolling_axis) {
 			input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
+			xdata->gamepad_sync = true;
+		}
 	}
 	return 0;
 
@@ -1114,6 +1120,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 
 	xdata->hdev = hdev;
 	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
+	hdev->quirks |= HID_QUIRK_NO_INPUT_SYNC;
 	hid_set_drvdata(hdev, xdata);
 
 	if (hdev->version == 0x00000903)
@@ -1281,6 +1288,7 @@ static struct hid_driver xpadneo_driver = {
 	.input_configured = xpadneo_input_configured,
 	.probe = xpadneo_probe,
 	.remove = xpadneo_remove,
+	.report = xpadneo_report,
 	.report_fixup = xpadneo_report_fixup,
 	.raw_event = xpadneo_raw_event,
 	.event = xpadneo_event,

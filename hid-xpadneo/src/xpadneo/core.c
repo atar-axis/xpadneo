@@ -35,3 +35,23 @@ extern int xpadneo_init_synthetic(struct xpadneo_devdata *xdata, char *suffix,
 	*devp = input_dev;
 	return 0;
 }
+
+extern void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
+{
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+
+	if (xdata->consumer && xdata->consumer_sync) {
+		xdata->consumer_sync = false;
+		input_sync(xdata->consumer);
+	}
+
+	if (xdata->gamepad && xdata->gamepad_sync) {
+		xdata->gamepad_sync = false;
+		input_sync(xdata->gamepad);
+	}
+
+	if (xdata->keyboard && xdata->keyboard_sync) {
+		xdata->keyboard_sync = false;
+		input_sync(xdata->keyboard);
+	}
+}
