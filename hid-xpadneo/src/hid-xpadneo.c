@@ -52,6 +52,12 @@ MODULE_PARM_DESC(enable_rolling_axis,
 		 "(bool) Enable rolling axis by combining both triggers, out of spec for many games. (deprecated) "
 		 "0: disable, 1: enable.");
 
+static bool param_disable_shift_mode = 0;
+module_param_named(disable_shift_mode, param_disable_shift_mode, bool, 0644);
+MODULE_PARM_DESC(disable_shift_mode,
+		 "(bool) Disable use Xbox logo button as shift. Will prohibit profile switching when enabled. "
+		 "0: disable, 1: enable.");
+
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -900,6 +906,13 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 		__set_bit(BTN_PADDLES(3), xdata->gamepad->keybit);
 	}
 
+	/* expose current profile as buttons */
+	__set_bit(BTN_PROFILES(0), xdata->gamepad->keybit);
+	__set_bit(BTN_PROFILES(1), xdata->gamepad->keybit);
+	__set_bit(BTN_PROFILES(2), xdata->gamepad->keybit);
+	__set_bit(BTN_PROFILES(3), xdata->gamepad->keybit);
+	input_report_key(xdata->gamepad, BTN_PROFILES(0), 1);
+
 	return 0;
 }
 
@@ -940,7 +953,8 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->last_abs_rz = value;
 			goto combine_z_axes;
 		}
-	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
+	} else if (!param_disable_shift_mode && (usage->type == EV_KEY)
+		   && (usage->code == BTN_XBOX)) {
 		/*
 		 * Handle the Xbox logo button: We want to cache the button
 		 * down event to allow for profile switching. The button will
@@ -1019,6 +1033,14 @@ keyboard_missing:
 	}
 
 stop_processing:
+	/* report the profile change */
+	if (xdata->last_profile != xdata->profile) {
+		if (xdata->last_profile < 4)
+			input_report_key(gamepad, BTN_PROFILES(xdata->last_profile), 0);
+		input_report_key(gamepad, BTN_PROFILES(xdata->profile), 1);
+		xdata->last_profile = xdata->profile;
+	}
+
 	return 1;
 }
 
