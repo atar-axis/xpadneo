@@ -152,9 +152,10 @@ applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sd
 ### GuliKit KingKong Controller Family
 
 This driver supports the GuliKit King Kong controller family, the driver was tested with model NS09 (using firmware
-v2.0) but should work just fine for the older models, too. If in doubt, follow the firmware upgrade guides on the
-GuliKit home page to receive the latest firmware. Both the Android mode and the X-Input mode are supported but it may
-depend on your Bluetooth stack which mode works better for you (Android mode didn't pair for me).
+v2.0) and NS39 (aka KK3 MAX, firmware v3.6) but should work just fine for the older models, too. If in doubt, follow
+the firmware upgrade guides on the GuliKit home page to receive the latest firmware. Both the Android mode and the
+X-Input mode are supported but it may depend on your Bluetooth stack which mode works better for you (Android mode
+didn't pair for me).
 
 This driver supports the Nintendo layout of those controllers to exposes them correctly as button A, B, X, and Y
 as labelled on the device. This is swapped compared to the original Xbox controller layout. However, this feature is
