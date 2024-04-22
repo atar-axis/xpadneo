@@ -195,5 +195,6 @@ extern int xpadneo_init_consumer(struct xpadneo_devdata *);
 extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
 extern void xpadneo_report(struct hid_device *, struct hid_report *);
+extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
 
 #endif

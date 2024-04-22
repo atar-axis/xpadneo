@@ -55,3 +55,23 @@ extern void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 		input_sync(xdata->keyboard);
 	}
 }
+
+extern void xpadneo_core_missing(struct xpadneo_devdata *xdata, u32 flag)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	if ((xdata->missing_reported & flag) == 0) {
+		xdata->missing_reported |= flag;
+		switch (flag) {
+		case XPADNEO_MISSING_GAMEPAD:
+			hid_err(hdev, "gamepad not detected\n");
+			break;
+		case XPADNEO_MISSING_KEYBOARD:
+			hid_err(hdev, "keyboard not detected\n");
+			break;
+		default:
+			hid_err(hdev, "unexpected subdevice missing: %d\n", flag);
+		}
+	}
+
+}

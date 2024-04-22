@@ -1020,10 +1020,7 @@ combine_z_axes:
 	return 0;
 
 keyboard_missing:
-	if ((xdata->missing_reported & XPADNEO_MISSING_KEYBOARD) == 0) {
-		xdata->missing_reported |= XPADNEO_MISSING_KEYBOARD;
-		hid_err(hdev, "keyboard not detected\n");
-	}
+	xpadneo_core_missing(xdata, XPADNEO_MISSING_KEYBOARD);
 
 stop_processing:
 	return 1;
@@ -1035,10 +1032,7 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	if (!xdata->gamepad) {
-		if ((xdata->missing_reported & XPADNEO_MISSING_GAMEPAD) == 0) {
-			xdata->missing_reported |= XPADNEO_MISSING_GAMEPAD;
-			hid_err(hdev, "gamepad not detected\n");
-		}
+		xpadneo_core_missing(xdata, XPADNEO_MISSING_GAMEPAD);
 		return -EINVAL;
 	}
 
