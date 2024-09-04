@@ -102,20 +102,29 @@ If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
   * Used as on-board chipset: ASUS B550-i
 
 
-### TP-Link
+### Realtek
+
+Known bad firmware for RTL8761BU chipset is 0xdfc6d922. It causes frequent
+reconnects. Firmware version can be found in the kernel log:
+```
+$ sudo dmesg | grep 'RTL: fw version'
+[   21.193448] Bluetooth: hci0: RTL: fw version 0xdfc6d922
+```
+
 * [TP-Link USB Bluetooth Adapter Bluetooth 5.0 (UB500)](https://www.amazon.com/gp/product/B09DMP6T22)
-  * Chipset: CSR ???
+  * Chipset: RTL8761BU
   * `ID 2357:0604 TP-Link TP-Link UB500 Adapter`
   * Performance:
     * Disconnects after some random interval and reconnects
     * When it's connected, it's good
   * Reported by @Arian8j2 [here](https://github.com/atar-axis/xpadneo/issues/389#issuecomment-1677012088)
-
-
-### Simplecom
-
 * [Simplecom NB409 Bluetooth 5.0 USB Wireless Dongle with A2DP EDR](https://www.mwave.com.au/product/simplecom-nb409-bluetooth-50-usb-wireless-dongle-with-a2dp-edr-ac38550)
-  * Chipset: Realtek Semiconductor Corp. ???
+  * Chipset: RTL8761BU
   * `ID 0bda:8771 Realtek Semiconductor Corp. Bluetooth Radio`
   * Status: it works straight out of the box for a user on Manjaro KDE with kernel 5.15 and 6.1
   * Reported by @mscharley [here](https://github.com/atar-axis/xpadneo/issues/406)
+* [UGREEN Bluetooth 5.0 USB Adapter (CM390)](https://www.amazon.com/gp/product/B08R8992YC/)
+  * Chipset: RTL8761BU
+  * `ID 0bda:8771 Realtek Semiconductor Corp. Bluetooth Radio`
+  * Performance:
+    * Connection flawless if good firmware is being used
