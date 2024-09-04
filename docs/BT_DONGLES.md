@@ -20,6 +20,7 @@ hci0:   Primary controller
         name jupiter
         short name
 ```
+If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
 
 
 ### Cambridge Silicon Radio
