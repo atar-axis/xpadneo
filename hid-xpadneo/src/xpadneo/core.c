@@ -54,4 +54,9 @@ extern void xpadneo_report(struct hid_device *hdev, struct hid_report *report)
 		xdata->keyboard_sync = false;
 		input_sync(xdata->keyboard);
 	}
+
+	if (xdata->mouse && xdata->mouse_sync) {
+		xdata->mouse_sync = false;
+		input_sync(xdata->mouse);
+	}
 }
