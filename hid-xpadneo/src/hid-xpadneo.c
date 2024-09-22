@@ -98,11 +98,13 @@ struct quirk {
 };
 
 static const struct quirk xpadneo_quirks[] = {
+	DEVICE_OUI_QUIRK("3E:42:6C", XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
 	DEVICE_OUI_QUIRK("A0:5A:5D", XPADNEO_QUIRK_NO_HAPTICS),
 	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_NO_HAPTICS | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
+	DEVICE_OUI_QUIRK("ED:BC:9A", XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
 };
 
 struct usage_map {
@@ -270,9 +272,9 @@ static void xpadneo_ff_worker(struct work_struct *work)
 
 	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
-	/* do not send these bits if not supported */
+	/* set all bits if not supported (some clones require these set) */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
-		r->ff.enable = 0;
+		r->ff.enable = FF_RUMBLE_ALL;
 
 	/* reverse the bits for trigger and main motors */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
@@ -401,9 +403,10 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	 */
 
 	save = ff_pck.ff.magnitude_weak;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 		ff_pck.ff.magnitude_weak = 40;
-	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_ALL;
+	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		ff_pck.ff.enable = FF_RUMBLE_LEFT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_WEAK;
@@ -418,9 +421,10 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	mdelay(30);
 
 	save = ff_pck.ff.magnitude_strong;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 		ff_pck.ff.magnitude_strong = 20;
-	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_ALL;
+	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		ff_pck.ff.enable = FF_RUMBLE_RIGHT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_STRONG;
@@ -440,6 +444,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 			ff_pck.ff.magnitude_left = 10;
 			ff_pck.ff.magnitude_right = 10;
+			ff_pck.ff.enable = FF_RUMBLE_ALL;
 		} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK) {
 			ff_pck.ff.enable = FF_RUMBLE_MAIN;
 		} else {
