@@ -1,0 +1,3 @@
+#FIXME(issue-291) Work around Steamlink not properly detecting the mappings
+#FIXME(issue-457) Word around QMK overriding our hidraw rules
+ACTION=="add|change", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", MODE:="0000", TAG-="uaccess"
