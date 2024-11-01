@@ -26,8 +26,8 @@ echo "Installing modalias database..."
 install -D -m 0644 -t /etc/modprobe.d etc-modprobe.d/xpadneo.conf
 
 echo "Installing udev rules..."
-install -D -m 0644 -t /etc/udev/rules.d etc-udev-rules.d/50-xpadneo-fixup-steamlink.rules
 install -D -m 0644 -t /etc/udev/rules.d etc-udev-rules.d/60-xpadneo.rules
+install -D -m 0644 -t /etc/udev/rules.d etc-udev-rules.d/70-xpadneo-disable-hidraw.rules
 
 echo "Reloading udev..."
 udevadm control --reload
