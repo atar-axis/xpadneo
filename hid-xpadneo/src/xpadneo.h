@@ -53,6 +53,13 @@ do {									\
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
 #define XPADNEO_QUIRK_REVERSE_MASK      128
 
+#define XPADNEO_QUIRK_NO_HAPTICS        (XPADNEO_QUIRK_NO_PULSE|XPADNEO_QUIRK_NO_MOTOR_MASK)
+#define XPADNEO_QUIRK_SIMPLE_CLONE      (XPADNEO_QUIRK_NO_HAPTICS|XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
+
+/* MAC OUI masks */
+#define XPADNEO_OUI_MASK(oui,mask)    (((oui)&(mask))==(mask))
+#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
+
 /* timing of rumble commands to work around firmware crashes */
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
