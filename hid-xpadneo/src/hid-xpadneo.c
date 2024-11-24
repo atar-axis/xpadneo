@@ -949,10 +949,10 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
 		if (xdata->profile == 0) {
 			/* report the paddles individually */
-			input_report_key(idev, BTN_PADDLES(0), value & 1 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(1), value & 2 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(2), value & 4 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(3), value & 8 ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(0), (value & 1) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(1), (value & 2) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(2), (value & 4) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(3), (value & 8) ? 1 : 0);
 		}
 		goto stop_processing;
 	} else if (usage->type == EV_ABS) {
