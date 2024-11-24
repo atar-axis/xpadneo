@@ -722,7 +722,7 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6,12,0)
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
 #else
-static const u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
+static const __u8 *xpadneo_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
 #endif
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
