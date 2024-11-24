@@ -205,6 +205,8 @@ options hid_xpadneo quirks=3E:42:6C:xx:xx:xx+6
 
 This controller uses emulated profile switching support (see below).
 
+This manufacturer uses random MAC addresses, so we cannot rely on known OUIs. Heuristics try to detect this controller.
+
 
 ## Profile Switching
 

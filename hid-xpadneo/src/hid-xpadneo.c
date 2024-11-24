@@ -98,17 +98,11 @@ struct quirk {
 };
 
 static const struct quirk xpadneo_quirks[] = {
-	DEVICE_OUI_QUIRK("3E:42:6C",
-			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_MOTOR_MASK |
-			 XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
 	DEVICE_OUI_QUIRK("A0:5A:5D", XPADNEO_QUIRK_NO_HAPTICS),
-	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_NO_HAPTICS | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
-	DEVICE_OUI_QUIRK("ED:BC:9A",
-			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_MOTOR_MASK |
-			 XPADNEO_QUIRK_NO_TRIGGER_RUMBLE),
+	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_SIMPLE_CLONE),
 };
 
 struct usage_map {
@@ -1042,6 +1036,8 @@ stop_processing:
 static int xpadneo_init_hw(struct hid_device *hdev)
 {
 	int i, ret;
+	u8 oui_byte;
+	char oui[3] = { };
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	if (!xdata->gamepad) {
@@ -1104,6 +1100,20 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		}
 	}
 	kernel_param_unlock(THIS_MODULE);
+
+	/*
+	 * copy the first two characters from the uniq ID (MAC address) and
+	 * expect it being too big to copy, then `kstrtou8()` converts the
+	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte
+	 */
+	if ((xdata->original_rsize == 283)
+	    && (strscpy(oui, xdata->gamepad->uniq, sizeof(oui)) == -E2BIG)
+	    && (kstrtou8(oui, 16, &oui_byte) == 0)
+	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)
+	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)) {
+		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
+		xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+	}
 
 	if (xdata->quirks > 0)
 		hid_info(hdev, "controller quirks: 0x%08x\n", xdata->quirks);
