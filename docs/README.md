@@ -191,6 +191,21 @@ options hid_xpadneo quirks=A0:5A:5D:xx:xx:xx+2
 This controller uses emulated profile switching support (see below).
 
 
+### GameSir T4 Nova Lite Family
+
+This driver supports the GameSir T4 Nova Lite controller family, tested by the community. These models have a quirk of
+only allowing rumble when all motor-enable bits are set and does not have trigger rumble motors. It looks like these
+models are available with different MAC OUIs, so your particular controller may not be automatically detected. In this
+case, manually add the quirk flags for your controller:
+
+```
+# /etc/modprobe.conf
+options hid_xpadneo quirks=3E:42:6C:xx:xx:xx+6
+```
+
+This controller uses emulated profile switching support (see below).
+
+
 ## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
