@@ -4,7 +4,6 @@ If you want to support me or accelerate the development of a special feature, co
 Just leave a message if your donation is for a specific use (like a new hardware or a specific function).
 
 [![Build Status](https://dev.azure.com/dollingerflorian/dollingerflorian/_apis/build/status/atar-axis.xpadneo?branchName=master)](https://dev.azure.com/dollingerflorian/dollingerflorian/_build/latest?definitionId=1?branchName=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7bba9bae5e6e493189969dd2a80ac09e)](https://www.codacy.com/app/atar-axis/xpadneo?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=atar-axis/xpadneo&amp;utm_campaign=Badge_Grade)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/atar-axis/xpadneo.svg)](http://isitmaintained.com/project/atar-axis/xpadneo "Average time to resolve an issue")
 [![Packaging status](https://repology.org/badge/tiny-repos/xpadneo.svg)](https://repology.org/project/xpadneo/versions)
 [![Discord](https://img.shields.io/discord/733964971842732042)](https://discord.gg/nCqfKa84KA)
@@ -68,20 +67,17 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 ## Advantages of this Driver
 
 * Supports Bluetooth
-* Supports all Force Feedback/Rumble effects through Linux `ff-memless` effect emulation
+* Supports most force feedback and all rumble effects through Linux `ff-memless` effect emulation
 * Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
   pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
-* Supports disabling FF
-* Supports multiple Gamepads at the same time (not even supported in Windows)
+* Supports adjusting rumble intensity including disabling rumble
 * Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
-* Working Select, Start, Mode buttons
 * Working paddles (buttons on the backside of the controller)
-* Correct Axis Range (signed, important for e.g. RPCS3)
-* Supports Battery Level Indication (including the Play 'n Charge Kit)
+* Correct axis range (signed, important for e.g. RPCS3)
+* Supports battery level indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
-* Easy Installation
-* Agile Support and Development
+* Easy installation
 * Supports customization through profiles (work in progress)
 * Optional high-precision mode for Wine/Proton users
 * Share button support on supported controllers
@@ -137,9 +133,10 @@ applied. See also: [SDL](https://atar-axis.github.io/xpadneo/#troubleshooting#sd
 ### GuliKit KingKong Controller Family
 
 This driver supports the GuliKit King Kong controller family, the driver was tested with model NS09 (using firmware
-v2.0) but should work just fine for the older models, too. If in doubt, follow the firmware upgrade guides on the
-GuliKit home page to receive the latest firmware. Both the Android mode and the X-Input mode are supported but it may
-depend on your Bluetooth stack which mode works better for you (Android mode didn't pair for me).
+v2.0) and NS39 (aka KK3 MAX, firmware v3.6) but should work just fine for the older models, too. If in doubt, follow
+the firmware upgrade guides on the GuliKit home page to receive the latest firmware. Both the Android mode and the
+X-Input mode are supported but it may depend on your Bluetooth stack which mode works better for you (Android mode
+didn't pair for me).
 
 This driver supports the Nintendo layout of those controllers to exposes them correctly as button A, B, X, and Y
 as labelled on the device. This is swapped compared to the original Xbox controller layout. However, this feature is
@@ -175,6 +172,23 @@ options hid_xpadneo quirks=A0:5A:5D:xx:xx:xx+2
 This controller uses emulated profile switching support (see below).
 
 
+### GameSir T4 Nova Lite Family
+
+This driver supports the GameSir T4 Nova Lite controller family, tested by the community. These models have a quirk of
+only allowing rumble when all motor-enable bits are set and does not have trigger rumble motors. It looks like these
+models are available with different MAC OUIs, so your particular controller may not be automatically detected. In this
+case, manually add the quirk flags for your controller:
+
+```
+# /etc/modprobe.conf
+options hid_xpadneo quirks=3E:42:6C:xx:xx:xx+6
+```
+
+This controller uses emulated profile switching support (see below).
+
+This manufacturer uses random MAC addresses, so we cannot rely on known OUIs. Heuristics try to detect this controller.
+
+
 ## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
@@ -201,6 +215,9 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 - Profiles currently behave all the same, and there is no support for configuring them.
 - Full support will be available once the Xbox Elite Series 2 controller is fully supported.
 - If you hold the button for too long, the controller will turn off - we cannot prevent that.
+
+**Important:** Emulated profile switching won't work if you disabled the shift-mode of the Xbox logo button (module
+parameter `disable_shift_mode`).
 
 
 ## Getting Started
@@ -231,7 +248,7 @@ daemon.
 * On **Manjaro** try
   `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
 * On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
-  `sudo zypper install dkms make bluez bluez-tools kernel-devel kernel-source`
+  `sudo zypper install dkms make bluez kernel-devel kernel-source`
 * On **OSMC** you will have to run the following commands
   ``sudo apt-get install dkms rbp2-headers-`uname -r` ``
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))

@@ -14,7 +14,7 @@ CONF_FILE=$(grep -sl '^options hid_xpadneo' /etc/modprobe.d/*.conf | tail -1)
 : "${CONF_FILE:="/etc/modprobe.d/99-xpadneo-options.conf"}"
 
 # Use getopt NOT getopts to parse arguments.
-OPTS=$(getopt -n "$NAME" -o h:m:r: -l help,version,trigger-rumble-mode:,rumble-attenuation: -- "$@")
+OPTS=$(getopt -n "$NAME" -o h:m:r:n: -l help,version,trigger-rumble-mode:,rumble-attenuation:,ff_connect_notify: -- "$@")
 
 ## Print Help ##
 function display_help {
@@ -41,6 +41,14 @@ function check_param {
             exit 1
         fi
         ;;
+      "ff_connect_notify")
+        if [[ "$value" -gt 2 ]] || [[ "$value" -lt 0 ]];
+        then
+            echo "$NAME: $key: Invalid value! Value must be 0 or 1."
+            exit 1
+        fi
+        ;;
+        
     *)
         # key not known, should not be possible
         exit 2
@@ -101,7 +109,7 @@ function parse_args {
     # If line doesn't exist echo all of the defaults.
     mkdir -p "$(dirname "${CONF_FILE}")"
     touch "${CONF_FILE}"
-    echo "options hid_xpadneo disable_deadzones=0 rumble_attenuation=0 trigger_rumble_mode=0" >> "$CONF_FILE"
+    echo "options hid_xpadneo disable_deadzones=0 rumble_attenuation=0 trigger_rumble_mode=0 ff_connect_notify=1" >> "$CONF_FILE"
   fi
 
   eval set -- "$OPTS"
@@ -123,6 +131,13 @@ function parse_args {
 
       -r | --rumble-attenuation)
         key='rumble_attenuation'
+        value="${2#*=}"
+        set_param "$key" "$value"
+        shift 2
+        ;;
+
+      -n | --ff_connect_notify)
+        key='ff_connect_notify'
         value="${2#*=}"
         set_param "$key" "$value"
         shift 2

@@ -10,6 +10,7 @@
 
 #include <linux/delay.h>
 #include <linux/module.h>
+#include <linux/version.h>
 
 #include "xpadneo.h"
 
@@ -45,6 +46,12 @@ static bool param_disable_deadzones = 0;
 module_param_named(disable_deadzones, param_disable_deadzones, bool, 0444);
 MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
+		 "0: disable, 1: enable.");
+
+static bool param_disable_shift_mode = 0;
+module_param_named(disable_shift_mode, param_disable_shift_mode, bool, 0644);
+MODULE_PARM_DESC(disable_shift_mode,
+		 "(bool) Disable use Xbox logo button as shift. Will prohibit profile switching when enabled. "
 		 "0: disable, 1: enable.");
 
 static struct {
@@ -91,11 +98,8 @@ static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
-	DEVICE_OUI_QUIRK("E4:17:D8",
-			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
-			 XPADNEO_QUIRK_NO_MOTOR_MASK | XPADNEO_QUIRK_NINTENDO),
-	DEVICE_OUI_QUIRK("A0:5A:5D",
-			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_MOTOR_MASK),
+	DEVICE_OUI_QUIRK("A0:5A:5D", XPADNEO_QUIRK_NO_HAPTICS),
+	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_SIMPLE_CLONE | XPADNEO_QUIRK_NINTENDO),
 };
 
 struct usage_map {
@@ -263,9 +267,9 @@ static void xpadneo_ff_worker(struct work_struct *work)
 
 	spin_unlock_irqrestore(&xdata->ff_lock, flags);
 
-	/* do not send these bits if not supported */
+	/* set all bits if not supported (some clones require these set) */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
-		r->ff.enable = 0;
+		r->ff.enable = FF_RUMBLE_ALL;
 
 	/* reverse the bits for trigger and main motors */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
@@ -456,9 +460,10 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	 */
 
 	save = ff_pck.ff.magnitude_weak;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 		ff_pck.ff.magnitude_weak = 40;
-	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_ALL;
+	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		ff_pck.ff.enable = FF_RUMBLE_LEFT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_WEAK;
@@ -473,9 +478,10 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	mdelay(30);
 
 	save = ff_pck.ff.magnitude_strong;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK)
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 		ff_pck.ff.magnitude_strong = 20;
-	else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		ff_pck.ff.enable = FF_RUMBLE_ALL;
+	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		ff_pck.ff.enable = FF_RUMBLE_RIGHT;
 	else
 		ff_pck.ff.enable = FF_RUMBLE_STRONG;
@@ -495,6 +501,7 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
 			ff_pck.ff.magnitude_left = 10;
 			ff_pck.ff.magnitude_right = 10;
+			ff_pck.ff.enable = FF_RUMBLE_ALL;
 		} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK) {
 			ff_pck.ff.enable = FF_RUMBLE_MAIN;
 		} else {
@@ -712,7 +719,11 @@ static int xpadneo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 	return MAP_AUTO;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,12,0)
 static u8 *xpadneo_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
+#else
+static const __u8 *xpadneo_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
+#endif
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -938,10 +949,10 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
 		if (xdata->profile == 0) {
 			/* report the paddles individually */
-			input_report_key(idev, BTN_PADDLES(0), value & 1 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(1), value & 2 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(2), value & 4 ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(3), value & 8 ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(0), (value & 1) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(1), (value & 2) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(2), (value & 4) ? 1 : 0);
+			input_report_key(idev, BTN_PADDLES(3), (value & 8) ? 1 : 0);
 		}
 		goto stop_processing;
 	} else if (usage->type == EV_ABS) {
@@ -964,7 +975,8 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 			xdata->last_abs_rz = value;
 			goto combine_z_axes;
 		}
-	} else if ((usage->type == EV_KEY) && (usage->code == BTN_XBOX)) {
+	} else if (!param_disable_shift_mode && (usage->type == EV_KEY)
+		   && (usage->code == BTN_XBOX)) {
 		/*
 		 * Handle the Xbox logo button: We want to cache the button
 		 * down event to allow for profile switching. The button will
@@ -1028,6 +1040,8 @@ stop_processing:
 static int xpadneo_init_hw(struct hid_device *hdev)
 {
 	int i, ret;
+	u8 oui_byte;
+	char oui[3] = { };
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
 	xdata->battery.name =
@@ -1074,6 +1088,20 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 		}
 	}
 	kernel_param_unlock(THIS_MODULE);
+
+	/*
+	 * copy the first two characters from the uniq ID (MAC address) and
+	 * expect it being too big to copy, then `kstrtou8()` converts the
+	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte
+	 */
+	if ((xdata->original_rsize == 283)
+	    && (strscpy(oui, xdata->idev->uniq, sizeof(oui)) == -E2BIG)
+	    && (kstrtou8(oui, 16, &oui_byte) == 0)
+	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)
+	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)) {
+		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
+		xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+	}
 
 	if (xdata->quirks > 0)
 		hid_info(hdev, "controller quirks: 0x%08x\n", xdata->quirks);
@@ -1235,8 +1263,8 @@ static void xpadneo_remove(struct hid_device *hdev)
 
 static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B20),
 	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
 
