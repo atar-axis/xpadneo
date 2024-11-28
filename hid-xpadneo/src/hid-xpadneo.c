@@ -76,7 +76,8 @@ MODULE_PARM_DESC(quirks,
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
 		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
 		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON)
-		 ", reversed motor masking = " __stringify(XPADNEO_QUIRK_REVERSE_MASK));
+		 ", reversed motor masking = " __stringify(XPADNEO_QUIRK_REVERSE_MASK)
+		 ", swapped motor masking = " __stringify(XPADNEO_QUIRK_SWAPPED_MASK));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -105,6 +106,8 @@ static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
+	DEVICE_OUI_QUIRK("98:B6:EC",
+			 XPADNEO_QUIRK_SIMPLE_CLONE | XPADNEO_QUIRK_SWAPPED_MASK),
 	DEVICE_OUI_QUIRK("A0:5A:5D", XPADNEO_QUIRK_NO_HAPTICS),
 	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_SIMPLE_CLONE),
 };
@@ -316,6 +319,10 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
 		r->ff.enable = SWAP_BITS(SWAP_BITS(r->ff.enable, 1, 2), 0, 3);
 
+	/* swap the bits of trigger and main motors */
+	if (unlikely(xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK))
+		r->ff.enable = SWAP_BITS(SWAP_BITS(r->ff.enable, 0, 2), 1, 3);
+
 	ret = xpadneo_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
@@ -448,6 +455,13 @@ static void xpadneo_test_rumble(char *which, struct xpadneo_devdata *xdata, stru
 	 */
 	if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		pck.ff.enable = SWAP_BITS(SWAP_BITS(pck.ff.enable, 1, 2), 0, 3);
+
+	/*
+	 * XPADNEO_QUIRK_SWAPPED_MASK:
+	 * The controller firmware swaps the bit masks for the trigger motors with those for the main motors.
+	 */
+	if (xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK)
+		pck.ff.enable = SWAP_BITS(SWAP_BITS(pck.ff.enable, 0, 2), 1, 3);
 
 	xpadneo_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	mdelay(300);
