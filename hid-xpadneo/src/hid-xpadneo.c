@@ -373,9 +373,12 @@ unlock_and_return:
 	return 0;
 }
 
-static void xpadneo_test_rumble(struct xpadneo_devdata *xdata, struct ff_report pck)
+static void xpadneo_test_rumble(char *which, struct xpadneo_devdata *xdata, struct ff_report pck)
 {
 	enum xpadneo_rumble_motors enabled = pck.ff.enable;
+
+	hid_info(xdata->hdev, "testing %s: sustain %d0ms release %d0ms loop %d wait 30ms\n", which,
+		 pck.ff.pulse_sustain_10ms, pck.ff.pulse_release_10ms, pck.ff.loop_count);
 
 	/*
 	 * XPADNEO_QUIRK_NO_MOTOR_MASK:
@@ -453,18 +456,18 @@ static void xpadneo_welcome_rumble(struct hid_device *hdev)
 	if (!(xdata->quirks & XPADNEO_QUIRK_NO_PULSE)) {
 		ff_pck.ff.pulse_sustain_10ms = 5;
 		ff_pck.ff.pulse_release_10ms = 5;
-		ff_pck.ff.loop_count = 3;
+		ff_pck.ff.loop_count = 2;
 	}
 
 	ff_pck.ff.enable = FF_RUMBLE_WEAK;
-	xpadneo_test_rumble(xdata, ff_pck);
+	xpadneo_test_rumble("weak motor", xdata, ff_pck);
 
 	ff_pck.ff.enable = FF_RUMBLE_STRONG;
-	xpadneo_test_rumble(xdata, ff_pck);
+	xpadneo_test_rumble("strong motor", xdata, ff_pck);
 
 	if (!(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 		ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
-		xpadneo_test_rumble(xdata, ff_pck);
+		xpadneo_test_rumble("trigger motors", xdata, ff_pck);
 	}
 }
 
