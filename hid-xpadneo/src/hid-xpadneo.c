@@ -373,92 +373,98 @@ unlock_and_return:
 	return 0;
 }
 
+static void xpadneo_test_rumble(struct xpadneo_devdata *xdata, struct ff_report pck)
+{
+	enum xpadneo_rumble_motors enabled = pck.ff.enable;
+
+	/*
+	 * XPADNEO_QUIRK_NO_MOTOR_MASK:
+	 * The controller does not support motor masking so we set all bits, and set the magnitude to 0 instead.
+	 */
+	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
+		pck.ff.enable = FF_RUMBLE_ALL;
+		if (!(enabled & FF_RUMBLE_WEAK))
+			pck.ff.magnitude_weak = 0;
+		if (!(enabled & FF_RUMBLE_STRONG))
+			pck.ff.magnitude_strong = 0;
+		if (!(enabled & FF_RUMBLE_RIGHT))
+			pck.ff.magnitude_right = 0;
+		if (!(enabled & FF_RUMBLE_LEFT))
+			pck.ff.magnitude_left = 0;
+	}
+
+	/*
+	 * XPADNEO_QUIRK_NO_TRIGGER_RUMBLE:
+	 * The controller does not support trigger rumble, so filter for the main motors only if we enabled all
+	 * before.
+	 */
+	if (xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
+		pck.ff.enable &= FF_RUMBLE_MAIN;
+
+	/*
+	 * XPADNEO_QUIRK_REVERSE_MASK:
+	 * The controller firmware reverses the order of the motor masking bits, so we swap the bits to reverse it.
+	 */
+	if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
+		pck.ff.enable = SWAP_BITS(SWAP_BITS(pck.ff.enable, 1, 2), 0, 3);
+
+	hid_hw_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+	mdelay(300);
+
+	/*
+	 * XPADNEO_QUIRK_NO_PULSE:
+	 * The controller doesn't support timing parameters of the rumble command, so we manually stop the motors.
+	 */
+	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
+		if (enabled & FF_RUMBLE_WEAK)
+			pck.ff.magnitude_weak = 0;
+		if (enabled & FF_RUMBLE_STRONG)
+			pck.ff.magnitude_strong = 0;
+		if (enabled & FF_RUMBLE_RIGHT)
+			pck.ff.magnitude_right = 0;
+		if (enabled & FF_RUMBLE_LEFT)
+			pck.ff.magnitude_left = 0;
+		hid_hw_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+	}
+	mdelay(30);
+}
+
 static void xpadneo_welcome_rumble(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct ff_report ff_pck;
-	u8 save, lsave, rsave;
-
-	memset(&ff_pck.ff, 0, sizeof(ff_pck.ff));
+	struct ff_report ff_pck = { };
 
 	ff_pck.report_id = XPADNEO_XB1S_FF_REPORT;
-	if ((xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) == 0) {
-		ff_pck.ff.magnitude_weak = 40;
-		ff_pck.ff.magnitude_strong = 20;
-		ff_pck.ff.magnitude_right = 10;
-		ff_pck.ff.magnitude_left = 10;
-	}
 
-	if ((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0) {
+	/*
+	 * Initialize the motor magnitudes here, the test command will individually zero masked magnitudes if
+	 * needed.
+	 */
+	ff_pck.ff.magnitude_weak = 40;
+	ff_pck.ff.magnitude_strong = 20;
+	ff_pck.ff.magnitude_right = 10;
+	ff_pck.ff.magnitude_left = 10;
+
+	/*
+	 * XPADNEO_QUIRK_NO_PULSE:
+	 * If the controller doesn't support timing parameters of the rumble command, don't set them. Otherwise we
+	 * may miss controllers that actually do support the parameters.
+	 */
+	if (!(xdata->quirks & XPADNEO_QUIRK_NO_PULSE)) {
 		ff_pck.ff.pulse_sustain_10ms = 5;
 		ff_pck.ff.pulse_release_10ms = 5;
 		ff_pck.ff.loop_count = 3;
 	}
 
-	/*
-	 * TODO Think about a way of dry'ing the following blocks in a way
-	 * that doesn't compromise the testing nature of this
-	 */
+	ff_pck.ff.enable = FF_RUMBLE_WEAK;
+	xpadneo_test_rumble(xdata, ff_pck);
 
-	save = ff_pck.ff.magnitude_weak;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
-		ff_pck.ff.magnitude_weak = 40;
-		ff_pck.ff.enable = FF_RUMBLE_ALL;
-	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
-		ff_pck.ff.enable = FF_RUMBLE_LEFT;
-	else
-		ff_pck.ff.enable = FF_RUMBLE_WEAK;
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-	mdelay(300);
-	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		ff_pck.ff.magnitude_weak = 0;
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		ff_pck.ff.magnitude_weak = save;
-	}
-	ff_pck.ff.enable = 0;
-	mdelay(30);
+	ff_pck.ff.enable = FF_RUMBLE_STRONG;
+	xpadneo_test_rumble(xdata, ff_pck);
 
-	save = ff_pck.ff.magnitude_strong;
-	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
-		ff_pck.ff.magnitude_strong = 20;
-		ff_pck.ff.enable = FF_RUMBLE_ALL;
-	} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
-		ff_pck.ff.enable = FF_RUMBLE_RIGHT;
-	else
-		ff_pck.ff.enable = FF_RUMBLE_STRONG;
-	hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-	mdelay(300);
-	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		ff_pck.ff.magnitude_strong = 0;
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		ff_pck.ff.magnitude_strong = save;
-	}
-	ff_pck.ff.enable = 0;
-	mdelay(30);
-
-	lsave = ff_pck.ff.magnitude_left;
-	rsave = ff_pck.ff.magnitude_right;
-	if ((xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE) == 0) {
-		if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
-			ff_pck.ff.magnitude_left = 10;
-			ff_pck.ff.magnitude_right = 10;
-			ff_pck.ff.enable = FF_RUMBLE_ALL;
-		} else if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK) {
-			ff_pck.ff.enable = FF_RUMBLE_MAIN;
-		} else {
-			ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
-		}
-		hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-		mdelay(300);
-		if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-			ff_pck.ff.magnitude_left = 0;
-			ff_pck.ff.magnitude_right = 0;
-			hid_hw_output_report(hdev, (u8 *)&ff_pck, sizeof(ff_pck));
-			ff_pck.ff.magnitude_left = lsave;
-			ff_pck.ff.magnitude_right = rsave;
-		}
-		ff_pck.ff.enable = 0;
-		mdelay(30);
+	if (!(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
+		ff_pck.ff.enable = FF_RUMBLE_TRIGGERS;
+		xpadneo_test_rumble(xdata, ff_pck);
 	}
 }
 
