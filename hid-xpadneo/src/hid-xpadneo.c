@@ -1085,6 +1085,7 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 {
 	int i, ret;
 	u8 oui_byte;
+	u32 quirks_set = 0, quirks_unset = 0, quirks_override = U32_MAX;
 	char oui[3] = { };
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -1133,21 +1134,28 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
 				goto err_free_name;
 			} else if (param_quirks.args[i][offset] == ':') {
-				hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
-				xdata->quirks = quirks;
+				quirks_override = quirks;
 			} else if (param_quirks.args[i][offset] == '-') {
-				hid_info(hdev, "quirks removed: %s flag 0x%08X\n",
-					 xdata->gamepad->uniq, quirks);
-				xdata->quirks &= ~quirks;
+				quirks_unset = quirks;
 			} else {
-				hid_info(hdev, "quirks added: %s flags 0x%08X\n",
-					 xdata->gamepad->uniq, quirks);
-				xdata->quirks |= quirks;
+				quirks_set = quirks;
 			}
 			break;
 		}
 	}
 	kernel_param_unlock(THIS_MODULE);
+
+	/* handle quirk flags which override a behavior before heuristics */
+	if (quirks_override != U32_MAX) {
+		hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
+		xdata->quirks = quirks_override;
+	}
+
+	/* handle quirk flags which add a behavior before heuristics */
+	if (quirks_set > 0) {
+		hid_info(hdev, "quirks added: %s flags 0x%08X\n", xdata->gamepad->uniq, quirks_set);
+		xdata->quirks |= quirks_set;
+	}
 
 	/*
 	 * copy the first two characters from the uniq ID (MAC address) and
@@ -1161,6 +1169,13 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)) {
 		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
 		xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+	}
+
+	/* handle quirk flags which remove a behavior after heuristics */
+	if (quirks_unset > 0) {
+		hid_info(hdev, "quirks removed: %s flag 0x%08X\n", xdata->gamepad->uniq,
+			 quirks_unset);
+		xdata->quirks &= ~quirks_unset;
 	}
 
 	if (xdata->quirks > 0)
