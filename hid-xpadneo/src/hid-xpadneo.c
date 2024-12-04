@@ -58,6 +58,10 @@ MODULE_PARM_DESC(disable_shift_mode,
 		 "(bool) Disable use Xbox logo button as shift. Will prohibit profile switching when enabled. "
 		 "0: disable, 1: enable.");
 
+static bool param_debug_hid = 0;
+module_param_named(debug_hid, param_debug_hid, bool, 0644);
+MODULE_PARM_DESC(debug_hid, "(u8) Debug HID reports. 0: disable, 1: enable.");
+
 static struct {
 	char *args[17];
 	unsigned int nargs;
@@ -190,6 +194,41 @@ static const struct usage_map xpadneo_usage_maps[] = {
 
 static struct workqueue_struct *xpadneo_rumble_wq;
 
+static int xpadneo_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
+{
+	struct ff_report *r = (struct ff_report *)buf;
+
+	if (unlikely(param_debug_hid && (len > 0))) {
+		switch (buf[0]) {
+		case 0x03:
+			if (len >= sizeof(*r)) {
+				hid_info(hdev,
+					 "HID debug: len %ld rumble cmd 0x%02x "
+					 "motors left %d right %d strong %d weak %d "
+					 "magnitude left %d right %d strong %d weak %d "
+					 "pulse sustain %dms release %dms loop %d\n",
+					 len, r->report_id,
+					 !!(r->ff.enable & FF_RUMBLE_LEFT),
+					 !!(r->ff.enable & FF_RUMBLE_RIGHT),
+					 !!(r->ff.enable & FF_RUMBLE_STRONG),
+					 !!(r->ff.enable & FF_RUMBLE_WEAK),
+					 r->ff.magnitude_left, r->ff.magnitude_right,
+					 r->ff.magnitude_strong, r->ff.magnitude_weak,
+					 r->ff.pulse_sustain_10ms * 10,
+					 r->ff.pulse_release_10ms * 10,
+					 r->ff.loop_count);
+			} else {
+				hid_info(hdev, "HID debug: len %ld malformed cmd 0x%02x\n", len,
+					 buf[0]);
+			}
+			break;
+		default:
+			hid_info(hdev, "HID debug: len %ld unhandled cmd 0x%02x\n", len, buf[0]);
+		}
+	}
+	return hid_hw_output_report(hdev, buf, len);
+}
+
 static void xpadneo_ff_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata =
@@ -278,7 +317,7 @@ static void xpadneo_ff_worker(struct work_struct *work)
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
 		r->ff.enable = SWAP_BITS(SWAP_BITS(r->ff.enable, 1, 2), 0, 3);
 
-	ret = hid_hw_output_report(hdev, (__u8 *) r, sizeof(*r));
+	ret = xpadneo_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
@@ -411,7 +450,7 @@ static void xpadneo_test_rumble(char *which, struct xpadneo_devdata *xdata, stru
 	if (xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK)
 		pck.ff.enable = SWAP_BITS(SWAP_BITS(pck.ff.enable, 1, 2), 0, 3);
 
-	hid_hw_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+	xpadneo_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	mdelay(300);
 
 	/*
@@ -427,7 +466,7 @@ static void xpadneo_test_rumble(char *which, struct xpadneo_devdata *xdata, stru
 			pck.ff.magnitude_right = 0;
 		if (enabled & FF_RUMBLE_LEFT)
 			pck.ff.magnitude_left = 0;
-		hid_hw_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+		xpadneo_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	}
 	mdelay(30);
 }
