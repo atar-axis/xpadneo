@@ -212,8 +212,7 @@ static int xpadneo_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
 					 r->ff.magnitude_left, r->ff.magnitude_right,
 					 r->ff.magnitude_strong, r->ff.magnitude_weak,
 					 r->ff.pulse_sustain_10ms * 10,
-					 r->ff.pulse_release_10ms * 10,
-					 r->ff.loop_count);
+					 r->ff.pulse_release_10ms * 10, r->ff.loop_count);
 			} else {
 				hid_info(hdev, "HID debug: len %ld malformed cmd 0x%02x\n", len,
 					 buf[0]);
@@ -475,8 +474,8 @@ static void xpadneo_test_rumble(char *which, struct xpadneo_devdata *xdata, stru
 {
 	enum xpadneo_rumble_motors enabled = pck.ff.enable;
 
-	hid_info(xdata->hdev, "testing %s: sustain %d0ms release %d0ms loop %d wait 30ms\n", which,
-		 pck.ff.pulse_sustain_10ms, pck.ff.pulse_release_10ms, pck.ff.loop_count);
+	hid_info(xdata->hdev, "testing %s: sustain %dms release %dms loop %d wait 30ms\n", which,
+		 pck.ff.pulse_sustain_10ms * 10, pck.ff.pulse_release_10ms * 10, pck.ff.loop_count);
 
 	/*
 	 * XPADNEO_QUIRK_NO_MOTOR_MASK:
