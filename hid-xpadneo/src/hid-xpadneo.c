@@ -77,7 +77,8 @@ MODULE_PARM_DESC(quirks,
 		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
 		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON)
 		 ", reversed motor masking = " __stringify(XPADNEO_QUIRK_REVERSE_MASK)
-		 ", swapped motor masking = " __stringify(XPADNEO_QUIRK_SWAPPED_MASK));
+		 ", swapped motor masking = " __stringify(XPADNEO_QUIRK_SWAPPED_MASK)
+		 ", apply no heuristics = " __stringify(XPADNEO_QUIRK_NO_HEURISTICS));
 
 static DEFINE_IDA(xpadneo_device_id_allocator);
 
@@ -103,6 +104,7 @@ struct quirk {
 };
 
 static const struct quirk xpadneo_quirks[] = {
+	DEVICE_OUI_QUIRK("68:6C:E6", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
@@ -1176,10 +1178,11 @@ static int xpadneo_init_hw(struct hid_device *hdev)
 	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte
 	 */
 	if ((xdata->original_rsize == 283)
+	    && ((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
+	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)
 	    && (strscpy(oui, xdata->gamepad->uniq, sizeof(oui)) == -E2BIG)
 	    && (kstrtou8(oui, 16, &oui_byte) == 0)
-	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)
-	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)) {
+	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)) {
 		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
 		xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 	}
