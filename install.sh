@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd "$(dirname "$0")" || exit 1
-source "lib/verbose.sh"
+source "lib/options.sh"
 source "lib/installer.sh"
 
 if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
