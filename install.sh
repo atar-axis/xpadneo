@@ -23,7 +23,7 @@ if [[ -z "${INSTALLED[*]}" ]]; then
     cp --recursive "${V[@]}" hid-xpadneo/. "/usr/src/hid-xpadneo-${VERSION}/."
 
     echo "* installing module (using DKMS)"
-    dkms install "${V[*]}" "hid-xpadneo/${VERSION}" --force || cat_dkms_make_log
+    dkms install "${V[*]}" "${FORCE}" "hid-xpadneo/${VERSION}" || cat_dkms_make_log
 
 else
 
