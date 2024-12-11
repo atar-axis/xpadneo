@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 cd "$(dirname "$0")" || exit 1
 source "lib/verbose.sh"

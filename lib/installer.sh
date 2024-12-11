@@ -31,7 +31,7 @@ DKMS_BIN=$(type -p dkms)
 : ${DKMS_BIN:?Please install dkms to continue}
 
 get_dkms_versions_installed() {
-	${DKMS_BIN} status | tr -s ':,/ ' ' ' | awk -- '$1 == "hid-xpadneo" { print $2 }' | sort -nu
+	${DKMS_BIN} status 2>/dev/null | tr -s ':,/ ' ' ' | awk -- '$1 == "hid-xpadneo" { print $2 }' | sort -nu
 }
 
 get_upstream_version_latest() {
@@ -49,6 +49,4 @@ cat_dkms_make_log() {
 }
 
 # shellcheck disable=SC2034
-INSTALLED=(
-	$(get_dkms_versions_installed)
-)
+mapfile -t INSTALLED < <(get_dkms_versions_installed)
