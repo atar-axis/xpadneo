@@ -10,15 +10,14 @@ modprobe -r hid_xpadneo || true
 echo "* looking for registered instances"
 echo "found ${#INSTALLED[@]} registered instance(s) on your system"
 
-for instance in "${INSTALLED[@]}"
-do
-    echo "* $instance"
+set -e
 
-    set -e
+for VERSION in "${INSTALLED[@]}"; do
+    echo "* ${VERSION}"
 
-    echo "  * uninstalling and removing $instance from DKMS"
-    dkms remove "${V[*]}" "hid-xpadneo/${instance}" --all
+    echo "  * uninstalling and removing ${VERSION}"
+    dkms remove "${V[*]}" "hid-xpadneo/${VERSION}" --all
 
-    echo "  * removing $instance folder from /usr/src"
-    rm --recursive "${V[@]}" "/usr/src/hid-xpadneo-$instance/"
+    echo "  * removing ${VERSION} folder from /usr/src"
+    rm --recursive "${V[@]}" "/usr/src/hid-xpadneo-${VERSION}/"
 done

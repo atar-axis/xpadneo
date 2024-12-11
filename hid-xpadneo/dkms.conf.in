@@ -1,11 +1,18 @@
+# vim:syntax=bash
+
 PACKAGE_NAME="hid-xpadneo"
 PACKAGE_VERSION="@DO_NOT_CHANGE@"
+
 BUILT_MODULE_NAME[0]="hid-xpadneo"
 BUILT_MODULE_LOCATION[0]="src"
 DEST_MODULE_LOCATION[0]="/kernel/drivers/hid"
+
+MAKE[0]="make -C '${kernel_source_dir}' M='${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build/src' VERSION='${PACKAGE_VERSION}' modules"
+CLEAN="make -C '${kernel_source_dir}' M='${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build/src' clean"
+
 BUILD_EXCLUSIVE_CONFIG="CONFIG_HID CONFIG_INPUT_FF_MEMLESS CONFIG_POWER_SUPPLY"
-MAKE[0]="make -C $kernel_source_dir M=$dkms_tree/$PACKAGE_NAME/$PACKAGE_VERSION/build/src VERSION=$PACKAGE_VERSION modules"
-CLEAN="make -C $kernel_source_dir M=$dkms_tree/$PACKAGE_NAME/$PACKAGE_VERSION/build/src clean"
+
 AUTOINSTALL="Y"
+
 POST_INSTALL="dkms.post_install"
 POST_REMOVE="dkms.post_remove"
