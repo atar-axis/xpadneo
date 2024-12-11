@@ -1,12 +1,17 @@
 #!/bin/bash
 
 # shellcheck disable=SC2046
-OPTIONS=$(getopt --name "$0" --longoptions "verbose" -- "" "$@") || exit 1
+OPTIONS=$(getopt --name "$0" --longoptions "kernelsourcedir:,verbose" -- "" "$@") || exit 1
 # shellcheck disable=SC2086
 eval set -- $OPTIONS
 
 while true; do
     case "$1" in
+        --kernelsourcedir)
+            shift
+            # shellcheck disable=SC2034
+            KERNEL_SOURCE_DIR="--kernelsourcedir=$1"
+            ;;
         --verbose)
             echo "* verbose mode enabled"
             # shellcheck disable=SC2034
@@ -17,7 +22,7 @@ while true; do
             break
             ;;
         *)
-            echo "usage: $0 [--verbose]"
+            echo "usage: $0 [--kernelsourcedir] [--verbose]"
             exit 1
     esac
     shift
