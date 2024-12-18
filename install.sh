@@ -13,7 +13,7 @@ if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
 fi
 
 echo "* creating dkms.conf"
-sed 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' <hid-xpadneo/dkms.conf.in >hid-xpadneo/dkms.conf
+make -C hid-xpadneo "${MAKE_OPTS[@]}" dkms.conf
 
 echo "* registering module"
 dkms add "${V[@]}" "hid-xpadneo" || maybe_already_installed

@@ -32,4 +32,6 @@ while true; do
     shift
 done
 
+# shellcheck disable=SC2034
+[ ${#V[*]} -gt 0 ] || MAKE_OPTS=("-s")
 [ ${#V[*]} -eq 0 ] || set -x
