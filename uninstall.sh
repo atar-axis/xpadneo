@@ -12,12 +12,7 @@ echo "found ${#INSTALLED[@]} registered instance(s) on your system"
 
 set -e
 
+# NOTE: overrides VERSION from lib/installer.sh but we don't need it
 for VERSION in "${INSTALLED[@]}"; do
-    echo "* ${VERSION}"
-
-    echo "  * uninstalling and removing ${VERSION}"
-    dkms remove "${V[*]}" "hid-xpadneo/${VERSION}" --all
-
-    echo "  * removing ${VERSION} folder from /usr/src"
-    rm --recursive "${V[@]}" "/usr/src/hid-xpadneo-${VERSION}/"
+    make "${MAKE_OPTS[@]}" VERSION="${VERSION}" uninstall
 done
