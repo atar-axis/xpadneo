@@ -15,3 +15,6 @@ reinstall: modules
 	sudo make modules_install
 	sudo rmmod hid-xpadneo || true
 	sudo modprobe hid-xpadneo $(MOD_PARAMS)
+
+dkms.conf: dkms.conf.in ../VERSION
+	sed 's/"@DO_NOT_CHANGE@"/"$(shell cat ../VERSION)"/g' <"$<" >"$@"
