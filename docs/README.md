@@ -37,6 +37,11 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
 These other projects may not support some of the advanced features of xpadneo.
 
 
+## Heads Up
+
+**Package maintainers:** Please see [Packaging](https://atar-axis.github.io/xpadneo/#packaging).
+
+
 ## Breaking Changes
 
 ### Kernel 4.18 or newer required
