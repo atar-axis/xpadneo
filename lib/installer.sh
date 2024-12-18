@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[ -n "${PREFIX}" ] && { echo >&2 "ERROR: Prefix installations are not supported, use make instead."; exit 1; }
+
 if [ ${EUID} -ne 0 ]; then
 	echo >&2 "ERROR: You most probably need superuser privileges to use this script, please run me via sudo!"
 	exit 3
