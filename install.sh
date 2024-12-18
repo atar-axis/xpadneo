@@ -12,21 +12,14 @@ if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
 
 fi
 
-if [[ -z "${INSTALLED[*]}" ]]; then
+echo "* creating dkms.conf"
+sed 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' <hid-xpadneo/dkms.conf.in >hid-xpadneo/dkms.conf
 
-    echo "* creating dkms.conf"
-    sed 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' <hid-xpadneo/dkms.conf.in >hid-xpadneo/dkms.conf
+echo "* registering module"
+dkms add "${V[@]}" "hid-xpadneo" || maybe_already_installed
 
-    # TODO: Works around https://github.com/dell/dkms/issues/177 for DKMS 3
-    echo "* adding hid-xpadneo-${VERSION} folder to /usr/src"
-    mkdir -p "/usr/src/hid-xpadneo-${VERSION}"
-    cp --recursive "${V[@]}" hid-xpadneo/. "/usr/src/hid-xpadneo-${VERSION}/."
+echo "* building module"
+dkms build "${V[@]}" "hid-xpadneo/${VERSION}" || cat_dkms_make_log
 
-    echo "* installing module (using DKMS)"
-    dkms install "${V[*]}" "${FORCE}" "hid-xpadneo/${VERSION}" || cat_dkms_make_log
-
-else
-
-    echo "already installed!"
-
-fi
+echo "* installing module"
+dkms install "${V[@]}" "${FORCE}" "hid-xpadneo/${VERSION}"

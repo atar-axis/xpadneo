@@ -51,5 +51,11 @@ cat_dkms_make_log() {
 	exit ${last_error}
 }
 
+maybe_already_installed() {
+    local last_error=$?
+    >&2 echo "HINT: Try uninstalling xpadneo first"
+    exit $last_error
+}
+
 # shellcheck disable=SC2034
 mapfile -t INSTALLED < <(get_dkms_versions_installed)
