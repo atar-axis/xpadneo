@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd "$(dirname "$0")" || exit 1
+set -e
+
+cd "$(dirname "$0")"
 source "lib/options.sh"
 source "lib/installer.sh"
 
@@ -11,8 +13,6 @@ if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
 fi
 
 if [[ -z "${INSTALLED[*]}" ]]; then
-
-    set -e
 
     echo "* creating dkms.conf"
     sed 's/"@DO_NOT_CHANGE@"/"'"${VERSION}"'"/g' <hid-xpadneo/dkms.conf.in >hid-xpadneo/dkms.conf

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd "$(dirname "$0")" || exit 1
+set -e
+
+cd "$(dirname "$0")"
 source "lib/installer.sh"
 
 LATEST=$(get_upstream_version_latest)
