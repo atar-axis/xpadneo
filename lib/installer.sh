@@ -14,6 +14,9 @@ __version() {
 		echo >&2 "ERROR: sudo git config --global --add safe.directory \$PWD"
 		echo >&2 "ERROR: to trust this git checkout for the root user."
 		echo >&2 "ERROR: See https://github.com/atar-axis/xpadneo/issues/346"
+		echo >&2
+		echo >&2 "HINT: Do not clone forks directly, add them as remotes to your"
+		echo >&2 "HINT: original clone. See docs/TESTING.md"
 		exit 3
 	}
 }
