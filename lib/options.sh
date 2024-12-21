@@ -32,4 +32,4 @@ while true; do
     shift
 done
 
-[ ${#V[*]} -gt 0 ] && set -x
+[ ${#V[*]} -eq 0 ] || set -x
