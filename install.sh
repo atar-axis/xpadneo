@@ -12,6 +12,12 @@ if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
 
 fi
 
+if [ "$(uname -r | awk -F. '{ printf "%03d%03d",$1,$2 }')" -lt 005012 ]; then
+
+    >&2 echo "WARNING: kernel 5.12 or lower will not be supported due to known ERTM issues"
+
+fi
+
 echo "* deploying DKMS package"
 make "${MAKE_OPTS[@]}" VERSION="${VERSION}" install || maybe_already_installed
 

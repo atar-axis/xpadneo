@@ -1,8 +1,7 @@
 #!/bin/sh
 
-#TODO Remove ERTM after kernel patch is deployed in the wild
+# DKMS now defaults to kernel 5.12 minimum, remove ERTM override
 ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
-
 [ -L "${ERTM_OVERRIDE}" ] || { echo "Uninstalling ERTM override..."; rm -f "${ERTM_OVERRIDE}"; }
 
 echo "Uninstalling modalias database..."
