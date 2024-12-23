@@ -1,3 +1,90 @@
+# Changes since v0.9.6 up to v0.9.7
+
+This is a maintanance release of the previous "final" v0.9.6 because v0.10 will
+be delayed a little longer.
+
+It provides support building for kernel 6.12 and later. It also adds new
+hardware support quirks and compatibility fix-ups. Although the list of changes
+seems long and accumulated over some time, there are no functional changes.
+Also, DKMS problems (like xpadneo missing after a kernel update or kernel
+hanging on boot because xpadneo is not built) should finally be fixed.
+
+**Heads up, package maintainers:** Upcoming xpadneo v0.10 will provide a new
+make-based installer to make usage in packaging scripts easier and more
+streamlined. See `docs/PACKAGING.md` in the master branch for more details.
+
+
+## Headlines:
+
+  * core, quirks: Add GameSir T4 Nova Lite support
+  * core, quirks: Add GuliKit KK3 MAX quirks
+  * core, quirks: Add heuristics to detect GameSir Nova controllers
+  * hid-xpadneo: Actually allow building with kernel 6.12
+  * hid-xpadneo: Allow building with kernel 6.12
+  * xpadneo, core: Add configuration for disabling Xbox logo shift-mode
+  * xpadneo, core: Fix coding style
+  * xpadneo, hidraw: Fixup previous commit to properly work with DKMS
+  * xpadneo, hidraw: Work around other software messing with our udev rules
+  * xpadneo, quirks: Let another Microsoft OUI bypass heuristics
+  * xpadneo, quirks: Prevent applying heuristics for some known vendors
+
+```
+Kai Krakow (33):
+      xpadneo, core: Sort device quirks into proper order
+      docs: Improve BT_DONGLES.md
+      docs: Remove feature claims that are obsolete or no longer true
+      docs: Fix wording and casing
+      docs, README: Remove the broken Codacy badge
+      xpadneo, core: Reorder devices by PID
+      docs: Add troubleshoot instructions for controllers requesting a PIN
+      docs: Add troubleshooting instructions after upgrading firmware
+      docs: Add missing blank line
+      docs: Add compatibilty status for a Simplecom Bluetooth dongle
+      hid-xpadneo: Allow building with kernel 6.12
+      xpadneo, hidraw: Work around other software messing with our udev rules
+      xpadneo, hidraw: Fixup previous commit to properly work with DKMS
+      hid-xpadneo: Actually allow building with kernel 6.12
+      hid-xpadneo, core: Match kernel 6.12 report_fixup signature
+      xpadneo, core: Fix coding style
+      core, quirks: Add GameSir T4 Nova Lite support
+      core, quirks: Add heuristics to detect GameSir Nova controllers
+      core, quirks: DRY the rumble tests
+      core, tests: Fix the pulse test and print test info
+      core, debug: Allow output of decoded rumble packets for debugging
+      xpadneo, debug: Fix indentation and output
+      core, quirks: Add GuliKit KK3 MAX quirks
+      xpadneo, quirks: Prevent applying heuristics for some known vendors
+      xpadneo, quirks: Let another Microsoft OUI bypass heuristics
+      xpadneo, installer: Fix some general issues with the scripts
+      xpadneo, dkms: Match minimum kernel version with source code
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, installer: Exit immediately on error
+      xpadneo, dkms: Use "yes" for autoinstall instead of "Y"
+      xpadneo, ci: Add missing dependencies
+      xpadneo, ci: Add Ubuntu 24.04
+      xpadneo, examples: Build hidraw properly on Ubuntu
+
+Alexander Tsoy (2):
+      docs: Suggest alternative command to get controller info
+      docs: Add compatibilty status for UGREEN CM390
+
+Matthew Scharley (1):
+      bluez-tools isn't required on Tumbleweed
+
+Scott Bailey (1):
+      Doc update for KK3 Max
+
+arnxxau (1):
+      added ff_connect_notify config option to configure.sh
+
+bouhaa (1):
+      xpadneo, core: Add configuration for disabling Xbox logo shift-mode
+
+liberodark (1):
+      docs: Update BT_DONGLES
+```
+
+
 # Changes since v0.9.5 up to v0.9.6
 
 ## Headlines:
