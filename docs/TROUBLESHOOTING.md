@@ -53,12 +53,12 @@ References:
 * https://wiki.archlinux.org/title/Bluetooth_mouse#Mouse_lag
 
 
-#### Incompatible Bluetooth Chipset
+#### Incompatible Bluetooth Chip Set
 
-Some chipsets, e.g. the CSR 85xx or Intel AX200 (and variants like 3xxx), do have problems when you try to reconnect
+Some chip sets, e.g. the CSR 85xx or Intel AX200 (and variants like 3xxx), do have problems when you try to reconnect
 the gamepad.
 
-Some chipsets may need additional driver firmware to work correctly. Try installing
+Some chip sets may need additional driver firmware to work correctly. Try installing
 `linux-firmware` from your distribution.
 
 See below, if this happens since a firmware upgrade of the controller.
@@ -77,7 +77,7 @@ Reference:
 #### Gamepad Asks for a PIN During Pairing
 
 A user found that with genuine Xbox controllers, the fix is often to use an external USB dongle instead of the internal
-chipset for pairing the controller (recommended to try first).
+chip set for pairing the controller (recommended to try first).
 
 If it still asks for a PIN, try `0000` to connect the controller. It should happen just once.
 
@@ -103,7 +103,7 @@ Reference:
 
 ### Gamepad Is Connected but Did not Rumble
 
-If the gamepad does connect but it doesn't rumble, then mosty probably the wrong driver is loaded,
+If the gamepad does connect but it doesn't rumble, then most probably the wrong driver is loaded,
 or the gamepad is quirky and doesn't fully support the protocol. Your kernel may also be missing the `uhid` module
 which is needed by all Bluetooth LE devices for input capabilities because the bluez daemon will handle HID data in
 user-space. Most distributions include  `uhid` but if in doubt, ask your distribution kernel maintainers.
@@ -117,7 +117,7 @@ gamepad.
 
 ### Gamepad Has Quirks (i.e., wrong rumble behavior)
 
-You may want to try serveral combinations of quirk flags added to the module paramters.
+You may want to try several combinations of quirk flags added to the module parameters.
 See [Configuration](https://atar-axis.github.io/xpadneo/#configuration) and `modinfo hid-xpadneo`
 for more information. You may also want to use the hidraw testing utility which bypasses the
 driver and let's you try different combination of parameters. The utility is located at
@@ -127,7 +127,7 @@ driver and let's you try different combination of parameters. The utility is loc
 ### Gamepad Does not Connect at All, Runs A Reconnect Loop, or Immediately Disconnects
 
 Check whether ERTM was disabled (see above). Also, some newer models use a different Bluetooth protocol "Bluetooth
-low energe" (BLE) which you may accidentally have disabled. Check the following settings in `/etc/bluetooth/main.conf`:
+low energy" (BLE) which you may accidentally have disabled. Check the following settings in `/etc/bluetooth/main.conf`:
 ```
 [General]
 ControllerMode = dual
@@ -145,7 +145,7 @@ not pairing with Bluez. There are some specific workarounds:
   update the firmware of the controller. When it's done, your controller should work just fine with any Linux system.
   - If you paired your controller to your linux computer before updating the firmware, and the controller is still not connecting properly after the firmware update, try removing the bluetooth device and re-pairing through the usual process. 
 - If it didn't work, you can try these two workarounds:
-    - Use a Windows 10 computer *on the same Bluetooth adapter* to pair with the controller. It must absolutly be on
+    - Use a Windows 10 computer *on the same Bluetooth adapter* to pair with the controller. It must absolutely be on
       the same Bluetooth adapter, i.e. the same computer (can be inside a virtual machine with Bluetooth passthrough)
       if it's an internal Bluetooth adapter, or the same Bluetooth dongle. Then, you can get the pairing keys and
       install them within your Linux Bluetooth system.

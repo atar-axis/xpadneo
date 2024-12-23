@@ -27,7 +27,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
   * Specify your controller MAC address in the format `11:22:33:44:55:66`
   * Specify the flags as sum of the following:
     * `1` if your controller does not support pulse parameters (i.e., 8BitDo controllers)
-    * `2` if your controller does not support trigger rumble (most clones in compat-mode)
+    * `2` if your controller does not support trigger rumble (most clones in compatibility mode)
     * `4` if your controller does not support individual motor programming (i.e., 8BitDo controllers)
     * `8` if your controller supports hardware profiles (hard-coded per model, do not set manually)
     * `16` if your controller boots in Linux mode (auto-detected, do not change manually)

@@ -98,8 +98,8 @@ BB: on/off for ABXY, LB, RB
 If Profile != 00, then ONLY THE FIRST ROW's (!!!) BB are on/off values for the paddles:
 0b0002 4013 // 1 = P1, etc.
 
-ST: on/off for Start and Sticks (thumbstick buttons)
-0b0000 SRL0 // S = Start, R/L = Right/Left thumbstick button
+ST: on/off for Start and Sticks (thumb stick buttons)
+0b0000 SRL0 // S = Start, R/L = Right/Left thumb stick button
 
 SE: on/off for Select
 0b0000 000S // S = Select
