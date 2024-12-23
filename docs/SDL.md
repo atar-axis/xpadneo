@@ -2,9 +2,9 @@
 
 We fixed the following problem by pretending we are in Windows wireless mode
 by faking the *input device PID* to `0x02E0`. The original PID `0x02FD`
-triggeres several unwanted fixups at multiple layers, i.e. SDL or the HTML5
+triggers several unwanted fixups at multiple layers, i.e. SDL or the HTML5
 game controller API. The following paragraphs document the originally
-wrong behaviour observed and we clearly don't want our fixed mappings to be
+wrong behavior observed and we clearly don't want our fixed mappings to be
 "fixed" again by layers detected a seemingly wrong button mapping:
 
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
@@ -46,7 +46,7 @@ You can find the values by looking at dmesg when `xpadneo` detects
 your device. In dmesg, find the device path, then change to the
 device path below `/sys` and look for the files in the `id` directory.
 
-The name value after the id is purely cosmetical, you can name it
+The name value after the id is purely cosmetically, you can name it
 whatever you like. It may show up in games as a visual identifier.
 
 If running Wine games, to properly support xpadneo, ensure you have
