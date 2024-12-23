@@ -1,26 +1,8 @@
 #!/bin/sh
 
-#TODO Remove ERTM after kernel patch is deployed in the wild
+# DKMS now defaults to kernel 5.12 minimum, remove ERTM override
 ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
-DISABLE_ERTM="/sys/module/bluetooth/parameters/disable_ertm"
-
-if [ "$(uname -r | awk -F. '{ printf "%03d%03d",$1,$2 }')" -ge 005012 ]; then
-	echo "Not disabling ERTM, kernel version doesn't require it..."
-elif [ "$(readlink "${ERTM_OVERRIDE}" 2>/dev/null)" = "/dev/null" ]; then
-	echo "Not disabling ERTM, local override in place..."
-elif [ -L "${ERTM_OVERRIDE}" ]; then
-	echo >&2 "WARNING: '${ERTM_OVERRIDE}' is an arbitrary symlink, this is not supported."
-	echo >&2 "Skipping ERTM fixup, you're expected to manage the options on your own..."
-else
-	echo "Disabling ERTM permanently (requires reboot)..."
-	echo "options bluetooth disable_ertm=y" >"${ERTM_OVERRIDE}"
-	echo "HINT: If you want to prevent this in the future, run 'ln -snf /dev/null ${ERTM_OVERRIDE}'."
-
-	if [ -w "${DISABLE_ERTM}" ]; then
-		echo "Disabling ERTM instantly..."
-		echo "Y" >"${DISABLE_ERTM}"
-	fi
-fi
+[ -L "${ERTM_OVERRIDE}" ] || { echo "Forcing removal of ERTM override..."; rm -f "${ERTM_OVERRIDE}"; }
 
 echo "Installing modalias database..."
 install -D -m 0644 -t /etc/modprobe.d etc-modprobe.d/xpadneo.conf
