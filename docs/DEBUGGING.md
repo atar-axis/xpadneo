@@ -9,7 +9,7 @@ Otherwise, the driver reports most incidents, quirks, and fixes to `dmesg`.
 
 ### Environment
 
-Useful information can now be aquired with the commands:
+Useful information can now be acquired with the commands:
 
   * `dmesg`: I advise you to run `dmesg -wdH` in a terminal while you connect your controller from a second terminal
     to get hardware information in realtime.

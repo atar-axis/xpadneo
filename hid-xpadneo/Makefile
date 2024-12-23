@@ -8,7 +8,7 @@ all: modules
 ../VERSION:
 	$(MAKE) -C .. $(@:../%=%)
 
-# convenience rules for local dvelopment
+# convenience rules for local development
 
 clean modules modules_install: ../VERSION
 	$(MAKE) -C $(KERNEL_SOURCE_DIR) INSTALL_MOD_DIR="kernel/drivers/hid" LD=$(LD) M=$(shell pwd)/src VERSION="$(shell cat ../VERSION)" $@

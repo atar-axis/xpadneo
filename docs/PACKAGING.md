@@ -1,7 +1,7 @@
 ## Packaging
 
 From v0.10 on, xpadneo provides a `Makefile` to help package maintainers
-avoding a lot of the duplicate work which was historically done by the
+avoiding a lot of the duplicate work which was historically done by the
 installer script. This also allows for prefixed installation to prepare an
 install image before merging the package to the live system.
 
@@ -61,7 +61,7 @@ make ETC_PREFIX=/usr/lib install
 
 # This can be combined with prefixed installation
 make PREFIX=/tmp/xpadneo-image ETC_PREFIX=/usr/lib install
-dmks add hid-xpadneo
+dkms add hid-xpadneo
 ```
 
 In all these usages, xpadneo will never try to build and install the kernel
@@ -109,7 +109,7 @@ package installation. It is a development tool.
 
 ### Summary
 
-Package maintainers are adviced to migration to the new installation method.
+Package maintainers are advised to migrate to the new installation method.
 Please provide feedback if you see problems or missing features.
 
 Package maintainers **SHOULD NOT** use `install.sh` or its sibling scripts
