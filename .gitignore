@@ -4,10 +4,10 @@
 /misc/examples/c_hidraw/hidraw
 docs/_site/**
 docs/Gemfile.lock
-hid-xpadneo/dkms.conf
-hid-xpadneo/src/*.ko*
 hid-xpadneo/**/*.mod*
 hid-xpadneo/**/*.o*
+hid-xpadneo/dkms.conf
+hid-xpadneo/src/*.ko*
 hid-xpadneo/src/*.symvers*
 
 #FIXME(kakra) remove after source file split
