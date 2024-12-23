@@ -32,6 +32,10 @@ steps:
     sudo ./uninstall.sh --verbose
   displayName: 'uninstall'
 - script: |
+    sudo make install
+    sudo dkms autoinstall
+  displayName: 'autoinstall'
+- script: |
     sudo apt-get install -y libncurses-dev
     make -C misc/examples/c_hidraw
   displayName: 'misc'
