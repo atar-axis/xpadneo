@@ -1,5 +1,6 @@
 *~
 .vscode
+/misc/examples/**/*.o
 /misc/examples/c_directional_rumble_test/direction_rumble_test
 /misc/examples/c_hidraw/hidraw
 docs/_site/**
