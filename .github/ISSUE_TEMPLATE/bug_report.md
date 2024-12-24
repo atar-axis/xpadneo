@@ -47,18 +47,18 @@ to report mapping errors or if the controller fails to be detected:
 
 - [ ] Steam Proton games are having issues
 - [ ] Steam Linux-native games are having issues
-    - [ ] I don't use Steam or did not try
+  - [ ] I don't use Steam or did not try
 - [ ] games running through Lutris, wine and/or Bottles are having issues
-    - [ ] I don't use Lutris, Bottles, wine or did not try
+  - [ ] I don't use Lutris, Bottles, wine or did not try
 - [ ] Linux-native games are having issues
-    - [ ] I don't use native games or did not try
+  - [ ] I don't use native games or did not try
 - [ ] Other software is having issues (describe software and issues below)
 - [ ] Running `evtest` is showing issues (describe the issues below)
-    - Keep in mind that `BTN_NORTH` and `BTN_WEST` are intentionally swapped
+  - Keep in mind that `BTN_NORTH` and `BTN_WEST` are intentionally swapped
 - [ ] Running `jstest` is showing issues (describe the issues below)
-    - [ ] I don't have this tool or don't know how to use it
+  - [ ] I don't have this tool or don't know how to use it
 - [ ] Running `gamepad-tool` is showing issues (post console output below)
-    - [ ] I don't have this tool
+  - [ ] I don't have this tool
 
 Please describe how it is failing below in the next sections.
 
