@@ -88,13 +88,13 @@ If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
 
 ### Qualcomm
 
-* Unspecified model (https://github.com/atar-axis/xpadneo/issues/180):
+* Unspecified model (<https://github.com/atar-axis/xpadneo/issues/180>):
   * `btmon` logs showed very low input report rate and high input lag (300ms+)
 
 
 ### Intel
 
-* Status: incompatible (https://github.com/atar-axis/xpadneo/issues/270)
+* Status: incompatible (<https://github.com/atar-axis/xpadneo/issues/270>)
   * OUI: DC:1B:A1 (Intel)
   * Used as on-board chip set: Gigabyte B450 AORUS Pro WiFi 1.0 with integrated Bluetooth
 * Status: bluetoothd logs "Request attribute has encountered an unlikely error"
