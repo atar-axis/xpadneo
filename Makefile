@@ -1,3 +1,5 @@
+ETC_PREFIX ?= /etc
+
 MODPROBE_CONFS := xpadneo.conf
 UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
 
@@ -7,8 +9,6 @@ else
   $(warning Installing to prefix, dkms commands will not be run!)
   DKMS ?= : SKIPPING dkms
 endif
-
-ETC_PREFIX ?= /etc
 
 all: build
 
