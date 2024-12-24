@@ -343,7 +343,7 @@ In order to update xpadneo, do the following
 
 ## Further Information
 
-For further information please visit the GitHub Page https://atar-axis.github.io/xpadneo/ which is generated
+For further information please visit the GitHub Page <https://atar-axis.github.io/xpadneo/> which is generated
 automatically from the content of the `/docs` folder.
 
 You will find there e.g. the following sections
