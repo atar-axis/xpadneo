@@ -128,19 +128,23 @@ not pairing with Bluez. There are some specific workarounds:
 - Plug your controller to a Windows 10 computer via a USB cord. Download
   the [Xbox Accessories application](https://xbox.com/accessories-app). When launching the app, it should ask you to
   update the firmware of the controller. When it's done, your controller should work just fine with any Linux system.
-  - If you paired your controller to your linux computer before updating the firmware, and the controller is still not connecting properly after the firmware update, try removing the bluetooth device and re-pairing through the usual process. 
+  - If you paired your controller to your linux computer before updating the firmware, and the controller is still not
+    connecting properly after the firmware update, try removing the bluetooth device and re-pairing through the usual
+    process.
 - If it didn't work, you can try these two workarounds:
-    - Use a Windows 10 computer *on the same Bluetooth adapter* to pair with the controller. It must absolutely be on
-      the same Bluetooth adapter, i.e. the same computer (can be inside a virtual machine with Bluetooth passthrough)
-      if it's an internal Bluetooth adapter, or the same Bluetooth dongle. Then, you can get the pairing keys and
-      install them within your Linux Bluetooth system.
-      - After pairing the controller on Windows, refer to [the steps on the ArchLinux wiki](https://wiki.archlinux.org/title/Bluetooth#Extracting_on_Windows) for extracting the pairing keys from Windows.
-      - Reboot the computer and try connecting.
-      - If this fails, try removing the Xbox controller and re-pairing through the usual process.
-    - Update to a newer kernel. Kernel 5.13 and higher might have patched a fix.
-    - Use a different Bluetooth stack. Xbox controllers work fine with Fluoride (the bluetooth stack from Android).
-      Sadly, it's hard to install on another Linux, and Bluez is the only stack easily provided on most Linux
-      distributions.
+  - Use a Windows 10 computer *on the same Bluetooth adapter* to pair with the controller. It must absolutely be on the
+    same Bluetooth adapter, i.e. the same computer (can be inside a virtual machine with Bluetooth passthrough) if it's
+    an internal Bluetooth adapter, or the same Bluetooth dongle. Then, you can get the pairing keys and install them
+    within your Linux Bluetooth system.
+    - After pairing the controller on Windows, refer to
+      [the steps on the ArchLinux wiki](https://wiki.archlinux.org/title/Bluetooth#Extracting_on_Windows) for
+      extracting the pairing keys from Windows.
+    - Reboot the computer and try connecting.
+    - If this fails, try removing the Xbox controller and re-pairing through the usual process.
+  - Update to a newer kernel. Kernel 5.13 and higher might have patched a fix.
+  - Use a different Bluetooth stack. Xbox controllers work fine with Fluoride (the bluetooth stack from Android).
+    Sadly, it's hard to install on another Linux, and Bluez is the only stack easily provided on most Linux
+    distributions.
 - If none of these options worked, or you can't try them, then the only solution is to plug the controller using a USB
   cord. As for now, it won't load the xpadneo driver, but the default controller driver. USB support may be added soon
   to xpadneo.
