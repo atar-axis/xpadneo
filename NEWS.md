@@ -32,25 +32,25 @@ Finally, we've got a logo now.
 
 Here the gist of what the new version delivers:
 
-  * Discord community (shared with xow, ask to join your project)
-  * Code generation assertions
-  * Start of code-redesign for splitting the driver core
-  * Start of profile support (not implemented yet)
-  * Dropped old debug mode
-  * Better compliance with the Linux Gamepad specification
-  * Improved driver documentation
-  * Improved hardware documentation
-  * Improved hardware support
-  * Improved quirks handler to more easily handle hardware quirks
-  * Improved HID handler performance
-  * Improved dmesg logging
-  * Improved DKMS installer
-  * Improved rumble timing and precision
-  * Improved rumble damping setting
-  * Improved continuous integration testing
-  * Added support for new hardware-level device functions
-  * Added high-precision mode for the thumb sticks
-  * Added option for disabling dead-zones for better Proton support
+* Discord community (shared with xow, ask to join your project)
+* Code generation assertions
+* Start of code-redesign for splitting the driver core
+* Start of profile support (not implemented yet)
+* Dropped old debug mode
+* Better compliance with the Linux Gamepad specification
+* Improved driver documentation
+* Improved hardware documentation
+* Improved hardware support
+* Improved quirks handler to more easily handle hardware quirks
+* Improved HID handler performance
+* Improved dmesg logging
+* Improved DKMS installer
+* Improved rumble timing and precision
+* Improved rumble damping setting
+* Improved continuous integration testing
+* Added support for new hardware-level device functions
+* Added high-precision mode for the thumb sticks
+* Added option for disabling dead-zones for better Proton support
 
 Many of the bug fixes have been backported to the v0.8 branch which has now
 received its end of life. If you're having problems with the new features,
@@ -109,11 +109,11 @@ dongle still has licensing issues for using its firmware.
 
 ## Headlines:
 
-  * hid-xpadneo, quirks: We need to carry a quirk for Linux button mappings
-  * hid-xpadneo, rumble: Migrate damping to generic attenuation parameter
-  * installer: Change to base directory first
-  * xpadneo, deadzones: Implement a high-precision mode without dead zones
-  * xpadneo, udev: Work around libinput using the controller as touchpad
+* hid-xpadneo, quirks: We need to carry a quirk for Linux button mappings
+* hid-xpadneo, rumble: Migrate damping to generic attenuation parameter
+* installer: Change to base directory first
+* xpadneo, deadzones: Implement a high-precision mode without dead zones
+* xpadneo, udev: Work around libinput using the controller as touchpad
 
 ```
 Kai Krakow (78):
@@ -232,10 +232,10 @@ version. He qualified for the quote of the day above.
 
 A handful patches have been contributed which fix some smaller bugs:
 
-  * Thanks to Adam Becker for adding some bug and style fixes.
-  * Lars-Sören Steck fixed a scripting bug, thank you.
-  * Manjaro users now see instructions for their favorite distribution,
-    thanks to @snpefk.
+* Thanks to Adam Becker for adding some bug and style fixes.
+* Lars-Sören Steck fixed a scripting bug, thank you.
+* Manjaro users now see instructions for their favorite distribution,
+  thanks to @snpefk.
 
 Let's not forget our testers, who have patiently been with us during the
 development of this milestone: We appreciate your work, patience, and
@@ -257,15 +257,15 @@ to 100% which translates to no rumble at all.
 
 ## Headlines:
 
-  * dmks, installer: Move etc sources one level up
-  * docs, mapping: Document and explain `joydev` mapping
-  * hid-xpadneo: Adhere to Linux Gamepad Specification
-  * hid-xpadneo, battery: Rework detection, parsing and reporting
-  * hid-xpadneo, compat: Fix compilation on kernel 4.19
-  * hid_xpadneo, quirks: Add "8BitDo SN30 Pro+"
-  * hid-xpadneo, rumble: Throttle reprogramming of rumble motors
-  * installer: Parse DKMS version info correctly
-  * installer: Use awk in non-GNU mode
+* dmks, installer: Move etc sources one level up
+* docs, mapping: Document and explain `joydev` mapping
+* hid-xpadneo: Adhere to Linux Gamepad Specification
+* hid-xpadneo, battery: Rework detection, parsing and reporting
+* hid-xpadneo, compat: Fix compilation on kernel 4.19
+* hid_xpadneo, quirks: Add "8BitDo SN30 Pro+"
+* hid-xpadneo, rumble: Throttle reprogramming of rumble motors
+* installer: Parse DKMS version info correctly
+* installer: Use awk in non-GNU mode
 
 ```
 Kai Krakow (70):
@@ -367,9 +367,9 @@ broken mapping variant.
 
 ## Headlines:
 
-  * fix direction_rumble_test path error (#168)
-  * hid-xpadneo: Convert mapping to using tables instead of code
-  * Pretend we are in Windows wireless mode
+* fix direction_rumble_test path error (#168)
+* hid-xpadneo: Convert mapping to using tables instead of code
+* Pretend we are in Windows wireless mode
 
 ```
 Kai Krakow (21):
