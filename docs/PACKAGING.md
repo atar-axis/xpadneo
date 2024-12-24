@@ -85,6 +85,10 @@ Makefile:7: Installing to prefix, dkms commands will not be run!
 : SKIPPING dkms add hid-xpadneo
 ```
 
+Documentation will be installed to `DOC_PREFIX` and follows the same rules as
+above. Default location is `/usr/share/doc/xpadneo`. Some distributions may
+want to override this with a versioned path.
+
 
 ### Uninstallation
 
