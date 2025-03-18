@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -e
-
 cd "$(dirname "$0")"
 source "lib/options.sh"
 source "lib/installer.sh"
+
+set -e
 
 echo "* unloading current driver module"
 modprobe -r hid_xpadneo || true

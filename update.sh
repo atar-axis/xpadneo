@@ -1,9 +1,9 @@
 #!/bin/bash
 
-set -e
-
 cd "$(dirname "$0")"
 source "lib/installer.sh"
+
+set -e
 
 LATEST=$(get_upstream_version_latest)
 
