@@ -74,7 +74,7 @@ do { \
 
 /* MAC OUI masks */
 #define XPADNEO_OUI_MASK(oui,mask)    (((oui)&(mask))==(mask))
-#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
+#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x20
 
 /* timing of rumble commands to work around firmware crashes */
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
