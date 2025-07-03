@@ -25,12 +25,12 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
 
 ## Other Projects
 
-* [xow](https://github.com/medusalix/xow) is a driver for the Xbox One S controllers, too, and supports the native
-  dongles packaged with the controller. Kudos to [@medusalix](https://github.com/medusalix) for working together on
-  finding some work-arounds for controller firmware bugs.
-* [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
-* [xone](https://github.com/medusalix/xone) is a driver aiming for fully supporting all Microsoft GIP devices thus
+* [xone](https://github.com/dlundqvist/xone) is a driver aiming for fully supporting all Microsoft GIP devices thus
   replacing the xpad driver in the kernel while adding support for additional types of hardware.
+* [xow](https://github.com/medusalix/xow) is an unmaintained driver for the Xbox One S controllers, which has been
+  superseeded by xone. Kudos to [@medusalix](https://github.com/medusalix) for working together on finding some
+  work-arounds for controller firmware bugs.
+* [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
 * [MissionControl](https://github.com/ndeadly/MissionControl) aims to support the controller on Nintendo Switch via
   Bluetooth.
 
