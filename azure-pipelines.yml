@@ -8,8 +8,6 @@ trigger:
 
 strategy:
   matrix:
-    Ubuntu 20.04 LTS:
-      imageName: 'ubuntu-20.04'
     Ubuntu 22.04 LTS:
       imageName: 'ubuntu-22.04'
     Ubuntu 24.04 LTS:
