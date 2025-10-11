@@ -1,5 +1,8 @@
+KVER ?= $(shell uname -r)
+
 ETC_PREFIX ?= /etc
 DOC_PREFIX ?= /usr/share/doc/xpadneo
+LIB_PREFIX := /usr/lib/modules/$(KVER)/kernel/drivers/hid
 
 MODPROBE_CONFS := xpadneo.conf
 UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
@@ -52,4 +55,5 @@ uninstall: VERSION
 	rm -f $(DOCS:%=$(PREFIX)$(DOC_PREFIX)/%)
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
 	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
+	rm -f $(LIB_PREFIX)/hid-xpadneo.ko*
 	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
