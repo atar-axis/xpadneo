@@ -47,7 +47,7 @@ install: build
 	$(DKMS) add hid-xpadneo
 
 uninstall: VERSION
-	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all
+	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all || echo "dkms: remove failed: ignored"
 	rm -Rf "$(PREFIX)/usr/src/hid-xpadneo-$(shell cat VERSION)"
 	rm -f $(DOCS:%=$(PREFIX)$(DOC_PREFIX)/%)
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
