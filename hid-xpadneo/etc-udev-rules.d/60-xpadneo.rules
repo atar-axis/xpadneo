@@ -1,2 +1,2 @@
 ACTION=="add", KERNEL=="0005:045E:02FD.*|0005:045E:02E0.*|0005:045E:0B05.*|0005:045E:0B13.*|0005:045E:0B20.*|0005:045E:0B22.*", SUBSYSTEM=="hid", DRIVER!="xpadneo", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
-ACTION=="add|change", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
