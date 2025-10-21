@@ -1211,14 +1211,18 @@ err_free_name:
 
 static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
-	int ret;
+	int ret, index;
 	struct xpadneo_devdata *xdata;
 
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
 	if (xdata == NULL)
 		return -ENOMEM;
 
-	xdata->id = ida_simple_get(&xpadneo_device_id_allocator, 0, 0, GFP_KERNEL);
+	index = ida_simple_get(&xpadneo_device_id_allocator, 0, 0, GFP_KERNEL);
+	if (index < 0)
+		return index;
+	xdata->id = index;
+
 	xdata->quirks = id->driver_data;
 
 	xdata->hdev = hdev;
