@@ -139,7 +139,7 @@ as labelled on the device. This is swapped compared to the original Xbox control
 not enabled by default. If you want to use this feature, you have to add a quirk flag to the module options:
 
 ```
-# /etc/modprobe.conf
+# /etc/modprobe.d/99-xpadneo-quirks.conf
 options hid_xpadneo quirks=E4:17:D8:xx:xx:xx+32
 ```
 
