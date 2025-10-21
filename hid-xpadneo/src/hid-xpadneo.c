@@ -692,6 +692,7 @@ static int xpadneo_get_psy_property(struct power_supply *psy,
 static int xpadneo_setup_psy(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	struct power_supply *psy;
 	struct power_supply_config ps_config = {
 		.drv_data = xdata
 	};
@@ -712,13 +713,13 @@ static int xpadneo_setup_psy(struct hid_device *hdev)
 	xdata->battery.desc.type = POWER_SUPPLY_TYPE_BATTERY;
 
 	/* register battery via device manager */
-	xdata->battery.psy =
-	    devm_power_supply_register(&hdev->dev, &xdata->battery.desc, &ps_config);
-	if (IS_ERR(xdata->battery.psy)) {
-		ret = PTR_ERR(xdata->battery.psy);
+	psy = devm_power_supply_register(&hdev->dev, &xdata->battery.desc, &ps_config);
+	if (IS_ERR(psy)) {
+		ret = PTR_ERR(psy);
 		hid_err(hdev, "battery registration failed\n");
 		goto err_free_name;
 	} else {
+		xdata->battery.psy = psy;
 		hid_info(hdev, "battery registered\n");
 	}
 
