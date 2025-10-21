@@ -10,7 +10,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
   - `1` enables raw passthrough of axis values without dead zones for high-precision use with modern Wine/Proton games
 - `trigger_rumble_mode` (default `0`)
   - `0` rumbles triggers by pressure and current rumble effect
-  - `1` rumbles triggers by force direction (non-conformant)
+  - `1` reserved/unsupported since v0.10, identical to `0`
   - `2` disables trigger rumble
 - `rumble_attenuation` (default `0,0`)
   - Attenuation the strength of the force feedback
