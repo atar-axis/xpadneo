@@ -20,7 +20,7 @@ extern int xpadneo_init_synthetic(struct xpadneo_devdata *xdata, char *suffix,
 	suffix_len = strlen(suffix);
 	if ((name_len < suffix_len) || strcmp(hdev->name + name_len - suffix_len, suffix)) {
 		char *name = devm_kasprintf(&hdev->dev, GFP_KERNEL, "%s %s", hdev->name, suffix);
-		if (!input_dev->name)
+		if (!name)
 			return -ENOMEM;
 		input_dev->name = name;
 	}
