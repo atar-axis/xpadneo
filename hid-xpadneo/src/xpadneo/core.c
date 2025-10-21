@@ -19,9 +19,10 @@ extern int xpadneo_init_synthetic(struct xpadneo_devdata *xdata, char *suffix,
 	name_len = strlen(hdev->name);
 	suffix_len = strlen(suffix);
 	if ((name_len < suffix_len) || strcmp(hdev->name + name_len - suffix_len, suffix)) {
-		input_dev->name = kasprintf(GFP_KERNEL, "%s %s", hdev->name, suffix);
+		char *name = devm_kasprintf(&hdev->dev, GFP_KERNEL, "%s %s", hdev->name, suffix);
 		if (!input_dev->name)
 			return -ENOMEM;
+		input_dev->name = name;
 	}
 
 	dev_set_drvdata(&input_dev->dev, xdata);

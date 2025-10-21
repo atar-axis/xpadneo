@@ -640,16 +640,17 @@ static int xpadneo_setup_psy(struct hid_device *hdev)
 	struct power_supply_config ps_config = {
 		.drv_data = xdata
 	};
-	int ret;
+	char *name;
 
 	/* already registered */
 	if (xdata->battery.psy)
 		return 0;
 
-	xdata->battery.desc.name = kasprintf(GFP_KERNEL, "xpadneo_battery_%i", xdata->id);
-	if (!xdata->battery.desc.name)
+	name = devm_kasprintf(&hdev->dev, GFP_KERNEL, "xpadneo_battery_%i", xdata->id);
+	if (!name)
 		return -ENOMEM;
 
+	xdata->battery.desc.name = name;
 	xdata->battery.desc.properties = xpadneo_battery_props;
 	xdata->battery.desc.num_properties = ARRAY_SIZE(xpadneo_battery_props);
 	xdata->battery.desc.use_for_apm = 0;
@@ -659,9 +660,8 @@ static int xpadneo_setup_psy(struct hid_device *hdev)
 	/* register battery via device manager */
 	psy = devm_power_supply_register(&hdev->dev, &xdata->battery.desc, &ps_config);
 	if (IS_ERR(psy)) {
-		ret = PTR_ERR(psy);
 		hid_err(hdev, "battery registration failed\n");
-		goto err_free_name;
+		return PTR_ERR(psy);
 	} else {
 		xdata->battery.psy = psy;
 		hid_info(hdev, "battery registered\n");
@@ -670,12 +670,6 @@ static int xpadneo_setup_psy(struct hid_device *hdev)
 	power_supply_powers(xdata->battery.psy, &xdata->hdev->dev);
 
 	return 0;
-
-err_free_name:
-	kfree(xdata->battery.desc.name);
-	xdata->battery.desc.name = NULL;
-
-	return ret;
 }
 
 static void xpadneo_update_psy(struct xpadneo_devdata *xdata, u8 value)
