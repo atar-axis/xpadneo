@@ -1218,7 +1218,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (xdata == NULL)
 		return -ENOMEM;
 
-	index = ida_simple_get(&xpadneo_device_id_allocator, 0, 0, GFP_KERNEL);
+	index = ida_alloc(&xpadneo_device_id_allocator, GFP_KERNEL);
 	if (index < 0)
 		return index;
 	xdata->id = index;
@@ -1327,7 +1327,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 static void xpadneo_release_device_id(struct xpadneo_devdata *xdata)
 {
 	if (xdata->id >= 0) {
-		ida_simple_remove(&xpadneo_device_id_allocator, xdata->id);
+		ida_free(&xpadneo_device_id_allocator, xdata->id);
 		xdata->id = -1;
 	}
 }

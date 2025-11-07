@@ -44,10 +44,12 @@ These other projects may not support some of the advanced features of xpadneo.
 
 ## Breaking Changes
 
-### Kernel 4.18 or newer required
+### Kernel 4.19 or newer required
 
-As of xpadneo v0.10, we require kernel 4.18 or later to utilize `HID_QUIRK_INPUT_PER_APP` which splits the gamepad into
-multiple sub-devices to fix problems and incompatibilities at several layers.
+As of xpadneo v0.10, we require kernel 4.19 or later to utilize `HID_QUIRK_INPUT_PER_APP` (available in kernel 4.18+)
+which splits the gamepad into multiple sub-devices to fix problems and incompatibilities at several layers. We also
+require `ida_simple_{alloc,free}()` (available since kernel 4.19) which has been deprecated since kernel 5.10, and is
+no longer available in kernel 6.18+.
 
 
 ### SDL2 2.28 Compatibility
