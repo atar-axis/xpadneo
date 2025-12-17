@@ -20,10 +20,6 @@
 #error "kernel version 4.19.0+ required for ida_simple_{alloc,free}()"
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0)
-#error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
-#endif
-
 #ifndef VERSION
 #error "xpadneo version not defined"
 #endif
