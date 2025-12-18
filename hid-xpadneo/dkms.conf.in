@@ -1,4 +1,5 @@
 # vim:syntax=bash
+# shellcheck disable=SC2034
 
 PACKAGE_NAME="hid-xpadneo"
 PACKAGE_VERSION="@DO_NOT_CHANGE@"
