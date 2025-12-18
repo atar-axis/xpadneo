@@ -321,6 +321,8 @@ Please feel free to add other distributions as well!
 
 You know that everything works fine when you feel the gamepad rumble ;)
 
+If it doesn't, please check our documentation in [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting).
+
 
 ### Configuration
 
