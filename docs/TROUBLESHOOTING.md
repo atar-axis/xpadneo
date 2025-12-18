@@ -165,6 +165,35 @@ not pairing with Bluez. There are some specific workarounds:
   to xpadneo.
 
 
+### Gamepad Axes Have Phantom Input, Erratic Behavior, or Triggers Get Stuck
+
+If you observe some of these issues, this is usually a problem with deadzones:
+
+- Triggers get stuck when randomly pressing and depressing them
+- Camera or character drift when releasing an axis
+- Your hardware degrades and software deadzones become too small
+
+It depends on your situation and setup to decide what your preferred way of fixing is.
+
+xpadneo supports a high precision mode which you can activate via a module parameter. It defaults to off. It is called
+`disabled_deadzones`, and when you enable it, xpadneo won't allow the kernel to process any deadzone handling. This is
+useful if you run games that properly implement circular deadzones or need very high precision movement. Most Windows
+games running via Proton belong to this category. Sometimes, you still need to adjust the settings in game to balance
+precision and phantom inputs.
+
+If you stick with the default behavior, the kernel implement deadzones. But this is a very simple implementation and is
+based just on absolute axis values instead of center point distance (circular). If you want to or need to use bigger
+deadzones, you most likely want to use the deadzone implementation of Proton or games.
+
+This problem will also affect the triggers. One user reported that an emulator didn't properly work until the deadzones
+had been adjusted in the emulator, see: https://github.com/atar-axis/xpadneo/issues/474
+
+Finally, over time, most controllers will start to drift slightly. We cannot fix this in the driver because we should
+not increase deadzones to arbitrarily high values for all users. Use the game or kernel settings instead to increase
+the deadzone. Controllers that use contact-less sensors (hall effect, MR, AMR, or TMR sensors) are usually not
+affected.
+
+
 ### Gamepad Axes Are Swapped, Seemingly Unresponsive or Strange Behavior
 
 If you observe this problem with `jstest`, `systemsettings joystick` (KDE) or `jstest-gtk`, there's usually nothing
