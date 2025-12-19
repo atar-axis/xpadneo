@@ -13,6 +13,13 @@ else
   DKMS ?= : SKIPPING dkms
 endif
 
+ifeq ($(PREFIX),)
+  UDEVADM ?= udevadm
+else
+  $(warning Installing to prefix, udevadm commands will not be run!)
+  UDEVADM ?= : SKIPPING udevadm
+endif
+
 all: build
 
 help:
@@ -44,6 +51,7 @@ install: build
 	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/modprobe.d $(MODPROBE_CONFS:%=hid-xpadneo/etc-modprobe.d/%)
 	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(UDEV_RULES:%=hid-xpadneo/etc-udev-rules.d/%)
 	install -D -m 0644 -t $(PREFIX)$(DOC_PREFIX) $(DOC_SRCS)
+	$(UDEVADM) control --reload
 	$(DKMS) add hid-xpadneo
 
 uninstall: VERSION
@@ -53,3 +61,4 @@ uninstall: VERSION
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
 	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
 	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
+	$(UDEVADM) control --reload
