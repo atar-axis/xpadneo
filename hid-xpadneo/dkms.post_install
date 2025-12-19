@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# FIXME(kakra): This file should be removed, the module rebuild should not
+# mangle files that are supposed to be handled by the package manager. But
+# for now, the ERTM fixup stays in place because both the installation and
+# the uninstallation remove a stray file for a work-around that is no longer
+# needed nor supported.
+
 # DKMS now defaults to kernel 5.12 minimum, remove ERTM override
 ERTM_OVERRIDE="/etc/modprobe.d/99-xpadneo-bluetooth.conf"
 [ -L "${ERTM_OVERRIDE}" ] || { echo "Forcing removal of ERTM override..."; rm -f "${ERTM_OVERRIDE}"; }
