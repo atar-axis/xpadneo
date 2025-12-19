@@ -82,7 +82,7 @@ If you prefer not to consent, a short reply stating that is perfectly fine and h
 | bouhaa | @bouhaa | disable_shift_mode module param gating BTN_XBOX shift behavior | 8 / 1 (driver) | small feature gate | rewrite/replace (easy) | ⏳ | Adds module_param + condition `!param_disable_shift_mode` around existing branch. Re-implement cleanly in new modular file if needed. |
 | Adam Becker | @adam-becker | small bugfixes + cleanup + param gate + rename | 29 / 24 (driver) | trivial to small-moderate | rewrite/replace | ⏳ | Battery mode case fix; early return cleanup; MODULE_PARM_DESC formatting; add `ff_connect_notify` param + gate welcome rumble; rename mapping function. All easy to re-implement during refactor without chasing consent. |
 | John Mather | @NextDesign1 | OUI quirk entry (single line) | 1 / 0 (driver) | trivial / factual data | keep | ✅ | none |
-| PiMaker | @pi | build/debug print fix (single line) | 1 / 1 (driver) | trivial | rewrite/replace | ⏳ | fold into refactor; do not chase consent |
+| PiMaker | unknown | build/debug print fix (single line) | 1 / 1 (driver) | trivial | rewrite/replace | 🔁 | fold into refactor; wrong Github handle |
 | nassek | @nassek | missing variable name (single line) | 1 / 1 (driver) | trivial | rewrite/replace | ⏳ | fold into refactor; do not chase consent |
 | yjun | @yjun123 | missing report check (2-line change) | 2 / 2 (driver) | trivial | keep | ✅ | commit 93c76df |
 
