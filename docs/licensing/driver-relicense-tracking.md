@@ -84,7 +84,7 @@ If you prefer not to consent, a short reply stating that is perfectly fine and h
 | John Mather | @NextDesign1 | OUI quirk entry (single line) | 1 / 0 (driver) | trivial / factual data | rewrite/replace | ⏳ | Treat as replaceable while rebuilding quirks/device tables in new files |
 | PiMaker | @pi | build/debug print fix (single line) | 1 / 1 (driver) | trivial | rewrite/replace | ⏳ | fold into refactor; do not chase consent |
 | nassek | @nassek | missing variable name (single line) | 1 / 1 (driver) | trivial | rewrite/replace | ⏳ | fold into refactor; do not chase consent |
-| yjun | @yjun123 | missing report check (2-line change) | 2 / 2 (driver) | trivial | rewrite/replace | ⏳ | re-apply as part of new raw_event/report handling; commit 93c76df |
+| yjun | @yjun123 | missing report check (2-line change) | 2 / 2 (driver) | trivial | keep | ✅ | commit 93c76df |
 
 
 ## Status legend
