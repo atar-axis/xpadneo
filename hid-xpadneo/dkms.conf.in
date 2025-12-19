@@ -1,5 +1,4 @@
-# vim:syntax=bash
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034 disable=SC2148
 
 PACKAGE_NAME="hid-xpadneo"
 PACKAGE_VERSION="@DO_NOT_CHANGE@"
@@ -8,6 +7,7 @@ BUILT_MODULE_NAME[0]="hid-xpadneo"
 BUILT_MODULE_LOCATION[0]="src"
 DEST_MODULE_LOCATION[0]="/kernel/drivers/hid"
 
+# shellcheck disable=SC2154
 MAKE[0]="make -C '${kernel_source_dir}' M='${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build/src' VERSION='${PACKAGE_VERSION}' modules"
 
 BUILD_EXCLUSIVE_KERNEL_MIN="4.18.0"
@@ -17,3 +17,5 @@ AUTOINSTALL="yes"
 
 POST_INSTALL="dkms.post_install"
 POST_REMOVE="dkms.post_remove"
+
+# vim:syntax=bash
