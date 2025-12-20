@@ -36,6 +36,21 @@ hci0:   Primary controller
 If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
 
 
+### Actions Semiconductor
+
+* [eppfun Bluetooth 5.3 USB Adapter](https://www.amazon.co.uk/dp/B0BG5YTK9P)
+  * Chip set: CM591 (reported, exact variant unclear)
+  * `ID 10d7:b012 Actions general adapter`
+  * Performance:
+    * Stable connection
+    * No disconnects reported
+    * Suitable for long gaming sessions
+  * Tested with:
+    * Xbox Elite Series 2 controller
+    * Ubuntu 24.10 (GNOME)
+  * Reported by @ashleyhinton [here](https://github.com/atar-axis/xpadneo/issues/527)
+
+
 ### Cambridge Silicon Radio
 
 * [Panda Bluetooth 4.0 USB Nano Adapter](https://www.amazon.com/gp/product/B00BCU4TZE/)
