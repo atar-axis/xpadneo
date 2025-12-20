@@ -6,6 +6,10 @@ Please report your Dongles and how they work [here](https://github.com/atar-axis
 > Product names are not reliable indicators for Bluetooth chipsets. Some vendors ship different hardware revisions
 > under the same name. Always check the USB ID (`lsusb`) and chipset information.
 
+> **Note on integrated Bluetooth adapters:**
+> PCIe and on-board Bluetooth chipsets may behave very differently from USB adapters.
+> Stability can vary significantly depending on chipset generation and firmware.
+
 To identify your Bluetooth adapter:
 
 ```bash
@@ -122,6 +126,16 @@ If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
 
 ### Intel
 
+* Intel 7265 (NGFF / PCIe)
+  * Chip set: Intel 7265
+  * `ID 8087:0a2a Intel Corp. Bluetooth wireless interface`
+  * Performance:
+    * Rock solid pairing and connection
+    * Stable with multiple controllers (5 connected simultaneously)
+    * No special configuration required
+  * Tested on:
+    * Ubuntu 25.04
+  * Reported by @teeedubb [here](https://github.com/atar-axis/xpadneo/issues/541)
 * Status: incompatible (<https://github.com/atar-axis/xpadneo/issues/270>)
   * OUI: DC:1B:A1 (Intel)
   * Used as on-board chip set: Gigabyte B450 AORUS Pro WiFi 1.0 with integrated Bluetooth
@@ -142,6 +156,17 @@ $ sudo dmesg | grep 'RTL: fw version'
 Several users reported that switching away from RTL8761BU-based adapters
 resolved frequent disconnect issues entirely.
 
+* Realtek RTL8852AE (NGFF / PCIe)
+  * Chip set: RTL8852AE
+  * Performance:
+    * Frequent disconnects and reconnects
+    * Unreliable pairing with some Xbox One controllers
+    * Other controllers may fail to pair entirely
+  * Tested on:
+    * Ubuntu 25.04 (distribution-provided drivers)
+  * Notes:
+    * Multiple users report instability with game controllers
+  * Reported by @teeedubb [here](https://github.com/atar-axis/xpadneo/issues/541)
 * TP-Link USB Bluetooth Adapter (marketed as "UB400" or "UB500")
   * Multiple hardware revisions exist under the same product name
   * Some units report as:
