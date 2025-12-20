@@ -6,7 +6,10 @@ about: Report a bug
 
 ## Version of xpadneo
 <!-- Please let us know the version number of xpadneo, either the one shown
-     during install (preferred) or the one you downloaded (releases). -->
+     during install (preferred) or the one you downloaded (releases).
+
+     Some of the following checklists help us understand common usage patterns
+     and user environments. Not all items are required for technical analysis. -->
 
 ## Controller Model
 <!-- Please identify your controller model. -->
@@ -19,8 +22,8 @@ about: Report a bug
 ### Connection mode
 
 - [ ] Bluetooth connection
-- [ ] USB cable (not yet supported)
-- [ ] Xbox Dongle connection (not yet supported)
+- [ ] USB cable (not yet supported by xpadneo)
+- [ ] Xbox Dongle connection (not yet supported by xpadneo)
 
 ## Installed Software
 <!-- Some software may interfere with functionality or detection, or may
@@ -33,9 +36,9 @@ about: Report a bug
 - [ ] Steam Link (usually via Raspberry Pi or other micro computers)
 - [ ] devices with QMK firmware (may affect udev rules, similar to OpenRGB)
 - [ ] netstick (shares input devices via network similar to Steam Link)
-- [ ] xboxdrv (user-space gamepad driver)
-- [ ] xone (kernel-space gamepad driver using the Xbox dongle or USB)
-- [ ] xow (alternative driver using the Xbox dongle)
+- [ ] xboxdrv (user-space gamepad driver, not used for Bluetooth)
+- [ ] xone (kernel-space gamepad driver for using USB or the Xbox Dongle)
+- [ ] xow (obsolete user-space driver for using the wireless Xbox Dongle)
 
 ## Protocol Information
 <!-- This helps us identifying the problematic software layer and running
@@ -117,9 +120,15 @@ Please describe how it is failing below in the next sections.
 
 <!-- First, disconnect the controller. -->
 
-<!-- Run `sudo btmon | tee xpadneo-btmon.txt` and connect the controller. -->
+<!-- Run `sudo timeout 90 btmon | tee xpadneo-btmon.txt` and connect the controller, we will collect logs for up to 90 seconds but you can press ctrl+c to stop early. The sudo command may ask for a password, prepare to enter it. No characters will be shown during typing your password. -->
 
-<!-- Run `dmesg | egrep -i 'hid|input|xpadneo' | tee xpadneo-dmesg.txt`. -->
+<!-- If btmon (above) produces no output at all, also include:
+     - bluetoothctl list
+     - rfkill list
+     - systemctl status bluetooth --no-pager
+-->
+
+<!-- Run `dmesg -H | egrep -i 'bt|bluetooth|hci|l2cap|att|xbox|045e|hid|input|xpadneo' | tee xpadneo-dmesg.txt`. -->
 
 <!-- Run `lsusb` and pick the device number of your dongle. -->
 
