@@ -2,6 +2,19 @@
 
 Please report your Dongles and how they work [here](https://github.com/atar-axis/xpadneo/issues/93)
 
+> **Note:**
+> Product names are not reliable indicators for Bluetooth chipsets. Some vendors ship different hardware revisions
+> under the same name. Always check the USB ID (`lsusb`) and chipset information.
+
+To identify your Bluetooth adapter:
+
+```bash
+lsusb
+dmesg | grep -i bluetooth
+```
+
+Pay special attention to USB IDs and firmware versions, not product names.
+
 
 ## Bluetooth Low Energy
 
@@ -111,6 +124,18 @@ $ sudo dmesg | grep 'RTL: fw version'
 [   21.193448] Bluetooth: hci0: RTL: fw version 0xdfc6d922
 ```
 
+Several users reported that switching away from RTL8761BU-based adapters
+resolved frequent disconnect issues entirely.
+
+* TP-Link USB Bluetooth Adapter (marketed as "UB400" or "UB500")
+  * Multiple hardware revisions exist under the same product name
+  * Some units report as:
+    * `ID 2357:0604` (RTL8761BU, problematic firmware)
+  * Performance:
+    * Frequent disconnects with known bad firmware
+  * Notes:
+    * Devices sold as "UB400" may internally be UB500-class hardware
+    * Always verify using `lsusb`
 * [TP-Link USB Bluetooth Adapter Bluetooth 5.0 (UB500)](https://www.amazon.com/gp/product/B09DMP6T22)
   * Chip set: RTL8761BU
   * `ID 2357:0604 TP-Link TP-Link UB500 Adapter`
