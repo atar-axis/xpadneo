@@ -162,7 +162,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_MAP(0xC0224, MAP_STATIC, EV_KEY, BTN_SELECT),
 
 	/* map special buttons without HID bitmaps, corrected in event handler */
-	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_PADDLES(0)),	/* Four paddles */
+	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_GRIPL),	/* Four paddles */
 
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
@@ -994,10 +994,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	}
 
 	/* ensure all four paddles exist as part of the gamepad */
-	if (test_bit(BTN_PADDLES(0), xdata->idev->keybit)) {
-		__set_bit(BTN_PADDLES(1), xdata->idev->keybit);
-		__set_bit(BTN_PADDLES(2), xdata->idev->keybit);
-		__set_bit(BTN_PADDLES(3), xdata->idev->keybit);
+	if (test_bit(BTN_GRIPL, xdata->idev->keybit)) {
+		__set_bit(BTN_GRIPR, xdata->idev->keybit);
+		__set_bit(BTN_GRIPL2, xdata->idev->keybit);
+		__set_bit(BTN_GRIPR2, xdata->idev->keybit);
 	}
 
 	/* expose current profile as axis */
@@ -1013,13 +1013,13 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *idev = xdata->idev;
 
-	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
+	if ((usage->type == EV_KEY) && (usage->code == BTN_GRIPL)) {
 		if (xdata->profile == 0) {
 			/* report the paddles individually */
-			input_report_key(idev, BTN_PADDLES(0), (value & 1) ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(1), (value & 2) ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(2), (value & 4) ? 1 : 0);
-			input_report_key(idev, BTN_PADDLES(3), (value & 8) ? 1 : 0);
+			input_report_key(idev, BTN_GRIPR, (value & 1) ? 1 : 0);
+			input_report_key(idev, BTN_GRIPR2, (value & 2) ? 1 : 0);
+			input_report_key(idev, BTN_GRIPL, (value & 4) ? 1 : 0);
+			input_report_key(idev, BTN_GRIPL2, (value & 8) ? 1 : 0);
 		}
 		goto stop_processing;
 	} else if (usage->type == EV_ABS) {

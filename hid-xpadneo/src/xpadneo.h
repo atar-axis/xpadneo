@@ -12,6 +12,7 @@
 #define XPADNEO_H_FILE
 
 #include <linux/hid.h>
+#include <linux/input-event-codes.h>
 
 #include "hid-ids.h"
 
@@ -43,6 +44,14 @@ do {									\
 #define BTN_PADDLES(b) (BTN_TRIGGER_HAPPY5+(b))
 #define BTN_SHARE      BTN_TRIGGER_HAPPY1
 #define BTN_XBOX       BTN_MODE
+
+/* Paddle usage codes for kernel < 6.17 */
+#ifndef BTN_GRIPL
+#define BTN_GRIPL  0x224
+#define BTN_GRIPR  0x225
+#define BTN_GRIPL2 0x226
+#define BTN_GRIPR2 0x227
+#endif
 
 /* XBE2 controllers support four profiles */
 #define XPADNEO_XBE2_PROFILES_MAX 4

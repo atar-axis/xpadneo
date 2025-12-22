@@ -37,6 +37,14 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
 These other projects may not support some of the advanced features of xpadneo.
 
 
+## Paddle Button Codes Changed
+
+To stay compatible with SDL and current kernel development, the button codes for the grip paddles of XBE2 controllers
+have been moved to the official kernel standards as of kernel 6.17. We will also reflect this change for older kernel
+versions so user-space can rely on a consistent mapping. If you remapped those buttons with third-party software, you
+will need to redo those mappings.
+
+
 ## SDL2 2.28 Compatibility
 
 Thanks to [@slouken](https://github.com/slouken) from SDL2, xpadneo mappings are now auto-detected in the upcoming
@@ -80,6 +88,7 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 - Easy installation
 - Exposes the currently selected profile to user-space (Xbox Elite 2 controllers, or emulated)
 - Supports customization through profiles (work in progress)
+- Supports grip paddles (as shipped with the Xbox Elite 2 controller)
 - Optional high-precision mode for Wine/Proton users
 - Share button support on supported controllers
 - Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
