@@ -13,6 +13,7 @@
 
 #include <linux/hid.h>
 #include <linux/version.h>
+#include <linux/input-event-codes.h>
 
 #include "hid-ids.h"
 
@@ -48,9 +49,16 @@ do { \
 } while (0)
 
 /* button aliases */
-#define BTN_PADDLES(b) (BTN_TRIGGER_HAPPY5+(b))
 #define BTN_SHARE      KEY_F12
 #define BTN_XBOX       BTN_MODE
+
+/* Fallback paddle support for Linux < 6.17 */
+#ifndef BTN_GRIPR
+#define BTN_GRIPR  BTN_TRIGGER_HAPPY5
+#define BTN_GRIPR2 BTN_TRIGGER_HAPPY6
+#define BTN_GRIPL  BTN_TRIGGER_HAPPY7
+#define BTN_GRIPL2 BTN_TRIGGER_HAPPY8
+#endif
 
 /* module parameter "trigger_rumble_mode" */
 #define PARAM_TRIGGER_RUMBLE_PRESSURE 0

@@ -165,7 +165,7 @@ static const struct usage_map xpadneo_usage_maps[] = {
 	USAGE_MAP(0xC0224, MAP_STATIC, EV_KEY, BTN_SELECT),
 
 	/* map special buttons without HID bitmaps, corrected in event handler */
-	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_PADDLES(0)),	/* Four paddles */
+	USAGE_MAP(0xC0081, MAP_STATIC, EV_KEY, BTN_GRIPR), /* Four paddles */
 
 	/* hardware features handled at the raw report level */
 	USAGE_IGN(0xC0085),	/* Profile switcher */
@@ -970,10 +970,10 @@ static int xpadneo_input_configured(struct hid_device *hdev, struct hid_input *h
 	__clear_bit(KEY_UNKNOWN, xdata->gamepad->keybit);
 
 	/* ensure all four paddles exist as part of the gamepad */
-	if (test_bit(BTN_PADDLES(0), xdata->gamepad->keybit)) {
-		__set_bit(BTN_PADDLES(1), xdata->gamepad->keybit);
-		__set_bit(BTN_PADDLES(2), xdata->gamepad->keybit);
-		__set_bit(BTN_PADDLES(3), xdata->gamepad->keybit);
+	if (test_bit(BTN_GRIPR, xdata->gamepad->keybit)) {
+		__set_bit(BTN_GRIPR2, xdata->gamepad->keybit);
+		__set_bit(BTN_GRIPL , xdata->gamepad->keybit);
+		__set_bit(BTN_GRIPL2, xdata->gamepad->keybit);
 	}
 
 	return 0;
@@ -986,13 +986,13 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 	struct input_dev *gamepad = xdata->gamepad;
 	struct input_dev *keyboard = xdata->keyboard;
 
-	if ((usage->type == EV_KEY) && (usage->code == BTN_PADDLES(0))) {
+	if ((usage->type == EV_KEY) && (usage->code == BTN_GRIPR)) {
 		if (gamepad && xdata->profile == 0) {
 			/* report the paddles individually */
-			input_report_key(gamepad, BTN_PADDLES(0), (value & 1) ? 1 : 0);
-			input_report_key(gamepad, BTN_PADDLES(1), (value & 2) ? 1 : 0);
-			input_report_key(gamepad, BTN_PADDLES(2), (value & 4) ? 1 : 0);
-			input_report_key(gamepad, BTN_PADDLES(3), (value & 8) ? 1 : 0);
+			input_report_key(gamepad, BTN_GRIPR , (value & 1) ? 1 : 0);
+			input_report_key(gamepad, BTN_GRIPR2, (value & 2) ? 1 : 0);
+			input_report_key(gamepad, BTN_GRIPL , (value & 4) ? 1 : 0);
+			input_report_key(gamepad, BTN_GRIPL2, (value & 8) ? 1 : 0);
 			xdata->gamepad_sync = true;
 		}
 		goto stop_processing;
