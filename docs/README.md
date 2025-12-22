@@ -50,6 +50,14 @@ As of xpadneo v0.10, we require kernel 4.18 or later to utilize `HID_QUIRK_INPUT
 multiple sub-devices to fix problems and incompatibilities at several layers.
 
 
+### Paddle Button Codes Changed
+
+To stay compatible with SDL and current kernel development, the button codes for the grip paddles of XBE2 controllers
+have been moved to the official kernel standards as of kernel 6.17. We will also reflect this change for older kernel
+versions so user-space can rely on a consistent mapping. If you remapped those buttons with third-party software, you
+will need to redo those mappings.
+
+
 ### SDL2 2.28 Compatibility
 
 Thanks to [@slouken](https://github.com/slouken) from SDL2, xpadneo mappings are now auto-detected in the upcoming
@@ -95,6 +103,7 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 - Easy installation
 - Exposes the currently selected profile to user-space (Xbox Elite 2 controllers, or emulated)
 - Supports customization through profiles (work in progress)
+- Supports grip paddles (as shipped with the Xbox Elite 2 controller)
 - Optional high-precision mode for Wine/Proton users (disables dead zones so games don't apply an additional one)
 - Share button support on supported controllers
 
