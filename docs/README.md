@@ -170,7 +170,7 @@ as labelled on the device. This is swapped compared to the original Xbox control
 not enabled by default. If you want to use this feature, you have to add a quirk flag to the module options:
 
 ```
-# /etc/modprobe.conf
+# /etc/modprobe.d/99-xpadneo-quirks.conf
 options hid_xpadneo quirks=98:B6:EA:xx:xx:xx+32
 ```
 
@@ -192,7 +192,7 @@ rumble protocol for both variants. This should not introduce any problems but if
 trigger rumble support, you can explicitly tell the driver to not use the trigger rumble motors by adding a quirk flag:
 
 ```
-# /etc/modprobe.conf
+# /etc/modprobe.d/99-xpadneo-quirks.conf
 options hid_xpadneo quirks=A0:5A:5D:xx:xx:xx+2
 ```
 
@@ -207,7 +207,7 @@ models are available with different MAC OUIs, so your particular controller may 
 case, manually add the quirk flags for your controller:
 
 ```
-# /etc/modprobe.conf
+# /etc/modprobe.d/99-xpadneo-quirks.conf
 options hid_xpadneo quirks=3E:42:6C:xx:xx:xx+6
 ```
 
