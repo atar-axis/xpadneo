@@ -16,8 +16,14 @@
 
 #include "hid-ids.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
-#error "kernel version 4.19.0+ required for ida_simple_{alloc,free}()"
+/* v4.19: ida_simple_{get,remove}() have been replaced */
+#if KERNEL_VERSION(4, 19, 0) >= LINUX_VERSION_CODE
+#define ida_alloc(a, f) ida_simple_get((a), 0, 0, (f))
+#define ida_free(a, f) ida_simple_remove((a), (f))
+#endif
+
+#if KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE
+#error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
 #endif
 
 #ifndef VERSION
