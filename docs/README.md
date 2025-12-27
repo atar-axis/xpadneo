@@ -25,13 +25,13 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
 
 ## Other Projects
 
-* [xone](https://github.com/dlundqvist/xone) is a driver aiming for fully supporting all Microsoft GIP devices thus
+- [xone](https://github.com/dlundqvist/xone) is a driver aiming for fully supporting all Microsoft GIP devices thus
   replacing the xpad driver in the kernel. It supports Xbox One and Xbox Series X|S accessories.
-* [xow](https://github.com/medusalix/xow) is an unmaintained driver for the Xbox One S controllers, which has been
+- [xow](https://github.com/medusalix/xow) is an unmaintained driver for the Xbox One S controllers, which has been
   superseded by xone. Kudos to [@medusalix](https://github.com/medusalix) for working together on finding some
   work-arounds for controller firmware bugs.
-* [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
-* [MissionControl](https://github.com/ndeadly/MissionControl) aims to support the controller on Nintendo Switch via
+- [xpad](https://github.com/paroj/xpad) supports this and many other controllers in USB mode.
+- [MissionControl](https://github.com/ndeadly/MissionControl) aims to support the controller on Nintendo Switch via
   Bluetooth.
 
 These other projects may not support some of the advanced features of xpadneo.
@@ -66,23 +66,23 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 
 ## Advantages of this Driver
 
-* Supports Bluetooth
-* Supports most force feedback and all rumble effects through Linux `ff-memless` effect emulation
-* Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
+- Supports Bluetooth
+- Supports most force feedback and all rumble effects through Linux `ff-memless` effect emulation
+- Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
   pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
-* Supports adjusting rumble intensity including disabling rumble
-* Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
+- Supports adjusting rumble intensity including disabling rumble
+- Offers a consistent mapping, even if the Gamepad was paired to Windows/Xbox before, and independent of software
   layers (SDL2, Stadia via Chrome Gamepad API, etc)
-* Working paddles (buttons on the backside of the controller)
-* Correct axis range (signed, important for e.g. RPCS3)
-* Supports battery level indication (including the Play 'n Charge Kit)
+- Working paddles (buttons on the backside of the controller)
+- Correct axis range (signed, important for e.g. RPCS3)
+- Supports battery level indication (including the Play 'n Charge Kit)
   ![Battery Level Indication](./img/battery_support.png)
-* Easy installation
-* Exposes the currently selected profile to user-space (Xbox Elite 2 controllers, or emulated)
-* Supports customization through profiles (work in progress)
-* Optional high-precision mode for Wine/Proton users
-* Share button support on supported controllers
-* Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
+- Easy installation
+- Exposes the currently selected profile to user-space (Xbox Elite 2 controllers, or emulated)
+- Supports customization through profiles (work in progress)
+- Optional high-precision mode for Wine/Proton users
+- Share button support on supported controllers
+- Works as a mouse if you're are in couch-mode (press <key>Guide</key>+<key>Select</key>)
 
 
 ## Unavailable Features
@@ -246,24 +246,24 @@ Kernel maintainers should also include the `uhid` module (`CONFIG_UHID`) because
 models with firmware 5.x or higher) cannot create the HID input device which is handled in user-space by the bluez
 daemon.
 
-* On **Arch** and Arch-based distributions (like **Antergos**), try
+- On **Arch** and Arch-based distributions (like **Antergos**), try
   `sudo pacman -S dkms linux-headers bluez bluez-utils`
-* On **Debian** based systems (like Ubuntu) you can install those packages by running
+- On **Debian** based systems (like Ubuntu) you can install those packages by running
   ``sudo apt-get install dkms linux-headers-`uname -r` ``
-* On **Fedora**, it is
+- On **Fedora**, it is
   ``sudo dnf install dkms make bluez bluez-tools kernel-devel-`uname -r` kernel-headers-`uname -r` ``
-* On **Manjaro** try
+- On **Manjaro** try
   `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
-* On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
+- On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
   `sudo zypper install dkms make bluez kernel-devel kernel-source`
-* On **OSMC** you will have to run the following commands
+- On **OSMC** you will have to run the following commands
   ``sudo apt-get install dkms rbp2-headers-`uname -r`\``
   ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
-* On **Raspbian**, it is
+- On **Raspbian**, it is
   `sudo apt-get install dkms raspberrypi-kernel-headers`
   If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for
   your kernel. Please follow the steps described [here](https://github.com/notro/rpi-source/wiki) in this case.
-* On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
+- On **generic distributions**, it doesn't need DKMS but requires a configured kernel source tree, then:
   `cd hid-xpadneo && make modules && sudo make modules_install`
 
 Please feel free to add other distributions as well!
@@ -271,26 +271,26 @@ Please feel free to add other distributions as well!
 
 ### Installation
 
-* Download the Repository to your local machine
+- Download the Repository to your local machine
   `git clone https://github.com/atar-axis/xpadneo.git`
-* `cd xpadneo`
-* If using DKMS, run `sudo ./install.sh`
-* If not using DKMS, follow steps above (generic distribution)
-* Done!
+- `cd xpadneo`
+- If using DKMS, run `sudo ./install.sh`
+- If not using DKMS, follow steps above (generic distribution)
+- Done!
 
 
 ### Connection
 
-* `sudo bluetoothctl`
-* `[bluetooth]# scan on`
-* wait until all available devices are listed (otherwise it may be hard to identify which one is the gamepad)
-* push the connect button on upper side of the gamepad, and hold it down until the light starts flashing fast
-* wait for the gamepad to show up in bluetoothctl, remember the <MAC> address (e.g. `C8:3F:26:XX:XX:XX`)
-* `[bluetooth]# scan off` to stop scanning as it may interfere with properly pairing the controller
-* `[bluetooth]# pair <MAC>`
-* `[bluetooth]# trust <MAC>`
-* `[bluetooth]# connect <MAC>` (should usually not be needed but there are [open bugs](https://github.com/atar-axis/xpadneo/issues/198))
-* The `<MAC>` parameter is optional if the command line already shows the controller name
+- `sudo bluetoothctl`
+- `[bluetooth]# scan on`
+- wait until all available devices are listed (otherwise it may be hard to identify which one is the gamepad)
+- push the connect button on upper side of the gamepad, and hold it down until the light starts flashing fast
+- wait for the gamepad to show up in bluetoothctl, remember the <MAC> address (e.g. `C8:3F:26:XX:XX:XX`)
+- `[bluetooth]# scan off` to stop scanning as it may interfere with properly pairing the controller
+- `[bluetooth]# pair <MAC>`
+- `[bluetooth]# trust <MAC>`
+- `[bluetooth]# connect <MAC>` (should usually not be needed but there are [open bugs](https://github.com/atar-axis/xpadneo/issues/198))
+- The `<MAC>` parameter is optional if the command line already shows the controller name
 
 You know that everything works fine when you feel the gamepad rumble ;)
 
@@ -299,7 +299,7 @@ If it doesn't, please check our documentation in [Troubleshooting](https://atar-
 
 ### Configuration
 
-* If using DKMS: Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the
+- If using DKMS: Use `sudo ./configure.sh` to configure the driver as you wish. The script will guide you through the
   available options.
 
 
@@ -307,15 +307,15 @@ If it doesn't, please check our documentation in [Troubleshooting](https://atar-
 
 In order to update xpadneo, do the following
 
-* Update your cloned repo: `git pull`
-* If using DKMS: Run `sudo ./update.sh`
-* otherwise follow the steps above (generic distribution)
+- Update your cloned repo: `git pull`
+- If using DKMS: Run `sudo ./update.sh`
+- otherwise follow the steps above (generic distribution)
 
 
 ### Uninstallation
 
-* If using DKMS: Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
-* otherwise follow the steps above (generic distribution)
+- If using DKMS: Run `sudo ./uninstall.sh` to remove all installed versions of hid-xpadneo
+- otherwise follow the steps above (generic distribution)
 
 
 ## Further Information
@@ -325,6 +325,6 @@ automatically from the content of the `/docs` folder.
 
 You will find there e.g. the following sections
 
-* [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting)
-* [Debugging](https://atar-axis.github.io/xpadneo/#debugging)
-* [Compatible BT Dongles](https://atar-axis.github.io/xpadneo/#bt-dongles)
+- [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting)
+- [Debugging](https://atar-axis.github.io/xpadneo/#debugging)
+- [Compatible BT Dongles](https://atar-axis.github.io/xpadneo/#bt-dongles)
