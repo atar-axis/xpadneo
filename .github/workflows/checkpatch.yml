@@ -1,0 +1,18 @@
+name: Kernel Coding Style Check
+
+on: [pull_request, push]
+
+jobs:
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download checkpatch.pl
+        run: wget https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/scripts/checkpatch.pl
+
+      - name: Run checkpatch.pl
+        run: perl checkpatch.pl --ignore BAD_SIGN_OFF,FILE_PATH_CHANGES,LINUX_VERSION_CODE --no-tree <(git format-patch --stdout origin/master)
