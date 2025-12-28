@@ -17,6 +17,7 @@ Officially validated OUIs are marked with a "+".
 | 3C:FA:06  +  | Microsoft |   `0011 1100 : 1111 1010 : 0000 0110`   | 283 inval match
 | 44:16:22  +  | Microsoft |   `0100 0100 : 0001 0110 : 0010 0010`   |
 | 68:6C:E6  +  | Microsoft |   `0110 1000 : 0110 1100 : 1110 0110`   | 283 inval match
+| 78:86:2E  +  | Microsoft |   `0111 1000 : 1000 0110 : 0010 1110`   |
 | 98:7A:14  +  | Microsoft |   `1001 1000 : 0111 1010 : 0001 0100`   |
 | AC:8E:BD  +  | Microsoft |   `1010 1100 : 1000 1110 : 1011 1101`   | 283 inval match
 | C8:3F:26  +  | Microsoft |   `1100 1000 : 0011 1111 : 0010 0110`   |
