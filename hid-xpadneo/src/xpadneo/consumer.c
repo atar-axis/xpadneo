@@ -18,6 +18,9 @@ extern int xpadneo_init_consumer(struct xpadneo_devdata *xdata)
 			return ret;
 	}
 
+	/* enable consumer events for mouse mode */
+	input_set_capability(xdata->consumer, EV_KEY, KEY_ONSCREEN_KEYBOARD);
+
 	if (synth) {
 		ret = input_register_device(xdata->consumer);
 		if (ret) {

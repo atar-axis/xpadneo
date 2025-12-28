@@ -106,6 +106,7 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 - Supports grip paddles (as shipped with the Xbox Elite 2 controller)
 - Optional high-precision mode for Wine/Proton users (disables dead zones so games don't apply an additional one)
 - Share button support on supported controllers
+- Works as a mouse if you are in couch-mode (press <key>Guide</key>+<key>Select</key>)
 
 
 ## Unavailable Features
@@ -278,6 +279,24 @@ or Y while holding down the Xbox logo button. However, the following caveats app
 
 **Important:** Emulated profile switching won't work if you disabled the shift-mode of the Xbox logo button (module
 parameter `disable_shift_mode`).
+
+
+### Mouse Profile Support
+
+The driver can switch to emulating a mouse (and limited keyboard) on all supported controllers. Press
+<key>Guide</key>+<key>Select</key> to switch to mouse mode or back to controller mode:
+
+- Left stick moves the mouse pointer
+- Right stick can be used as a scrolling wheel/ball
+- Triggers for left and right mouse button
+- Shoulder buttons for back and forward button
+- D-pad for cursor movement
+- Menu to show on-screen keyboard (FIXME possible? KEY_KEYBOARD)
+- A for <key>Enter</key>
+- B for <key>Escape</key>
+
+**Important:** The mouse profile won't work if you disabled the shift-mode of the Xbox logo button (module parameter
+`disable_shift_mode`).
 
 
 ## Getting Started
