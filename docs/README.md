@@ -223,6 +223,26 @@ This controller uses emulated profile switching support (see below).
 This manufacturer uses random MAC addresses, so we cannot rely on known OUIs. Heuristics try to detect this controller.
 
 
+### A Note About GameSir Devices
+
+GameSir devices do not use officially registered MAC OUIs on the Bluetooth radio part, and they come with various
+flaky firmware behavior and bugs, while mimicking all other identifiable feature of genuine Microsoft controllers
+perfectly. This makes such devices hard to detect to work around the bugs in the rumble implementation but we will
+need a correct implementation in a future version of xpadneo. This means that xpadneo will probably drop official
+support for GameSir devices in the future: Base functionality should work out of the box but advanced future rumble
+features may show erratic behavior. There's nothing we can do about that and you should instead complain at the
+manufacturer: either properly implement the full rumble protocol, or just stick to officially registered OUIs.
+
+If you've come here because your kernel logged `enabling heuristic GameSir Nova quirks` but you don't have a GameSir
+device, try the following module option and report the incident on our issue tracker:
+
+```
+# /etc/modprobe.d/99-xpadneo-quirks.conf
+options hid_xpadneo quirks=78:86:2E:xx:xx:xx+512
+```
+
+
+
 ## Profile Switching
 
 The driver supports switching between different profiles, either through emulation or by using the hardware
