@@ -1,3 +1,74 @@
+# Changes since v0.9.7 up to v0.9.8
+
+This is the final maintenance release for the v0.9 branch. We won't have
+another Christmas with version v0.9.
+
+It mainly focuses on documentation cleanups, installer robustness, DKMS and
+packaging stability, and additional hardware compatibility fix-ups. There are
+no intentional functional changes to input handling or controller behavior.
+
+The v0.9 branch is approaching its end-of-life. This release serves as a final
+polish to ensure a smooth experience on current distributions and kernels,
+while v0.10 continues to evolve in parallel.
+
+**Heads up, package maintainers:** This release further stabilizes installer
+and DKMS behavior. Upcoming xpadneo v0.10 will introduce a new make-based
+installer intended to simplify packaging and automation workflows.
+
+
+## Headlines:
+
+  * xpadneo, dkms: Drop deprecated variable CLEAN
+  * xpadneo, docs: Align all of README.md with current distribution practice
+  * xpadneo, docs: Link troubleshooting more prominently
+  * xpadneo, quirks: Add another Microsoft OUI
+  * xpadneo, quirks: Another Microsoft OUI
+
+```
+Kai Krakow (30):
+      xpadneo, docs: Fix various spelling mistakes and phrasing
+      xpadneo, docs: Fix indentation, line length and whitespace
+      xpadneo, docs: Document the new quirk flags for configuration
+      xpadneo, docs: Use dashes instead of stars for list items
+      xpadneo, docs: Fix use of bare URLs
+      xpadneo, installer: Delay `set -e` to not silence errors early
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, ci: Drop Ubuntu 20.04 CI testing
+      xpadneo, udev: Trigger loading of `uhid` before `bluetooth`
+      xpadneo, psy: Fix potential pointer leak during battery registration
+      xpadneo, psy: Fix memory leak of device and battery name
+      xpadneo, probe: Implement error path for ida_simple_get()
+      xpadneo, core: Remove hard requirement of ida_{alloc,free}
+      xpadneo, docs: Document sensor drift and deadzones better
+      xpadneo, docs: Link troubleshooting more prominently
+      xpadneo, dkms: Fix shellcheck for unused variables
+      xpadneo, dkms: Drop deprecated variable CLEAN
+      xpadneo, docs: add GPL-2.0 relicensing requirement
+      xpadneo, dkms: Fix warning about unassigned variables
+      xpadneo, docs: document safe firmware flashing for Xbox controllers
+      xpadneo, docs: improve Bluetooth dongle documentation
+      xpadneo, docs: add user-reported Bluetooth dongle compatibility report
+      xpadneo, docs: add PCIe Bluetooth adapter compatibility reports
+      xpadneo, profiles: Report current profile as absolute axis
+      xpadneo, docs: Unify list formatting of README.md
+      xpadneo, docs: Align all of README.md with current distribution practice
+      xpadneo, core: Support explicit paddle button usages
+      xpadneo, docs: Fix manufacturer name of a tested USB BLE adapter
+      xpadneo, quirks: Add another Microsoft OUI
+
+l3d00m (2):
+      xpadneo, docs: Update links to other projects
+      xpadneo, docs: Fix typo and add specific hardware support to xone
+
+Eduard Tolosa (1):
+      xpadneo, udev: update rules for systemd v258+
+
+John Mather (1):
+      xpadneo, quirks: Add another OUI
+```
+
+
 # Changes since v0.9.6 up to v0.9.7
 
 This is a maintanance release of the previous "final" v0.9.6 because v0.10 will
