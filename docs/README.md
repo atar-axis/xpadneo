@@ -339,6 +339,17 @@ Please feel free to add other distributions as well!
 - If not using DKMS, follow steps above (generic distribution)
 - Done!
 
+#### Sign the module
+
+If Secure Boot is enabled on your machine, your system will not accept to load the unsigned module
+and you may get this kind of error:
+`modprobe: ERROR: could not insert 'hid_xpadneo': Key was rejected by service`.
+You need to sign it:
+
+* If using DKMS, run `sudo ./sign_and_install.sh` in lieu of `install.sh`.
+* For generic distribution, run `cd hid-xpadneo && sudo ./sign_and_install_generic.sh`
+
+You may need to run the scripts twice, with a reboot in-between, according to the output.
 
 ### Connection
 
