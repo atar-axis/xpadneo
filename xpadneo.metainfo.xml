@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="driver">
+  <id>xpadneo</id>
+  <name>xpadneo</name>
+  <summary>Advanced Linux Driver for Xbox One Wireless Gamepad</summary>
+  <description>
+    <p>
+      Wireless driver for Xbox One S, Xbox Elite Series 2, and Xbox Series X|S
+      controllers connected via Bluetooth. Supports force feedback, rumble
+      effects, trigger force feedback, battery level indication, and
+      working paddle buttons.
+    </p>
+  </description>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-only</project_license>
+  <url type="homepage">https://github.com/atar-axis/xpadneo</url>
+  <url type="bugtracker">https://github.com/atar-axis/xpadneo/issues</url>
+  <provides>
+    <!-- Xbox One S / X -->
+    <modalias>hid:b0005g*v0000045Ep000002E0*</modalias>
+    <modalias>hid:b0005g*v0000045Ep000002FD*</modalias>
+    <modalias>hid:b0005g*v0000045Ep00000B20*</modalias>
+    <!-- Xbox One Elite Series 2 -->
+    <modalias>hid:b0005g*v0000045Ep00000B05*</modalias>
+    <modalias>hid:b0005g*v0000045Ep00000B22*</modalias>
+    <!-- Xbox Series X|S -->
+    <modalias>hid:b0005g*v0000045Ep00000B13*</modalias>
+  </provides>
+</component>
