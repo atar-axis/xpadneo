@@ -15,8 +15,6 @@
 #include <linux/input-event-codes.h>
 #include <linux/version.h>
 
-#include "hid-ids.h"
-
 /* v4.19: ida_simple_{get,remove}() have been replaced */
 #if KERNEL_VERSION(4, 19, 0) >= LINUX_VERSION_CODE
 #define ida_alloc(a, f) ida_simple_get((a), 0, 0, (f))
@@ -53,6 +51,10 @@ do { \
 #define xpadneo_benchmark_stop(name) \
 	pr_info("xpadneo " #name " took %ums\n", jiffies_to_msecs(jiffies - __##name_jiffies)); \
 } while (0)
+
+#ifndef USB_VENDOR_ID_MICROSOFT
+#define USB_VENDOR_ID_MICROSOFT 0x045e
+#endif
 
 /* button aliases */
 #define BTN_SHARE KEY_F12
