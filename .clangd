@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://json.schemastore.org/clangd.json
+CompileFlags:
+  Add:
+    - "-DVERSION=clangd-checker"
+  Remove:
+    - "-fno-allow-store-data-races"
+    - "-fzero-init-padding-bits=all"
+    - "-mpreferred-stack-boundary=3"
+    - "-fmin-function-alignment=16"
+    - "-mrecord-mcount"
