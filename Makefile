@@ -26,6 +26,7 @@ help:
 	@echo "Targets:"
 	@echo "help        This help"
 	@echo "build       Prepare the package for DKMS deployment"
+	@echo "clangd-lsp  Generate compile_commands.json for clangd (requires bear)"
 	@echo "install     Install the package, documentation and DKMS source code"
 	@echo "uninstall   Uninstall the package, documentation and DKMS source code"
 	@echo
@@ -36,7 +37,7 @@ help:
 	@echo
 	@echo "Using PREFIX requires handling dkms commands in your package script."
 
-.PHONY: build install
+.PHONY: build clangd-lsp install uninstall help
 
 .INTERMEDIATE: VERSION
 
@@ -45,6 +46,8 @@ VERSION:
 
 build: VERSION
 	$(MAKE) VERSION="$(shell cat VERSION)" -C hid-xpadneo dkms.conf
+
+clangd-lsp: compile_commands.json
 
 install: build
 	mkdir -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
@@ -62,3 +65,6 @@ uninstall: VERSION
 	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
 	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
 	$(UDEVADM) control --reload
+
+compile_commands.json: build
+	bear -- $(MAKE) -C hid-xpadneo clean modules
