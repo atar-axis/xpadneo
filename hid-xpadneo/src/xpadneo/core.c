@@ -17,6 +17,9 @@
 
 #include "xpadneo.h"
 
+/* always include last */
+#include "compat.h"
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_AUTHOR("Kai Krakow <kai@kaishome.de>");
@@ -240,7 +243,7 @@ static struct hid_driver xpadneo_driver = {
 	.probe = xpadneo_core_probe,
 	.remove = xpadneo_core_remove,
 	.report = xpadneo_device_report,
-	.report_fixup = xpadneo_device_report_fixup,
+	.report_fixup = xpadneo_device_report_fixup_compat,
 	.raw_event = xpadneo_events_raw_event,
 };
 

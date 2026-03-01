@@ -96,11 +96,7 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 	}
 }
 
-#if KERNEL_VERSION(6, 12, 0) > LINUX_VERSION_CODE
-u8 *xpadneo_device_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize)
-#else
 const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
-#endif
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 

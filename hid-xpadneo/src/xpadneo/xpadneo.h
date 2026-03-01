@@ -251,12 +251,8 @@ extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *, struct
 extern void xpadneo_device_report(struct hid_device *, struct hid_report *);
 extern void xpadneo_device_missing(struct xpadneo_devdata *, u32);
 extern int xpadneo_device_output_report(struct hid_device *, __u8 *, size_t);
-#if KERNEL_VERSION(6, 12, 0) > LINUX_VERSION_CODE
-extern u8 *xpadneo_device_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize);
-#else
 extern const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc,
 					       unsigned int *rsize);
-#endif
 
 /* xpadneo consumer driver */
 extern int xpadneo_consumer_init(struct xpadneo_devdata *);
