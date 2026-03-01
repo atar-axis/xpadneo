@@ -18,12 +18,6 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 
-#ifndef VERSION
-#error "xpadneo version not defined"
-#endif
-
-#define XPADNEO_VERSION __stringify(VERSION)
-
 /* helper for printing a notice only once */
 #ifndef hid_notice_once
 #define hid_notice_once(hid, fmt, ...)					\

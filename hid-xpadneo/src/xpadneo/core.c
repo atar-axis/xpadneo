@@ -20,6 +20,12 @@
 /* always include last */
 #include "compat.h"
 
+#ifndef VERSION
+#error "xpadneo version not defined"
+#endif
+
+#define XPADNEO_VERSION __stringify(VERSION)
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_AUTHOR("Kai Krakow <kai@kaishome.de>");
