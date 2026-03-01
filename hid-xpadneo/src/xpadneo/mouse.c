@@ -16,7 +16,7 @@
 #define XPADNEO_TRIGGER_RELEASE_THRESHOLD 384
 #define XPADNEO_TRIGGER_PRESS_THRESHOLD   640
 
-extern void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
+void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 {
 	if (!xdata->mouse) {
 		xdata->mouse_mode = false;
@@ -34,7 +34,7 @@ extern void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 }
 
 #define mouse_report_rel(a,v) if((v)!=0)input_report_rel(mouse,(a),(v))
-extern void xpadneo_mouse_report(struct timer_list *t)
+void xpadneo_mouse_report(struct timer_list *t)
 {
 	__s32 value;
 
@@ -65,8 +65,8 @@ extern void xpadneo_mouse_report(struct timer_list *t)
 
 }
 
-extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *xdata, struct hid_report *report,
-				   u8 *data, int reportsize)
+int xpadneo_mouse_raw_event(struct xpadneo_devdata *xdata, struct hid_report *report,
+			    u8 *data, int reportsize)
 {
 	if (!xdata->mouse_mode)
 		return 0;
@@ -77,7 +77,7 @@ extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *xdata, struct hid_rep
 
 #define rescale_axis(v,d) (((v)<(d)&&(v)>-(d))?0:(32768*((v)>0?(v)-(d):(v)+(d))/(32768-(d))))
 #define digipad(v,v1,v2,v3) (((v==(v1))||(v==(v2))||(v==(v3)))?1:0)
-extern int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, __s32 value)
+int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, __s32 value)
 {
 	struct input_dev *consumer = xdata->consumer;
 	struct input_dev *keyboard = xdata->keyboard;
@@ -207,7 +207,7 @@ consumer_missing:
 	return 1;
 }
 
-extern int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
+int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
 	int ret, synth = 0;
@@ -250,13 +250,13 @@ extern int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 	return 0;
 }
 
-extern void xpadneo_mouse_init_timer(struct xpadneo_devdata *xdata)
+void xpadneo_mouse_init_timer(struct xpadneo_devdata *xdata)
 {
 	timer_setup(&xdata->mouse_timer, xpadneo_mouse_report, 0);
 	mod_timer(&xdata->mouse_timer, jiffies);
 }
 
-extern void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
+void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
 {
 	timer_delete_sync(&xdata->mouse_timer);
 }
