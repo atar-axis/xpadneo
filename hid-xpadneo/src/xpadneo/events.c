@@ -15,6 +15,9 @@
 /* always include last */
 #include "compat.h"
 
+/* XBE2 controllers support four profiles */
+#define XPADNEO_XBE2_PROFILES_MAX 4
+
 static bool param_gamepad_compliance = 1;
 module_param_named(gamepad_compliance, param_gamepad_compliance, bool, 0444);
 MODULE_PARM_DESC(gamepad_compliance,

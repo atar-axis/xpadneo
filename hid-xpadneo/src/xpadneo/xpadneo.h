@@ -18,21 +18,9 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 
-#ifndef USB_VENDOR_ID_MICROSOFT
-#define USB_VENDOR_ID_MICROSOFT 0x045e
-#endif
-
 /* button aliases */
 #define BTN_SHARE KEY_F12
 #define BTN_XBOX  BTN_MODE
-
-/* XBE2 controllers support four profiles */
-#define XPADNEO_XBE2_PROFILES_MAX 4
-
-/* module parameter "trigger_rumble_mode" */
-#define PARAM_TRIGGER_RUMBLE_PRESSURE 0
-#define PARAM_TRIGGER_RUMBLE_RESERVED 1
-#define PARAM_TRIGGER_RUMBLE_DISABLE  2
 
 /* module parameter "quirks" */
 #define XPADNEO_QUIRK_NO_PULSE          1
@@ -44,18 +32,29 @@
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
 #define XPADNEO_QUIRK_REVERSE_MASK      128
 #define XPADNEO_QUIRK_SWAPPED_MASK      256
-#define XPADNEO_QUIRK_NO_HEURISTICS	512
+#define XPADNEO_QUIRK_NO_HEURISTICS     512
 
+/* common quirk combinations */
 #define XPADNEO_QUIRK_NO_HAPTICS        (XPADNEO_QUIRK_NO_PULSE|XPADNEO_QUIRK_NO_MOTOR_MASK)
 #define XPADNEO_QUIRK_SIMPLE_CLONE      (XPADNEO_QUIRK_NO_HAPTICS|XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
 
-/* MAC OUI masks */
-#define XPADNEO_OUI_MASK(oui,mask)    (((oui)&(mask))==(mask))
-#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
+/* report number for rumble commands */
+#define XPADNEO_XBOX_RUMBLE_REPORT 0x03
 
-/* timing of rumble commands to work around firmware crashes */
-#define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
-#define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
+/* maximum length of report 0x01 for duplicate packet filtering */
+#define XPADNEO_REPORT_0x01_LENGTH (55+1)
+
+/* trigger range limits implemented in XBE2 controllers */
+enum xpadneo_trigger_scale {
+	XBOX_TRIGGER_SCALE_FULL,
+	XBOX_TRIGGER_SCALE_HALF,
+	XBOX_TRIGGER_SCALE_DIGITAL,
+	XBOX_TRIGGER_SCALE_NUM
+} __packed;
+
+#define XPADNEO_MISSING_CONSUMER 1
+#define XPADNEO_MISSING_GAMEPAD  2
+#define XPADNEO_MISSING_KEYBOARD 4
 
 /* rumble motors enable bits */
 enum xpadneo_rumble_motors {
@@ -84,12 +83,6 @@ struct rumble_data {
 static_assert(sizeof(struct rumble_data) == 8);
 #endif
 
-/* report number for rumble commands */
-#define XPADNEO_XBOX_RUMBLE_REPORT 0x03
-
-/* maximum length of report 0x01 for duplicate packet filtering */
-#define XPADNEO_REPORT_0x01_LENGTH (55+1)
-
 /* HID packet for rumble commands */
 struct rumble_report {
 	u8 report_id;
@@ -98,18 +91,6 @@ struct rumble_report {
 #ifdef static_assert
 static_assert(sizeof(struct rumble_report) == 9);
 #endif
-
-/* trigger range limits implemented in XBE2 controllers */
-enum xpadneo_trigger_scale {
-	XBOX_TRIGGER_SCALE_FULL,
-	XBOX_TRIGGER_SCALE_HALF,
-	XBOX_TRIGGER_SCALE_DIGITAL,
-	XBOX_TRIGGER_SCALE_NUM
-} __packed;
-
-#define XPADNEO_MISSING_CONSUMER 1
-#define XPADNEO_MISSING_GAMEPAD  2
-#define XPADNEO_MISSING_KEYBOARD 4
 
 /* private driver instance data */
 struct xpadneo_devdata {

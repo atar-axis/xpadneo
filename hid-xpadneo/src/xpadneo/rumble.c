@@ -13,6 +13,15 @@
 #include "xpadneo.h"
 #include "helpers.h"
 
+/* timing of rumble commands to work around firmware crashes */
+#define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
+#define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
+
+/* module parameter "trigger_rumble_mode" */
+#define PARAM_TRIGGER_RUMBLE_PRESSURE 0
+#define PARAM_TRIGGER_RUMBLE_RESERVED 1
+#define PARAM_TRIGGER_RUMBLE_DISABLE  2
+
 static u8 param_trigger_rumble_mode;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
 MODULE_PARM_DESC(trigger_rumble_mode, "(u8) Trigger rumble mode. 0: pressure, 2: disable.");

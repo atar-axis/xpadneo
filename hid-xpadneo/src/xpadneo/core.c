@@ -34,6 +34,10 @@ MODULE_VERSION(XPADNEO_VERSION);
 
 static DEFINE_IDA(xpadneo_core_device_id_allocator);
 
+#ifndef USB_VENDOR_ID_MICROSOFT
+#define USB_VENDOR_ID_MICROSOFT 0x045e
+#endif
+
 static const struct hid_device_id xpadneo_devices[] = {
 	/* XBOX ONE S / X */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },

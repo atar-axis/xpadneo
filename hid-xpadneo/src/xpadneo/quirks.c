@@ -40,6 +40,10 @@ struct quirk {
 	u32 flags;
 };
 
+/* MAC OUI masks */
+#define XPADNEO_OUI_MASK(oui, mask)   (((oui)&(mask)) == (mask))
+#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
+
 static const struct quirk xpadneo_quirks[] = {
 	DEVICE_OUI_QUIRK("28:EA:0B", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("3C:FA:06", XPADNEO_QUIRK_NO_HEURISTICS),
