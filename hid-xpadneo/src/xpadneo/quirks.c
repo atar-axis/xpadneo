@@ -81,13 +81,30 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 
 	kernel_param_lock(THIS_MODULE);
 	for (int i = 0; i < param_quirks.nargs; i++) {
-		int offset = strnlen(xdata->gamepad->uniq, 18);
+		const char *arg = param_quirks.args[i];
+		size_t uniq_len = strnlen(xdata->gamepad->uniq, 18);
+		size_t arg_len = strnlen(arg, 128);
 
-		if ((strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], offset) == 0)
-		    && ((param_quirks.args[i][offset] == ':')
-			|| (param_quirks.args[i][offset] == '+')
-			|| (param_quirks.args[i][offset] == '-'))) {
-			char *quirks_arg = &param_quirks.args[i][offset + 1];
+		/* check if the argument is long enough to fetch uniq + a suffix */
+		if (arg_len <= uniq_len) {
+			hid_warn(hdev,
+				 "quirks parameter '%s' ignored: invalid MAC or missing modifier\n",
+				 arg);
+			continue;
+		}
+
+		if (strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], uniq_len) != 0)
+			continue;
+
+		if ((arg[uniq_len] != ':') && (arg[uniq_len] != '+') && (arg[uniq_len] != '-')) {
+			hid_warn(hdev,
+				 "quirks parameter '%s' ignored: invalid modifier '%c'\n",
+				 arg, arg[uniq_len]);
+			continue;
+		}
+
+		do {
+			const char *quirks_arg = arg + uniq_len + 1;
 			u32 quirks = 0;
 			int ret = kstrtou32(quirks_arg, 0, &quirks);
 
@@ -95,15 +112,16 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
 				kernel_param_unlock(THIS_MODULE);
 				return -EINVAL;
-			} else if (param_quirks.args[i][offset] == ':') {
+			} else if (arg[uniq_len] == ':') {
 				quirks_override = quirks;
-			} else if (param_quirks.args[i][offset] == '-') {
+			} else if (arg[uniq_len] == '-') {
 				quirks_unset = quirks;
 			} else {
 				quirks_set = quirks;
 			}
-			break;
-		}
+		} while (0);
+
+		break;
 	}
 	kernel_param_unlock(THIS_MODULE);
 
