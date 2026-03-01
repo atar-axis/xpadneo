@@ -250,10 +250,16 @@ extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
 /* xpadneo helpers for synthetic drivers */
 extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *, struct input_dev **);
 
-/* xpadneo core driver */
-extern void xpadneo_core_report(struct hid_device *, struct hid_report *);
-extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
-extern int xpadneo_core_output_report(struct hid_device *, __u8 *, size_t);
+/* xpadneo core device functions */
+extern void xpadneo_device_report(struct hid_device *, struct hid_report *);
+extern void xpadneo_device_missing(struct xpadneo_devdata *, u32);
+extern int xpadneo_device_output_report(struct hid_device *, __u8 *, size_t);
+#if KERNEL_VERSION(6, 12, 0) > LINUX_VERSION_CODE
+extern u8 *xpadneo_device_report_fixup(struct hid_device *hdev, u8 *rdesc, unsigned int *rsize);
+#else
+extern const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+					       unsigned int *rsize);
+#endif
 
 /* xpadneo rumble driver */
 extern int xpadneo_rumble_init(struct hid_device *);

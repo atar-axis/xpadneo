@@ -196,11 +196,11 @@ extern int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *
 	return 0;
 
 keyboard_missing:
-	xpadneo_core_missing(xdata, XPADNEO_MISSING_KEYBOARD);
+	xpadneo_device_missing(xdata, XPADNEO_MISSING_KEYBOARD);
 	return 1;
 
 consumer_missing:
-	xpadneo_core_missing(xdata, XPADNEO_MISSING_CONSUMER);
+	xpadneo_device_missing(xdata, XPADNEO_MISSING_CONSUMER);
 	return 1;
 }
 

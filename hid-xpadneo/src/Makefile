@@ -7,6 +7,7 @@ obj-m += hid-xpadneo.o
 hid-xpadneo-y += \
 	xpadneo/consumer.o \
 	xpadneo/core.o \
+	xpadneo/device.o \
 	xpadneo/events.o \
 	xpadneo/keyboard.o \
 	xpadneo/mappings.o \

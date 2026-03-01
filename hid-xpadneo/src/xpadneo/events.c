@@ -264,7 +264,7 @@ combine_z_axes:
 	return 0;
 
 keyboard_missing:
-	xpadneo_core_missing(xdata, XPADNEO_MISSING_KEYBOARD);
+	xpadneo_device_missing(xdata, XPADNEO_MISSING_KEYBOARD);
 
 stop_processing:
 	/* report the profile change */
