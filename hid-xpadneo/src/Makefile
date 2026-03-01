@@ -12,3 +12,4 @@ $(obj)/xpadneo.c: $(src)/hid-xpadneo.c
 
 hid-xpadneo-y += xpadneo/core.o xpadneo/consumer.o xpadneo/keyboard.o xpadneo/mouse.o
 hid-xpadneo-y += xpadneo/events.o xpadneo/mappings.o xpadneo/power.o xpadneo/quirks.o
+hid-xpadneo-y += xpadneo/rumble.o

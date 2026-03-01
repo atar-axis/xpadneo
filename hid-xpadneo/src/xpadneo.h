@@ -128,7 +128,7 @@ enum xpadneo_rumble_motors {
 } __packed;
 
 /* rumble packet structure */
-struct ff_data {
+struct rumble_data {
 	enum xpadneo_rumble_motors enable;
 	u8 magnitude_left;
 	u8 magnitude_right;
@@ -139,7 +139,7 @@ struct ff_data {
 	u8 loop_count;
 } __packed;
 #ifdef static_assert
-static_assert(sizeof(struct ff_data) == 8);
+static_assert(sizeof(struct rumble_data) == 8);
 #endif
 
 /* report number for rumble commands */
@@ -149,12 +149,12 @@ static_assert(sizeof(struct ff_data) == 8);
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)
 
 /* HID packet for rumble commands */
-struct ff_report {
+struct rumble_report {
 	u8 report_id;
-	struct ff_data ff;
+	struct rumble_data data;
 } __packed;
 #ifdef static_assert
-static_assert(sizeof(struct ff_report) == 9);
+static_assert(sizeof(struct rumble_report) == 9);
 #endif
 
 /* trigger range limits implemented in XBE2 controllers */
@@ -227,14 +227,16 @@ struct xpadneo_devdata {
 	s32 last_abs_z;
 	s32 last_abs_rz;
 
-	/* buffer for ff_worker */
-	spinlock_t ff_lock;
-	struct delayed_work ff_worker;
-	unsigned long ff_throttle_until;
-	bool ff_scheduled;
-	struct ff_data ff;
-	struct ff_data ff_shadow;
-	void *output_report_dmabuf;
+	/* buffer for rumble_worker */
+	struct {
+		spinlock_t lock;
+		struct delayed_work worker;
+		unsigned long throttle_until;
+		bool scheduled;
+		struct rumble_data data;
+		struct rumble_data shadow;
+		void *output_report_dmabuf;
+	} rumble;
 };
 
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
@@ -242,6 +244,13 @@ extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
 extern void xpadneo_report(struct hid_device *, struct hid_report *);
 extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
+extern int xpadneo_output_report(struct hid_device *, __u8 *, size_t);
+
+/* xpadneo rumble driver */
+extern int xpadneo_rumble_init(struct hid_device *);
+extern int xpadneo_rumble_init_workqueue(void);
+extern void xpadneo_rumble_destroy_workqueue(void);
+extern void xpadneo_rumble_remove(struct xpadneo_devdata *);
 
 /* xpadneo mouse driver */
 extern int xpadneo_mouse_init(struct xpadneo_devdata *);
