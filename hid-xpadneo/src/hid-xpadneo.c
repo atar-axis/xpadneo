@@ -1073,12 +1073,14 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 				if (value == 1)
 					xpadneo_switch_profile(xdata, 3, true);
 				goto stop_processing;
-			case BTN_SELECT:
+			}
+		}
+		switch (usage->code) {
+		case BTN_SELECT:
 			if (value == 1)
 				xpadneo_toggle_mouse(xdata);
 			goto stop_processing;
 		}
-	}
 	}
 
 	/* Let hid-core handle the event */
