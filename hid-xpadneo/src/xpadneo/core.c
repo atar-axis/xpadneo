@@ -60,7 +60,7 @@ static const struct hid_device_id core_devices[] = {
 
 MODULE_DEVICE_TABLE(hid, core_devices);
 
-static int core_init_hw(struct hid_device *hdev)
+static int core_init_base_device(struct hid_device *hdev)
 {
 	int ret;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -76,12 +76,14 @@ static int core_init_hw(struct hid_device *hdev)
 
 	ret = xpadneo_quirks_init(xdata);
 	if (ret)
-		goto err_free_name;
+		goto err_uninit_power;
 
 	return 0;
 
-err_free_name:
+err_uninit_power:
 	xpadneo_power_remove(xdata);
+
+err_free_name:
 	return ret;
 }
 
@@ -117,7 +119,11 @@ static void core_remove(struct hid_device *hdev)
 
 	xpadneo_mouse_remove_timer(xdata);
 	xpadneo_rumble_remove(xdata);
+	xpadneo_quirks_remove(xdata);
 	xpadneo_power_remove(xdata);
+	xpadneo_mouse_remove(xdata);
+	xpadneo_keyboard_remove(xdata);
+	xpadneo_consumer_remove(xdata);
 
 	core_release_device_id(xdata);
 	hid_hw_stop(hdev);
@@ -208,32 +214,31 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	ret = hid_parse(hdev);
 	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		return ret;
+		goto err_release_id;
 	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		return ret;
+		goto err_release_id;
 	}
 
 	ret = xpadneo_consumer_init(xdata);
 	if (ret)
-		return ret;
+		goto err_stop_hw;
 
 	ret = xpadneo_keyboard_init(xdata);
 	if (ret)
-		return ret;
+		goto err_uninit_consumer;
 
 	ret = xpadneo_mouse_init(xdata);
 	if (ret)
-		return ret;
+		goto err_uninit_keyboard;
 
-	ret = core_init_hw(hdev);
+	ret = core_init_base_device(hdev);
 	if (ret) {
 		hid_err(hdev, "hw init failed: %d\n", ret);
-		hid_hw_stop(hdev);
-		return ret;
+		goto err_uninit_mouse;
 	}
 
 	ret = xpadneo_rumble_init(hdev);
@@ -245,6 +250,27 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	hid_info(hdev, "%s connected\n", xdata->battery.name);
 
 	return 0;
+
+	/* error paths in reverse initialization order */
+err_uninit_mouse:
+	xpadneo_mouse_remove(xdata);
+
+err_uninit_keyboard:
+	xpadneo_keyboard_remove(xdata);
+
+err_uninit_consumer:
+	xpadneo_consumer_remove(xdata);
+
+err_stop_hw:
+	hid_hw_stop(hdev);
+
+err_release_id:
+	/* restore the original device IDs first */
+	hdev->product = xdata->original_product;
+	hdev->version = xdata->original_version;
+
+	core_release_device_id(xdata);
+	return ret;
 }
 
 static struct hid_driver core_driver = {

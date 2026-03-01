@@ -93,6 +93,7 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 
 			if (ret) {
 				hid_err(hdev, "quirks override invalid: %s\n", quirks_arg);
+				kernel_param_unlock(THIS_MODULE);
 				return -EINVAL;
 			} else if (param_quirks.args[i][offset] == ':') {
 				quirks_override = quirks;
@@ -144,4 +145,12 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 		hid_info(hdev, "controller quirks: 0x%08x\n", xdata->quirks);
 
 	return 0;
+}
+
+void xpadneo_quirks_remove(struct xpadneo_devdata *xdata)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	if (xdata->quirks > 0)
+		hid_info(hdev, "removing controller quirks: 0x%08x\n", xdata->quirks);
 }

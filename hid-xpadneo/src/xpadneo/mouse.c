@@ -260,3 +260,14 @@ void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
 {
 	timer_delete_sync(&xdata->mouse_timer);
 }
+
+void xpadneo_mouse_remove(struct xpadneo_devdata *xdata)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	if (xdata->mouse) {
+		input_unregister_device(xdata->mouse);
+		xdata->mouse = NULL;
+		hid_info(hdev, "mouse removed\n");
+	}
+}

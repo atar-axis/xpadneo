@@ -43,3 +43,14 @@ int xpadneo_keyboard_init(struct xpadneo_devdata *xdata)
 
 	return 0;
 }
+
+void xpadneo_keyboard_remove(struct xpadneo_devdata *xdata)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	if (xdata->keyboard) {
+		input_unregister_device(xdata->keyboard);
+		xdata->keyboard = NULL;
+		hid_info(hdev, "keyboard removed\n");
+	}
+}

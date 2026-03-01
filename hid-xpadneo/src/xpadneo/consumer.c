@@ -39,3 +39,14 @@ int xpadneo_consumer_init(struct xpadneo_devdata *xdata)
 
 	return 0;
 }
+
+void xpadneo_consumer_remove(struct xpadneo_devdata *xdata)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	if (xdata->consumer) {
+		input_unregister_device(xdata->consumer);
+		xdata->consumer = NULL;
+		hid_info(hdev, "consumer control removed\n");
+	}
+}

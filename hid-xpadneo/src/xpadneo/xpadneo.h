@@ -174,9 +174,11 @@ extern const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rd
 
 /* xpadneo consumer driver */
 extern int xpadneo_consumer_init(struct xpadneo_devdata *);
+extern void xpadneo_consumer_remove(struct xpadneo_devdata *);
 
 /* xpadneo keyboard driver */
 extern int xpadneo_keyboard_init(struct xpadneo_devdata *);
+extern void xpadneo_keyboard_remove(struct xpadneo_devdata *);
 
 /* xpadneo rumble driver */
 extern int xpadneo_rumble_init(struct hid_device *);
@@ -192,6 +194,7 @@ extern void xpadneo_mouse_toggle(struct xpadneo_devdata *);
 extern int xpadneo_mouse_event(struct xpadneo_devdata *, struct hid_usage *, __s32);
 extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *, struct hid_report *, u8 *, int);
 extern void xpadneo_mouse_remove_timer(struct xpadneo_devdata *);
+extern void xpadneo_mouse_remove(struct xpadneo_devdata *);
 
 /* battery and power functions */
 extern int xpadneo_power_init(struct xpadneo_devdata *);
@@ -200,6 +203,7 @@ extern void xpadneo_power_remove(struct xpadneo_devdata *xdata);
 
 /* driver quirks handling */
 extern int xpadneo_quirks_init(struct xpadneo_devdata *);
+extern void xpadneo_quirks_remove(struct xpadneo_devdata *);
 
 /* driver usage mappings */
 extern int xpadneo_mappings_input(struct hid_device *, struct hid_input *,
