@@ -265,4 +265,9 @@ extern int xpadneo_mapping_input(struct hid_device *, struct hid_input *,
 				 struct hid_field *,
 				 struct hid_usage *, unsigned long **, int *);
 
+/* driver events and profiles handling */
+extern int xpadneo_events_raw_event(struct hid_device *, struct hid_report *, u8 *, int);
+extern int xpadneo_events_event(struct hid_device *, struct hid_field *, struct hid_usage *, __s32);
+extern int xpadneo_events_input_configured(struct hid_device *, struct hid_input *);
+
 #endif
