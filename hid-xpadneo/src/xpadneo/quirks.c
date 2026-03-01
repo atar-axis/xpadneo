@@ -44,7 +44,7 @@ struct quirk {
 #define XPADNEO_OUI_MASK(oui, mask)   (((oui)&(mask)) == (mask))
 #define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
 
-static const struct quirk xpadneo_quirks[] = {
+static const struct quirk quirks[] = {
 	DEVICE_OUI_QUIRK("28:EA:0B", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("3C:FA:06", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("68:6C:E6", XPADNEO_QUIRK_NO_HEURISTICS),
@@ -68,8 +68,8 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	u8 oui_byte;
 	char oui[3] = { };
 
-	for (int i = 0; i < ARRAY_SIZE(xpadneo_quirks); i++) {
-		const struct quirk *q = &xpadneo_quirks[i];
+	for (int i = 0; i < ARRAY_SIZE(quirks); i++) {
+		const struct quirk *q = &quirks[i];
 
 		if (q->name_match
 		    && (strncmp(q->name_match, xdata->gamepad->name, q->name_len) == 0))

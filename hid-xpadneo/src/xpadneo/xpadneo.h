@@ -69,7 +69,7 @@ enum xpadneo_rumble_motors {
 } __packed;
 
 /* rumble packet structure */
-struct rumble_data {
+struct xpadneo_rumble_data {
 	enum xpadneo_rumble_motors enable;
 	u8 magnitude_left;
 	u8 magnitude_right;
@@ -80,16 +80,16 @@ struct rumble_data {
 	u8 loop_count;
 } __packed;
 #ifdef static_assert
-static_assert(sizeof(struct rumble_data) == 8);
+static_assert(sizeof(struct xpadneo_rumble_data) == 8);
 #endif
 
 /* HID packet for rumble commands */
-struct rumble_report {
+struct xpadneo_rumble_report {
 	u8 report_id;
-	struct rumble_data data;
+	struct xpadneo_rumble_data data;
 } __packed;
 #ifdef static_assert
-static_assert(sizeof(struct rumble_report) == 9);
+static_assert(sizeof(struct xpadneo_rumble_report) == 9);
 #endif
 
 /* private driver instance data */
@@ -156,8 +156,8 @@ struct xpadneo_devdata {
 		struct delayed_work worker;
 		unsigned long throttle_until;
 		bool scheduled;
-		struct rumble_data data;
-		struct rumble_data shadow;
+		struct xpadneo_rumble_data data;
+		struct xpadneo_rumble_data shadow;
 		void *output_report_dmabuf;
 	} rumble;
 };
@@ -202,9 +202,8 @@ extern void xpadneo_power_remove(struct xpadneo_devdata *xdata);
 extern int xpadneo_quirks_init(struct xpadneo_devdata *);
 
 /* driver usage mappings */
-extern int xpadneo_mapping_input(struct hid_device *, struct hid_input *,
-				 struct hid_field *,
-				 struct hid_usage *, unsigned long **, int *);
+extern int xpadneo_mappings_input(struct hid_device *, struct hid_input *,
+				  struct hid_field *, struct hid_usage *, unsigned long **, int *);
 
 /* driver events and profiles handling */
 extern int xpadneo_events_raw_event(struct hid_device *, struct hid_report *, u8 *, int);

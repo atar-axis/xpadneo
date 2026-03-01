@@ -16,7 +16,7 @@ MODULE_PARM_DESC(debug_hid, "(bool) Debug HID reports. 0: disable, 1: enable.");
 
 int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
 {
-	struct rumble_report *r = (struct rumble_report *)buf;
+	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
 	if (unlikely(param_debug_hid && (len > 0))) {
 		switch (buf[0]) {

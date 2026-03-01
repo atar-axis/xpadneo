@@ -97,9 +97,9 @@ static const struct usage_map usage_maps[] = {
 
 #define map_usage_clear(ev) \
 	hid_map_usage_clear(hi, usage, bit, max, (ev).event_type, (ev).input_code)
-int xpadneo_mapping_input(struct hid_device *hdev, struct hid_input *hi,
-			  struct hid_field *field,
-			  struct hid_usage *usage, unsigned long **bit, int *max)
+int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
+			   struct hid_field *field,
+			   struct hid_usage *usage, unsigned long **bit, int *max)
 {
 	int i = 0;
 

@@ -38,7 +38,7 @@ static DEFINE_IDA(xpadneo_core_device_id_allocator);
 #define USB_VENDOR_ID_MICROSOFT 0x045e
 #endif
 
-static const struct hid_device_id xpadneo_devices[] = {
+static const struct hid_device_id core_devices[] = {
 	/* XBOX ONE S / X */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
@@ -58,9 +58,9 @@ static const struct hid_device_id xpadneo_devices[] = {
 	{ }
 };
 
-MODULE_DEVICE_TABLE(hid, xpadneo_devices);
+MODULE_DEVICE_TABLE(hid, core_devices);
 
-static int xpadneo_core_init_hw(struct hid_device *hdev)
+static int core_init_hw(struct hid_device *hdev)
 {
 	int ret;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -85,7 +85,7 @@ err_free_name:
 	return ret;
 }
 
-static void xpadneo_core_release_device_id(struct xpadneo_devdata *xdata)
+static void core_release_device_id(struct xpadneo_devdata *xdata)
 {
 	if (xdata->id >= 0) {
 		ida_free(&xpadneo_core_device_id_allocator, xdata->id);
@@ -93,7 +93,7 @@ static void xpadneo_core_release_device_id(struct xpadneo_devdata *xdata)
 	}
 }
 
-static void xpadneo_core_remove(struct hid_device *hdev)
+static void core_remove(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
@@ -119,14 +119,14 @@ static void xpadneo_core_remove(struct hid_device *hdev)
 	xpadneo_rumble_remove(xdata);
 	xpadneo_power_remove(xdata);
 
-	xpadneo_core_release_device_id(xdata);
+	core_release_device_id(xdata);
 	hid_hw_stop(hdev);
 }
 
 #if KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE
 #error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
 #endif
-static int xpadneo_core_probe(struct hid_device *hdev, const struct hid_device_id *id)
+static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	int ret, index;
 	struct xpadneo_devdata *xdata;
@@ -229,7 +229,7 @@ static int xpadneo_core_probe(struct hid_device *hdev, const struct hid_device_i
 	if (ret)
 		return ret;
 
-	ret = xpadneo_core_init_hw(hdev);
+	ret = core_init_hw(hdev);
 	if (ret) {
 		hid_err(hdev, "hw init failed: %d\n", ret);
 		hid_hw_stop(hdev);
@@ -247,20 +247,20 @@ static int xpadneo_core_probe(struct hid_device *hdev, const struct hid_device_i
 	return 0;
 }
 
-static struct hid_driver xpadneo_driver = {
+static struct hid_driver core_driver = {
 	.name = "xpadneo",
 	.event = xpadneo_events_event,
-	.id_table = xpadneo_devices,
+	.id_table = core_devices,
 	.input_configured = xpadneo_events_input_configured,
-	.input_mapping = xpadneo_mapping_input,
-	.probe = xpadneo_core_probe,
-	.remove = xpadneo_core_remove,
+	.input_mapping = xpadneo_mappings_input,
+	.probe = core_probe,
+	.remove = core_remove,
 	.report = xpadneo_device_report,
 	.report_fixup = xpadneo_device_report_fixup_compat,
 	.raw_event = xpadneo_events_raw_event,
 };
 
-static int __init xpadneo_core_init(void)
+static int __init core_init(void)
 {
 	int ret;
 
@@ -269,7 +269,7 @@ static int __init xpadneo_core_init(void)
 
 	ret = xpadneo_rumble_init_workqueue();
 	if (!ret) {
-		ret = hid_register_driver(&xpadneo_driver);
+		ret = hid_register_driver(&core_driver);
 		if (ret)
 			xpadneo_rumble_destroy_workqueue();
 	}
@@ -277,13 +277,13 @@ static int __init xpadneo_core_init(void)
 	return ret;
 }
 
-static void __exit xpadneo_core_exit(void)
+static void __exit core_exit(void)
 {
 	dbg_hid("xpadneo:%s\n", __func__);
-	hid_unregister_driver(&xpadneo_driver);
+	hid_unregister_driver(&core_driver);
 	ida_destroy(&xpadneo_core_device_id_allocator);
 	xpadneo_rumble_destroy_workqueue();
 }
 
-module_init(xpadneo_core_init);
-module_exit(xpadneo_core_exit);
+module_init(core_init);
+module_exit(core_exit);

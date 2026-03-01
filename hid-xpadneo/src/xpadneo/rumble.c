@@ -14,8 +14,8 @@
 #include "helpers.h"
 
 /* timing of rumble commands to work around firmware crashes */
-#define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
-#define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
+#define RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
+#define RUMBLE_THROTTLE_JIFFIES (jiffies + RUMBLE_THROTTLE_DELAY)
 
 /* module parameter "trigger_rumble_mode" */
 #define PARAM_TRIGGER_RUMBLE_PRESSURE 0
@@ -39,12 +39,12 @@ MODULE_PARM_DESC(ff_connect_notify,
 
 static struct workqueue_struct *rumble_wq;
 
-static void xpadneo_rumble_worker(struct work_struct *work)
+static void rumble_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata =
 	    container_of(to_delayed_work(work), struct xpadneo_devdata, rumble.worker);
 	struct hid_device *hdev = xdata->hdev;
-	struct rumble_report *r = xdata->rumble.output_report_dmabuf;
+	struct xpadneo_rumble_report *r = xdata->rumble.output_report_dmabuf;
 	int ret;
 	unsigned long flags;
 
@@ -115,7 +115,7 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 	 * throttle next command submission, the firmware doesn't like us to
 	 * send rumble data any faster
 	 */
-	xdata->rumble.throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
+	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
 
 	spin_unlock_irqrestore(&xdata->rumble.lock, flags);
 
@@ -141,7 +141,7 @@ static inline void update_magnitude(u8 *m, u8 v)
 	*m = v > 0 ? max(*m, v) : 0;
 }
 
-static int xpadneo_rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
+static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
 	unsigned long flags, rumble_run_at, rumble_throttle_until;
 	long delay_work;
@@ -230,8 +230,8 @@ unlock_and_return:
 	return 0;
 }
 
-static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
-				struct rumble_report pck)
+static void rumble_test(char *which, struct xpadneo_devdata *xdata,
+			struct xpadneo_rumble_report pck)
 {
 	enum xpadneo_rumble_motors enabled = pck.data.enable;
 
@@ -305,7 +305,7 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 static void xpadneo_rumble_welcome(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct rumble_report pck = { };
+	struct xpadneo_rumble_report pck = { };
 
 	pck.report_id = XPADNEO_XBOX_RUMBLE_REPORT;
 
@@ -330,14 +330,14 @@ static void xpadneo_rumble_welcome(struct hid_device *hdev)
 	}
 
 	pck.data.enable = XBOX_RUMBLE_WEAK;
-	xpadneo_rumble_test("weak motor", xdata, pck);
+	rumble_test("weak motor", xdata, pck);
 
 	pck.data.enable = XBOX_RUMBLE_STRONG;
-	xpadneo_rumble_test("strong motor", xdata, pck);
+	rumble_test("strong motor", xdata, pck);
 
 	if (!(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 		pck.data.enable = XBOX_RUMBLE_TRIGGERS;
-		xpadneo_rumble_test("trigger motors", xdata, pck);
+		rumble_test("trigger motors", xdata, pck);
 	}
 }
 
@@ -347,9 +347,10 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	struct input_dev *gamepad = xdata->gamepad;
 
 	spin_lock_init(&xdata->rumble.lock);
-	INIT_DELAYED_WORK(&xdata->rumble.worker, xpadneo_rumble_worker);
+	INIT_DELAYED_WORK(&xdata->rumble.worker, rumble_worker);
 	xdata->rumble.output_report_dmabuf = devm_kzalloc(&hdev->dev,
-							  sizeof(struct rumble_report), GFP_KERNEL);
+							  sizeof(struct xpadneo_rumble_report),
+							  GFP_KERNEL);
 	if (xdata->rumble.output_report_dmabuf == NULL)
 		return -ENOMEM;
 
@@ -360,10 +361,10 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 		xpadneo_benchmark(xpadneo_rumble_welcome, hdev);
 
 	/* initialize our rumble command throttle */
-	xdata->rumble.throttle_until = XPADNEO_RUMBLE_THROTTLE_JIFFIES;
+	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
 
 	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
-	return input_ff_create_memless(gamepad, NULL, xpadneo_rumble_play);
+	return input_ff_create_memless(gamepad, NULL, rumble_play);
 }
 
 int xpadneo_rumble_init_workqueue(void)
