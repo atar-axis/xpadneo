@@ -15,7 +15,7 @@ extern int xpadneo_init_keyboard(struct xpadneo_devdata *xdata)
 
 	if (!xdata->keyboard) {
 		synth = 1;
-		ret = xpadneo_init_synthetic(xdata, "Keyboard", &xdata->keyboard);
+		ret = xpadneo_synthetic_init(xdata, "Keyboard", &xdata->keyboard);
 		if (ret || !xdata->keyboard)
 			return ret;
 	}

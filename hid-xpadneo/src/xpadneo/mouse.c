@@ -211,7 +211,7 @@ extern int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 
 	if (!xdata->mouse) {
 		synth = 1;
-		ret = xpadneo_init_synthetic(xdata, "Mouse", &xdata->mouse);
+		ret = xpadneo_synthetic_init(xdata, "Mouse", &xdata->mouse);
 		if (ret || !xdata->mouse)
 			return ret;
 	}

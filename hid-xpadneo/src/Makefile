@@ -13,4 +13,5 @@ hid-xpadneo-y += \
 	xpadneo/mouse.o \
 	xpadneo/power.o \
 	xpadneo/quirks.o \
-	xpadneo/rumble.o
+	xpadneo/rumble.o \
+	xpadneo/synthetic.o

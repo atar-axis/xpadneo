@@ -246,7 +246,9 @@ struct xpadneo_devdata {
 
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
 extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
-extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
+
+/* xpadneo helpers for synthetic drivers */
+extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *, struct input_dev **);
 
 /* xpadneo core driver */
 extern void xpadneo_core_report(struct hid_device *, struct hid_report *);

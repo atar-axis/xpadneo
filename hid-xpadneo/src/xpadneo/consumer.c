@@ -11,22 +11,26 @@
 extern int xpadneo_init_consumer(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
-	int ret, synth = 0;
 
 	if (!xdata->consumer) {
-		synth = 1;
-		ret = xpadneo_init_synthetic(xdata, "Consumer Control", &xdata->consumer);
+		int ret = xpadneo_synthetic_init(xdata, "Consumer Control", &xdata->consumer);
+
 		if (ret || !xdata->consumer)
 			return ret;
+
+		xdata->consumer_is_synthetic = true;
 	}
 
 	/* enable consumer events for mouse mode */
 	input_set_capability(xdata->consumer, EV_KEY, KEY_ONSCREEN_KEYBOARD);
 
-	if (synth) {
-		ret = input_register_device(xdata->consumer);
+	if (xdata->consumer_is_synthetic) {
+		int ret = input_register_device(xdata->consumer);
+
 		if (ret) {
 			hid_err(hdev, "failed to register consumer control\n");
+			xdata->consumer = NULL;
+			xdata->consumer_is_synthetic = false;
 			return ret;
 		}
 
