@@ -11,7 +11,7 @@
 #define XPADNEO_TRIGGER_RELEASE_THRESHOLD 384
 #define XPADNEO_TRIGGER_PRESS_THRESHOLD   640
 
-extern void xpadneo_toggle_mouse(struct xpadneo_devdata *xdata)
+extern void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 {
 	if (!xdata->mouse) {
 		xdata->mouse_mode = false;
@@ -202,7 +202,7 @@ consumer_missing:
 	return 1;
 }
 
-extern int xpadneo_init_mouse(struct xpadneo_devdata *xdata)
+extern int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
 	int ret, synth = 0;
@@ -243,4 +243,15 @@ extern int xpadneo_init_mouse(struct xpadneo_devdata *xdata)
 	}
 
 	return 0;
+}
+
+extern void xpadneo_mouse_init_timer(struct xpadneo_devdata *xdata)
+{
+	timer_setup(&xdata->mouse_timer, xpadneo_mouse_report, 0);
+	mod_timer(&xdata->mouse_timer, jiffies);
+}
+
+extern void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
+{
+	timer_delete_sync(&xdata->mouse_timer);
 }

@@ -880,7 +880,7 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 		switch (usage->code) {
 		case BTN_SELECT:
 			if (value == 1)
-				xpadneo_toggle_mouse(xdata);
+				xpadneo_mouse_toggle(xdata);
 			goto stop_processing;
 		}
 	}
@@ -1038,7 +1038,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (ret)
 		return ret;
 
-	ret = xpadneo_init_mouse(xdata);
+	ret = xpadneo_mouse_init(xdata);
 	if (ret)
 		return ret;
 
@@ -1053,8 +1053,7 @@ static int xpadneo_probe(struct hid_device *hdev, const struct hid_device_id *id
 	if (ret)
 		hid_err(hdev, "could not initialize ff, continuing anyway\n");
 
-	timer_setup(&xdata->mouse_timer, xpadneo_mouse_report, 0);
-	mod_timer(&xdata->mouse_timer, jiffies);
+	xpadneo_mouse_init_timer(xdata);
 
 	hid_info(hdev, "%s connected\n", xdata->battery.name);
 
@@ -1091,7 +1090,8 @@ static void xpadneo_remove(struct hid_device *hdev)
 		hdev->product = xdata->original_product;
 	}
 
-	timer_delete_sync(&xdata->mouse_timer);
+	xpadneo_mouse_remove_timer(xdata);
+
 	cancel_delayed_work_sync(&xdata->ff_worker);
 
 	xpadneo_power_remove(xdata);
