@@ -12,8 +12,6 @@
 #define XPADNEO_H_FILE
 
 #include <linux/hid.h>
-#include <linux/input-event-codes.h>
-#include <linux/timer.h>
 #include <linux/version.h>
 
 /* v4.19: ida_simple_{get,remove}() have been replaced */
