@@ -18,27 +18,6 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 
-/* helper for printing a notice only once */
-#ifndef hid_notice_once
-#define hid_notice_once(hid, fmt, ...)					\
-do {									\
-	static bool __print_once __read_mostly;				\
-	if (!__print_once) {						\
-		__print_once = true;					\
-		hid_notice(hid, fmt, ##__VA_ARGS__);			\
-	}								\
-} while (0)
-#endif
-
-/* benchmark helper */
-#define xpadneo_benchmark_start(name) \
-do { \
-	unsigned long __##name_jiffies = jiffies; \
-	pr_info("xpadneo " #name " start\n")
-#define xpadneo_benchmark_stop(name) \
-	pr_info("xpadneo " #name " took %ums\n", jiffies_to_msecs(jiffies - __##name_jiffies)); \
-} while (0)
-
 #ifndef USB_VENDOR_ID_MICROSOFT
 #define USB_VENDOR_ID_MICROSOFT 0x045e
 #endif
@@ -77,10 +56,6 @@ do { \
 /* timing of rumble commands to work around firmware crashes */
 #define XPADNEO_RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
 #define XPADNEO_RUMBLE_THROTTLE_JIFFIES (jiffies + XPADNEO_RUMBLE_THROTTLE_DELAY)
-
-/* helpers */
-#define SWAP_BITS(v,b1,b2) \
-	(((v)>>(b1)&1)==((v)>>(b2)&1)?(v):(v^(1ULL<<(b1))^(1ULL<<(b2))))
 
 /* rumble motors enable bits */
 enum xpadneo_rumble_motors {

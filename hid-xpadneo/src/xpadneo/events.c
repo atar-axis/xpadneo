@@ -10,6 +10,7 @@
 #include <linux/module.h>
 
 #include "xpadneo.h"
+#include "helpers.h"
 
 /* always include last */
 #include "compat.h"
