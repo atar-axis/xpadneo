@@ -10,47 +10,37 @@
 
 int xpadneo_keyboard_init(struct xpadneo_devdata *xdata)
 {
-	struct hid_device *hdev = xdata->hdev;
-	int ret, synth = 0;
+	int ret;
 
-	if (!xdata->keyboard) {
-		synth = 1;
+	if (!xdata->keyboard.idev) {
 		ret = xpadneo_synthetic_init(xdata, "Keyboard", &xdata->keyboard);
-		if (ret || !xdata->keyboard)
+		if (ret || !xdata->keyboard.idev)
 			return ret;
 	}
 
-	/* enable key events for keyboard */
-	input_set_capability(xdata->keyboard, EV_KEY, BTN_SHARE);
+	do {
+		struct input_dev *keyboard = xdata->keyboard.idev;
 
-	/* enable key events for mouse mode */
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_ESC);
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_ENTER);
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_UP);
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_LEFT);
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_RIGHT);
-	input_set_capability(xdata->keyboard, EV_KEY, KEY_DOWN);
+		/* enable key events for keyboard */
+		input_set_capability(keyboard, EV_KEY, BTN_SHARE);
 
-	if (synth) {
-		ret = input_register_device(xdata->keyboard);
-		if (ret) {
-			hid_err(hdev, "failed to register keyboard\n");
-			return ret;
-		}
+		/* enable key events for mouse mode */
+		input_set_capability(keyboard, EV_KEY, KEY_ESC);
+		input_set_capability(keyboard, EV_KEY, KEY_ENTER);
+		input_set_capability(keyboard, EV_KEY, KEY_UP);
+		input_set_capability(keyboard, EV_KEY, KEY_LEFT);
+		input_set_capability(keyboard, EV_KEY, KEY_RIGHT);
+		input_set_capability(keyboard, EV_KEY, KEY_DOWN);
+	} while (0);
 
-		hid_info(hdev, "keyboard added\n");
-	}
+	ret = xpadneo_synthetic_register(xdata, "keyboard", &xdata->keyboard);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
 void xpadneo_keyboard_remove(struct xpadneo_devdata *xdata)
 {
-	struct hid_device *hdev = xdata->hdev;
-
-	if (xdata->keyboard) {
-		input_unregister_device(xdata->keyboard);
-		xdata->keyboard = NULL;
-		hid_info(hdev, "keyboard removed\n");
-	}
+	xpadneo_synthetic_remove(xdata, "keyboard", &xdata->keyboard);
 }

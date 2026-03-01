@@ -71,29 +71,22 @@ void xpadneo_device_missing(struct xpadneo_devdata *xdata, u32 flag)
 
 }
 
+static inline void sync_device(struct xpadneo_subdevice *subdev)
+{
+	if (subdev->idev && subdev->sync) {
+		subdev->sync = false;
+		input_sync(subdev->idev);
+	}
+}
+
 void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	if (xdata->consumer && xdata->consumer_sync) {
-		xdata->consumer_sync = false;
-		input_sync(xdata->consumer);
-	}
-
-	if (xdata->gamepad && xdata->gamepad_sync) {
-		xdata->gamepad_sync = false;
-		input_sync(xdata->gamepad);
-	}
-
-	if (xdata->keyboard && xdata->keyboard_sync) {
-		xdata->keyboard_sync = false;
-		input_sync(xdata->keyboard);
-	}
-
-	if (xdata->mouse && xdata->mouse_sync) {
-		xdata->mouse_sync = false;
-		input_sync(xdata->mouse);
-	}
+	sync_device(&xdata->consumer);
+	sync_device(&xdata->gamepad);
+	sync_device(&xdata->keyboard);
+	sync_device(&xdata->mouse);
 }
 
 const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)

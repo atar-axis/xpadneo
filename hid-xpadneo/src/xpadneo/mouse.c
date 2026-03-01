@@ -18,7 +18,7 @@
 
 void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 {
-	if (!xdata->mouse) {
+	if (!xdata->mouse.idev) {
 		xdata->mouse_mode = false;
 		hid_info(xdata->hdev, "mouse not available\n");
 	} else if (xdata->mouse_mode) {
@@ -39,7 +39,7 @@ void xpadneo_mouse_report(struct timer_list *t)
 	__s32 value;
 
 	struct xpadneo_devdata *xdata = timer_container_of(xdata, t, mouse_timer);
-	struct input_dev *mouse = xdata->mouse;
+	struct input_dev *mouse = xdata->mouse.idev;
 
 	mod_timer(&xdata->mouse_timer, jiffies + msecs_to_jiffies(10));
 
@@ -60,7 +60,7 @@ void xpadneo_mouse_report(struct timer_list *t)
 		xdata->mouse_state.wheel_y_err = value % 16384;
 		mouse_report_rel(REL_WHEEL, value / 16384);
 
-		input_sync(xdata->mouse);
+		input_sync(xdata->mouse.idev);
 	}
 
 }
@@ -75,13 +75,21 @@ int xpadneo_mouse_raw_event(struct xpadneo_devdata *xdata, struct hid_report *re
 	return 0;
 }
 
+static inline void report_key_and_sync(struct xpadneo_subdevice *subdev, unsigned int code,
+				       int value)
+{
+	if (subdev->idev) {
+		input_report_key(subdev->idev, code, value);
+		subdev->sync = true;
+	}
+}
+
 #define rescale_axis(v,d) (((v)<(d)&&(v)>-(d))?0:(32768*((v)>0?(v)-(d):(v)+(d))/(32768-(d))))
 #define digipad(v,v1,v2,v3) (((v==(v1))||(v==(v2))||(v==(v3)))?1:0)
 int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, __s32 value)
 {
-	struct input_dev *consumer = xdata->consumer;
-	struct input_dev *keyboard = xdata->keyboard;
-	struct input_dev *mouse = xdata->mouse;
+	struct input_dev *consumer = xdata->consumer.idev;
+	struct input_dev *keyboard = xdata->keyboard.idev;
 
 	if (!xdata->mouse_mode)
 		return 0;
@@ -109,13 +117,11 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 			if (xdata->mouse_state.analog_button.left
 			    && value < XPADNEO_TRIGGER_RELEASE_THRESHOLD) {
 				xdata->mouse_state.analog_button.left = false;
-				input_report_key(mouse, BTN_LEFT, 0);
-				xdata->mouse_sync = true;
+				report_key_and_sync(&xdata->mouse, BTN_LEFT, 0);
 			} else if (!xdata->mouse_state.analog_button.left
 				   && value > XPADNEO_TRIGGER_PRESS_THRESHOLD) {
 				xdata->mouse_state.analog_button.left = true;
-				input_report_key(mouse, BTN_LEFT, 1);
-				xdata->mouse_sync = true;
+				report_key_and_sync(&xdata->mouse, BTN_LEFT, 1);
 			}
 			return 1;
 		case ABS_Z:
@@ -123,24 +129,19 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 			if (xdata->mouse_state.analog_button.right
 			    && value < XPADNEO_TRIGGER_RELEASE_THRESHOLD) {
 				xdata->mouse_state.analog_button.right = false;
-				input_report_key(mouse, BTN_RIGHT, 0);
-				xdata->mouse_sync = true;
+				report_key_and_sync(&xdata->mouse, BTN_RIGHT, 0);
 			} else if (!xdata->mouse_state.analog_button.right
 				   && value > XPADNEO_TRIGGER_PRESS_THRESHOLD) {
 				xdata->mouse_state.analog_button.right = true;
-				input_report_key(mouse, BTN_RIGHT, 1);
-				xdata->mouse_sync = true;
+				report_key_and_sync(&xdata->mouse, BTN_RIGHT, 1);
 			}
 			return 1;
 		case ABS_HAT0X:
 			/* reports 8 directions: 1 = up, 3 = right, down = 5, left = 7 */
-			if (xdata->keyboard) {
-				input_report_key(keyboard, KEY_UP, digipad(value, 8, 1, 2));
-				input_report_key(keyboard, KEY_RIGHT, digipad(value, 2, 3, 4));
-				input_report_key(keyboard, KEY_DOWN, digipad(value, 4, 5, 6));
-				input_report_key(keyboard, KEY_LEFT, digipad(value, 6, 7, 8));
-				xdata->keyboard_sync = true;
-			}
+			report_key_and_sync(&xdata->keyboard, KEY_UP, digipad(value, 8, 1, 2));
+			report_key_and_sync(&xdata->keyboard, KEY_RIGHT, digipad(value, 2, 3, 4));
+			report_key_and_sync(&xdata->keyboard, KEY_DOWN, digipad(value, 4, 5, 6));
+			report_key_and_sync(&xdata->keyboard, KEY_LEFT, digipad(value, 6, 7, 8));
 			return 1;
 		}
 	} else if (usage->type == EV_KEY) {
@@ -148,32 +149,26 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 		case BTN_A:
 			if (!keyboard)
 				goto keyboard_missing;
-			input_report_key(keyboard, KEY_ENTER, value);
-			xdata->keyboard_sync = true;
+			report_key_and_sync(&xdata->keyboard, KEY_ENTER, value);
 			return 1;
 		case BTN_B:
 			if (!keyboard)
 				goto keyboard_missing;
-			input_report_key(keyboard, KEY_ESC, value);
-			xdata->keyboard_sync = true;
+			report_key_and_sync(&xdata->keyboard, KEY_ESC, value);
 			return 1;
 		case BTN_X:
 			if (!consumer)
 				goto consumer_missing;
-			input_report_key(consumer, KEY_ONSCREEN_KEYBOARD, value);
-			xdata->consumer_sync = true;
+			report_key_and_sync(&xdata->consumer, KEY_ONSCREEN_KEYBOARD, value);
 			return 1;
 		case BTN_Y:
-			input_report_key(mouse, BTN_MIDDLE, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_MIDDLE, value);
 			return 1;
 		case BTN_TL:
-			input_report_key(mouse, BTN_SIDE, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_SIDE, value);
 			return 1;
 		case BTN_TR:
-			input_report_key(mouse, BTN_EXTRA, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_EXTRA, value);
 			return 1;
 		case BTN_SELECT:
 			/*
@@ -182,16 +177,13 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 			 */
 			if (xdata->xbox_button_down)
 				break;
-			input_report_key(mouse, BTN_BACK, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_BACK, value);
 			return 1;
 		case BTN_START:
-			input_report_key(mouse, BTN_FORWARD, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_FORWARD, value);
 			return 1;
 		case BTN_SHARE:
-			input_report_key(mouse, BTN_TASK, value);
-			xdata->mouse_sync = true;
+			report_key_and_sync(&xdata->mouse, BTN_TASK, value);
 			return 1;
 		}
 	}
@@ -209,43 +201,39 @@ consumer_missing:
 
 int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 {
-	struct hid_device *hdev = xdata->hdev;
-	int ret, synth = 0;
+	int ret;
 
-	if (!xdata->mouse) {
-		synth = 1;
+	if (!xdata->mouse.idev) {
 		ret = xpadneo_synthetic_init(xdata, "Mouse", &xdata->mouse);
-		if (ret || !xdata->mouse)
+		if (ret || !xdata->mouse.idev)
 			return ret;
 	}
 
-	/* enable relative events for mouse emulation */
-	__set_bit(EV_REL, xdata->mouse->evbit);
-	__set_bit(REL_X, xdata->mouse->relbit);
-	__set_bit(REL_Y, xdata->mouse->relbit);
-	__set_bit(REL_HWHEEL, xdata->mouse->relbit);
-	__set_bit(REL_WHEEL, xdata->mouse->relbit);
+	do {
+		struct input_dev *mouse = xdata->mouse.idev;
 
-	/* enable button events for mouse emulation */
-	__set_bit(EV_KEY, xdata->mouse->evbit);
-	__set_bit(BTN_LEFT, xdata->mouse->keybit);
-	__set_bit(BTN_RIGHT, xdata->mouse->keybit);
-	__set_bit(BTN_MIDDLE, xdata->mouse->keybit);
-	__set_bit(BTN_SIDE, xdata->mouse->keybit);
-	__set_bit(BTN_EXTRA, xdata->mouse->keybit);
-	__set_bit(BTN_FORWARD, xdata->mouse->keybit);
-	__set_bit(BTN_BACK, xdata->mouse->keybit);
-	__set_bit(BTN_TASK, xdata->mouse->keybit);
+		/* enable relative events for mouse emulation */
+		__set_bit(EV_REL, mouse->evbit);
+		__set_bit(REL_X, mouse->relbit);
+		__set_bit(REL_Y, mouse->relbit);
+		__set_bit(REL_HWHEEL, mouse->relbit);
+		__set_bit(REL_WHEEL, mouse->relbit);
 
-	if (synth) {
-		ret = input_register_device(xdata->mouse);
-		if (ret) {
-			hid_err(hdev, "failed to register mouse\n");
-			return ret;
-		}
+		/* enable button events for mouse emulation */
+		__set_bit(EV_KEY, mouse->evbit);
+		__set_bit(BTN_LEFT, mouse->keybit);
+		__set_bit(BTN_RIGHT, mouse->keybit);
+		__set_bit(BTN_MIDDLE, mouse->keybit);
+		__set_bit(BTN_SIDE, mouse->keybit);
+		__set_bit(BTN_EXTRA, mouse->keybit);
+		__set_bit(BTN_FORWARD, mouse->keybit);
+		__set_bit(BTN_BACK, mouse->keybit);
+		__set_bit(BTN_TASK, mouse->keybit);
+	} while (0);
 
-		hid_info(hdev, "mouse added\n");
-	}
+	ret = xpadneo_synthetic_register(xdata, "mouse", &xdata->mouse);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -263,11 +251,5 @@ void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
 
 void xpadneo_mouse_remove(struct xpadneo_devdata *xdata)
 {
-	struct hid_device *hdev = xdata->hdev;
-
-	if (xdata->mouse) {
-		input_unregister_device(xdata->mouse);
-		xdata->mouse = NULL;
-		hid_info(hdev, "mouse removed\n");
-	}
+	xpadneo_synthetic_remove(xdata, "mouse", &xdata->mouse);
 }

@@ -92,6 +92,13 @@ struct xpadneo_rumble_report {
 static_assert(sizeof(struct xpadneo_rumble_report) == 9);
 #endif
 
+/* sub devices */
+struct xpadneo_subdevice {
+	struct input_dev *idev;
+	bool sync;
+	bool is_synthetic;
+};
+
 /* private driver instance data */
 struct xpadneo_devdata {
 	/* unique physical device id (randomly assigned) */
@@ -99,8 +106,13 @@ struct xpadneo_devdata {
 
 	/* logical device interfaces */
 	struct hid_device *hdev;
-	struct input_dev *consumer, *gamepad, *keyboard, *mouse;
-	bool consumer_sync, gamepad_sync, keyboard_sync, mouse_sync;
+
+	/* sub devices */
+	struct xpadneo_subdevice consumer;
+	struct xpadneo_subdevice gamepad;
+	struct xpadneo_subdevice keyboard;
+	struct xpadneo_subdevice mouse;
+
 	short int missing_reported;
 
 	/* revert fixups on removal */
@@ -163,7 +175,12 @@ struct xpadneo_devdata {
 };
 
 /* xpadneo helpers for synthetic drivers */
-extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *, struct input_dev **);
+extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *,
+				  struct xpadneo_subdevice *);
+extern int xpadneo_synthetic_register(struct xpadneo_devdata *, const char *,
+				      struct xpadneo_subdevice *);
+extern void xpadneo_synthetic_remove(struct xpadneo_devdata *, const char *,
+				     struct xpadneo_subdevice *);
 
 /* xpadneo core device functions */
 extern void xpadneo_device_report(struct hid_device *, struct hid_report *);

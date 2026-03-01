@@ -159,13 +159,14 @@ int xpadneo_power_init(struct xpadneo_devdata *xdata)
 	struct device *dev = &xdata->hdev->dev;
 
 	xdata->battery.name =
-	    devm_kasprintf(dev, GFP_KERNEL, "%s [%s]", xdata->gamepad->name, xdata->gamepad->uniq);
+	    devm_kasprintf(dev, GFP_KERNEL, "%s [%s]", xdata->gamepad.idev->name,
+			   xdata->gamepad.idev->uniq);
 	if (!xdata->battery.name)
 		return -ENOMEM;
 
 	xdata->battery.name_pnc =
-	    devm_kasprintf(dev, GFP_KERNEL, "%s [%s] Play'n Charge Kit", xdata->gamepad->name,
-			   xdata->gamepad->uniq);
+	    devm_kasprintf(dev, GFP_KERNEL, "%s [%s] Play'n Charge Kit", xdata->gamepad.idev->name,
+			   xdata->gamepad.idev->uniq);
 	if (!xdata->battery.name_pnc)
 		return -ENOMEM;
 

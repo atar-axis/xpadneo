@@ -9,7 +9,7 @@
 #include "xpadneo.h"
 
 int xpadneo_synthetic_init(struct xpadneo_devdata *xdata, const char *suffix,
-			   struct input_dev **devp)
+			   struct xpadneo_subdevice *subdev)
 {
 	struct hid_device *hdev = xdata->hdev;
 	struct input_dev *input_dev = devm_input_allocate_device(&hdev->dev);
@@ -38,6 +38,44 @@ int xpadneo_synthetic_init(struct xpadneo_devdata *xdata, const char *suffix,
 	input_dev->id.product = hdev->product;
 	input_dev->id.version = hdev->version;
 
-	*devp = input_dev;
+	subdev->idev = input_dev;
+	subdev->is_synthetic = true;
+	subdev->sync = false;
+
 	return 0;
+}
+
+int xpadneo_synthetic_register(struct xpadneo_devdata *xdata, const char *name,
+			       struct xpadneo_subdevice *subdev)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	/* register the device on our behalf if synthetic */
+	if (subdev->is_synthetic) {
+		int ret = input_register_device(subdev->idev);
+
+		if (ret) {
+			hid_err(hdev, "failed to register %s\n", name);
+			subdev->idev = NULL;
+			subdev->is_synthetic = false;
+			return ret;
+		}
+
+		hid_info(hdev, "%s added\n", name);
+	}
+	return 0;
+}
+
+void xpadneo_synthetic_remove(struct xpadneo_devdata *xdata, const char *name,
+			      struct xpadneo_subdevice *subdev)
+{
+	struct hid_device *hdev = xdata->hdev;
+
+	/* unregister the device on our behalf if synthetic */
+	if (subdev->idev && subdev->is_synthetic) {
+		input_unregister_device(subdev->idev);
+		subdev->idev = NULL;
+		subdev->is_synthetic = false;
+		hid_info(hdev, "%s removed\n", name);
+	}
 }

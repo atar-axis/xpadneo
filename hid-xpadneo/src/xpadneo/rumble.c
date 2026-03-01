@@ -344,7 +344,7 @@ static void xpadneo_rumble_welcome(struct hid_device *hdev)
 int xpadneo_rumble_init(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct input_dev *gamepad = xdata->gamepad;
+	struct input_dev *gamepad = xdata->gamepad.idev;
 
 	spin_lock_init(&xdata->rumble.lock);
 	INIT_DELAYED_WORK(&xdata->rumble.worker, rumble_worker);

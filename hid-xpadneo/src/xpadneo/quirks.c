@@ -64,6 +64,7 @@ static const struct quirk quirks[] = {
 int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
+	struct input_dev *gamepad = xdata->gamepad.idev;
 	u32 quirks_set = 0, quirks_unset = 0, quirks_override = U32_MAX;
 	u8 oui_byte;
 	char oui[3] = { };
@@ -71,18 +72,17 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	for (int i = 0; i < ARRAY_SIZE(quirks); i++) {
 		const struct quirk *q = &quirks[i];
 
-		if (q->name_match
-		    && (strncmp(q->name_match, xdata->gamepad->name, q->name_len) == 0))
+		if (q->name_match && (strncmp(q->name_match, gamepad->name, q->name_len) == 0))
 			xdata->quirks |= q->flags;
 
-		if (q->oui_match && (strncasecmp(q->oui_match, xdata->gamepad->uniq, 8) == 0))
+		if (q->oui_match && (strncasecmp(q->oui_match, gamepad->uniq, 8) == 0))
 			xdata->quirks |= q->flags;
 	}
 
 	kernel_param_lock(THIS_MODULE);
 	for (int i = 0; i < param_quirks.nargs; i++) {
 		const char *arg = param_quirks.args[i];
-		size_t uniq_len = strnlen(xdata->gamepad->uniq, 18);
+		size_t uniq_len = strnlen(gamepad->uniq, 18);
 		size_t arg_len = strnlen(arg, 128);
 
 		/* check if the argument is long enough to fetch uniq + a suffix */
@@ -93,7 +93,7 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 			continue;
 		}
 
-		if (strncasecmp(xdata->gamepad->uniq, param_quirks.args[i], uniq_len) != 0)
+		if (strncasecmp(gamepad->uniq, param_quirks.args[i], uniq_len) != 0)
 			continue;
 
 		if ((arg[uniq_len] != ':') && (arg[uniq_len] != '+') && (arg[uniq_len] != '-')) {
@@ -127,13 +127,13 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 
 	/* handle quirk flags which override a behavior before heuristics */
 	if (quirks_override != U32_MAX) {
-		hid_info(hdev, "quirks override: %s\n", xdata->gamepad->uniq);
+		hid_info(hdev, "quirks override: %s\n", gamepad->uniq);
 		xdata->quirks = quirks_override;
 	}
 
 	/* handle quirk flags which add a behavior before heuristics */
 	if (quirks_set > 0) {
-		hid_info(hdev, "quirks added: %s flags 0x%08X\n", xdata->gamepad->uniq, quirks_set);
+		hid_info(hdev, "quirks added: %s flags 0x%08X\n", gamepad->uniq, quirks_set);
 		xdata->quirks |= quirks_set;
 	}
 
@@ -145,7 +145,7 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	if ((xdata->original_rsize == 283)
 	    && ((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
 	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)
-	    && (strscpy(oui, xdata->gamepad->uniq, sizeof(oui)) == -E2BIG)
+	    && (strscpy(oui, gamepad->uniq, sizeof(oui)) == -E2BIG)
 	    && (kstrtou8(oui, 16, &oui_byte) == 0)
 	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)) {
 		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
@@ -154,8 +154,7 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 
 	/* handle quirk flags which remove a behavior after heuristics */
 	if (quirks_unset > 0) {
-		hid_info(hdev, "quirks removed: %s flag 0x%08X\n", xdata->gamepad->uniq,
-			 quirks_unset);
+		hid_info(hdev, "quirks removed: %s flag 0x%08X\n", gamepad->uniq, quirks_unset);
 		xdata->quirks &= ~quirks_unset;
 	}
 

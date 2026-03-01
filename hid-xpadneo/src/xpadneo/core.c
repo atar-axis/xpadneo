@@ -65,7 +65,7 @@ static int core_init_base_device(struct hid_device *hdev)
 	int ret;
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	if (!xdata->gamepad) {
+	if (!xdata->gamepad.idev) {
 		xpadneo_device_missing(xdata, XPADNEO_MISSING_GAMEPAD);
 		return -EINVAL;
 	}

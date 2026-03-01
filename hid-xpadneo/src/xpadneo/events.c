@@ -159,8 +159,8 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 			 struct hid_usage *usage, __s32 value)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-	struct input_dev *gamepad = xdata->gamepad;
-	struct input_dev *keyboard = xdata->keyboard;
+	struct input_dev *gamepad = xdata->gamepad.idev;
+	struct input_dev *keyboard = xdata->keyboard.idev;
 
 	if (xpadneo_mouse_event(xdata, usage, value))
 		goto stop_processing;
@@ -172,7 +172,7 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 			input_report_key(gamepad, BTN_GRIPR2, (value & 2) ? 1 : 0);
 			input_report_key(gamepad, BTN_GRIPL, (value & 4) ? 1 : 0);
 			input_report_key(gamepad, BTN_GRIPL2, (value & 8) ? 1 : 0);
-			xdata->gamepad_sync = true;
+			xdata->gamepad.sync = true;
 		}
 		goto stop_processing;
 	} else if (usage->type == EV_ABS) {
@@ -184,7 +184,7 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 			/* Linux Gamepad Specification */
 			if (param_gamepad_compliance) {
 				input_report_abs(gamepad, usage->code, value - 32768);
-				xdata->gamepad_sync = true;
+				xdata->gamepad.sync = true;
 				goto stop_processing;
 			}
 			break;
@@ -225,7 +225,7 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		if (!keyboard)
 			goto keyboard_missing;
 		input_report_key(keyboard, BTN_SHARE, value);
-		xdata->keyboard_sync = true;
+		xdata->keyboard.sync = true;
 		goto stop_processing;
 	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
@@ -257,7 +257,7 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 	}
 
 	/* Let hid-core handle the event */
-	xdata->gamepad_sync = true;
+	xdata->gamepad.sync = true;
 	return 0;
 
 combine_z_axes:
@@ -265,7 +265,7 @@ combine_z_axes:
 		xdata->count_abs_z_rz = 0;
 		if (param_enable_rolling_axis) {
 			input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
-			xdata->gamepad_sync = true;
+			xdata->gamepad.sync = true;
 		}
 	}
 	return 0;
@@ -293,19 +293,19 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 	switch (hi->application) {
 	case HID_GD_GAMEPAD:
 		hid_info(hdev, "gamepad detected\n");
-		xdata->gamepad = hi->input;
+		xdata->gamepad.idev = hi->input;
 		break;
 	case HID_GD_KEYBOARD:
 		hid_info(hdev, "keyboard detected\n");
-		xdata->keyboard = hi->input;
+		xdata->keyboard.idev = hi->input;
 
 		/* do not report bogus keys as part of the keyboard */
-		__clear_bit(KEY_UNKNOWN, xdata->keyboard->keybit);
+		__clear_bit(KEY_UNKNOWN, xdata->keyboard.idev->keybit);
 
 		return 0;
 	case HID_CP_CONSUMER_CONTROL:
 		hid_info(hdev, "consumer control detected\n");
-		xdata->consumer = hi->input;
+		xdata->consumer.idev = hi->input;
 		return 0;
 	case 0xFF000005:
 		/* FIXME: this is no longer in the current firmware */
@@ -328,35 +328,42 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		abs_max = 32767;
 	}
 
-	input_set_abs_params(xdata->gamepad, ABS_X, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->gamepad, ABS_Y, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->gamepad, ABS_RX, abs_min, abs_max, 32, deadzone);
-	input_set_abs_params(xdata->gamepad, ABS_RY, abs_min, abs_max, 32, deadzone);
+	/* setup gamepad */
+	do {
+		struct input_dev *gamepad = xdata->gamepad.idev;
 
-	input_set_abs_params(xdata->gamepad, ABS_Z, 0, 1023, 4, 0);
-	input_set_abs_params(xdata->gamepad, ABS_RZ, 0, 1023, 4, 0);
+		/* set thumb stick parameters */
+		input_set_abs_params(gamepad, ABS_X, abs_min, abs_max, 32, deadzone);
+		input_set_abs_params(gamepad, ABS_Y, abs_min, abs_max, 32, deadzone);
+		input_set_abs_params(gamepad, ABS_RX, abs_min, abs_max, 32, deadzone);
+		input_set_abs_params(gamepad, ABS_RY, abs_min, abs_max, 32, deadzone);
 
-	/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-	if (param_enable_rolling_axis) {
-		hid_info(hdev, "enabling rolling axis is deprecated\n");
-		input_set_abs_params(xdata->gamepad, ABS_MISC, -1023, 1023, 3, 63);
-	}
+		/* set trigger parameters */
+		input_set_abs_params(gamepad, ABS_Z, 0, 1023, 4, 0);
+		input_set_abs_params(gamepad, ABS_RZ, 0, 1023, 4, 0);
 
-	/* do not report the keyboard buttons as part of the gamepad */
-	__clear_bit(BTN_SHARE, xdata->gamepad->keybit);
-	__clear_bit(KEY_RECORD, xdata->gamepad->keybit);
-	__clear_bit(KEY_UNKNOWN, xdata->gamepad->keybit);
+		/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
+		if (param_enable_rolling_axis) {
+			hid_info(hdev, "enabling rolling axis is deprecated\n");
+			input_set_abs_params(gamepad, ABS_MISC, -1023, 1023, 3, 63);
+		}
 
-	/* ensure all four paddles exist as part of the gamepad */
-	if (test_bit(BTN_GRIPL, xdata->gamepad->keybit)) {
-		__set_bit(BTN_GRIPR, xdata->gamepad->keybit);
-		__set_bit(BTN_GRIPL2, xdata->gamepad->keybit);
-		__set_bit(BTN_GRIPR2, xdata->gamepad->keybit);
-	}
+		/* do not report the keyboard buttons as part of the gamepad */
+		__clear_bit(BTN_SHARE, gamepad->keybit);
+		__clear_bit(KEY_RECORD, gamepad->keybit);
+		__clear_bit(KEY_UNKNOWN, gamepad->keybit);
 
-	/* expose current profile as axis */
-	input_set_abs_params(xdata->gamepad, ABS_PROFILE, 0, XPADNEO_XBE2_PROFILES_MAX - 1, 0, 0);
-	input_report_abs(xdata->gamepad, ABS_PROFILE, 0);
+		/* ensure all four paddles exist as part of the gamepad */
+		if (test_bit(BTN_GRIPL, gamepad->keybit)) {
+			__set_bit(BTN_GRIPR, gamepad->keybit);
+			__set_bit(BTN_GRIPL2, gamepad->keybit);
+			__set_bit(BTN_GRIPR2, gamepad->keybit);
+		}
+
+		/* expose current profile as axis */
+		input_set_abs_params(gamepad, ABS_PROFILE, 0, XPADNEO_XBE2_PROFILES_MAX - 1, 0, 0);
+		input_report_abs(gamepad, ABS_PROFILE, 0);
+	} while (0);
 
 	return 0;
 }
