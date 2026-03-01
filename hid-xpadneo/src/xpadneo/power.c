@@ -9,7 +9,7 @@
 
 #include <linux/power_supply.h>
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 static enum power_supply_property xpadneo_battery_props[] = {
 	POWER_SUPPLY_PROP_CAPACITY_LEVEL,

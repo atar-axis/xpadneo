@@ -10,7 +10,7 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 static u8 param_trigger_rumble_mode;
 module_param_named(trigger_rumble_mode, param_trigger_rumble_mode, byte, 0644);
@@ -121,7 +121,7 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK))
 		r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 
-	ret = xpadneo_output_report(hdev, (__u8 *) r, sizeof(*r));
+	ret = xpadneo_core_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
@@ -270,7 +270,7 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 	if (xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK)
 		pck.data.enable = SWAP_BITS(SWAP_BITS(pck.data.enable, 0, 2), 1, 3);
 
-	xpadneo_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+	xpadneo_core_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	mdelay(300);
 
 	/*
@@ -287,7 +287,7 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 			pck.data.magnitude_right = 0;
 		if (enabled & FF_RUMBLE_LEFT)
 			pck.data.magnitude_left = 0;
-		xpadneo_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+		xpadneo_core_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	}
 	mdelay(30);
 }

@@ -8,11 +8,16 @@
  * Copyright (c) 2020 Kai Krakow <kai@kaishome.de>
  */
 
-#ifndef XPADNEO_H_FILE
-#define XPADNEO_H_FILE
+#ifndef XPADNEO_H
+#define XPADNEO_H
 
 #include <linux/hid.h>
+#include <linux/input.h>
+#include <linux/power_supply.h>
+#include <linux/spinlock.h>
+#include <linux/timer.h>
 #include <linux/version.h>
+#include <linux/workqueue.h>
 
 /* v4.19: ida_simple_{get,remove}() have been replaced */
 #if KERNEL_VERSION(4, 19, 0) >= LINUX_VERSION_CODE
@@ -242,9 +247,11 @@ struct xpadneo_devdata {
 extern int xpadneo_init_consumer(struct xpadneo_devdata *);
 extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
 extern int xpadneo_init_synthetic(struct xpadneo_devdata *, char *, struct input_dev **);
-extern void xpadneo_report(struct hid_device *, struct hid_report *);
+
+/* xpadneo core driver */
+extern void xpadneo_core_report(struct hid_device *, struct hid_report *);
 extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
-extern int xpadneo_output_report(struct hid_device *, __u8 *, size_t);
+extern int xpadneo_core_output_report(struct hid_device *, __u8 *, size_t);
 
 /* xpadneo rumble driver */
 extern int xpadneo_rumble_init(struct hid_device *);

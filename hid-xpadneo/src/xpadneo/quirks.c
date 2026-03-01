@@ -8,7 +8,7 @@
 
 #include <linux/module.h>
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 static struct {
 	char *args[17];

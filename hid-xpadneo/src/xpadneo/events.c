@@ -9,7 +9,7 @@
 
 #include <linux/module.h>
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 static bool param_gamepad_compliance = 1;
 module_param_named(gamepad_compliance, param_gamepad_compliance, bool, 0444);

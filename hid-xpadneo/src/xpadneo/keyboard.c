@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 /*
  * xpadneo keyboard driver
  *
  * Copyright (c) 2021 Kai Krakow <kai@kaishome.de>
  */
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 extern int xpadneo_init_keyboard(struct xpadneo_devdata *xdata)
 {

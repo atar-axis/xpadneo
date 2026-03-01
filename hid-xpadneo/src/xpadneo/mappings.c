@@ -7,7 +7,7 @@
  * Copyright (c) 2026 Kai Krakow <kai@kaishome.de>
  */
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 struct usage_map {
 	u32 usage;

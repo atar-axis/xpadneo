@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 /*
  * xpadneo mouse driver
  *
  * Copyright (c) 2021 Kai Krakow <kai@kaishome.de>
  */
 
-#include "../xpadneo.h"
+#include "xpadneo.h"
 
 /* Mouse movement deadzone and trigger thresholds (raw values) */
 #define XPADNEO_MOUSE_MOVEMENT_DEADZONE   3072
