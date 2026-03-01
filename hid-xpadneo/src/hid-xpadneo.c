@@ -809,7 +809,8 @@ static void xpadneo_switch_profile(struct xpadneo_devdata *xdata, const u8 profi
 	}
 
 	/* Indicate to profile emulation that a request was made */
-	xdata->profile_switched = emulated;
+	if (emulated)
+		xdata->profile_switched = true;
 }
 
 static void xpadneo_switch_triggers(struct xpadneo_devdata *xdata, const u8 mode)
@@ -1073,11 +1074,11 @@ static int xpadneo_event(struct hid_device *hdev, struct hid_field *field,
 					xpadneo_switch_profile(xdata, 3, true);
 				goto stop_processing;
 			case BTN_SELECT:
-				if (value == 1)
-					xpadneo_toggle_mouse(xdata);
-				goto stop_processing;
-			}
+			if (value == 1)
+				xpadneo_toggle_mouse(xdata);
+			goto stop_processing;
 		}
+	}
 	}
 
 	/* Let hid-core handle the event */
