@@ -122,14 +122,14 @@ do { \
 
 /* rumble motors enable bits */
 enum xpadneo_rumble_motors {
-	FF_RUMBLE_NONE = 0x00,
-	FF_RUMBLE_WEAK = 0x01,
-	FF_RUMBLE_STRONG = 0x02,
-	FF_RUMBLE_MAIN = FF_RUMBLE_WEAK | FF_RUMBLE_STRONG,
-	FF_RUMBLE_RIGHT = 0x04,
-	FF_RUMBLE_LEFT = 0x08,
-	FF_RUMBLE_TRIGGERS = FF_RUMBLE_LEFT | FF_RUMBLE_RIGHT,
-	FF_RUMBLE_ALL = 0x0F
+	XBOX_RUMBLE_NONE = 0x00,
+	XBOX_RUMBLE_WEAK = 0x01,
+	XBOX_RUMBLE_STRONG = 0x02,
+	XBOX_RUMBLE_MAIN = XBOX_RUMBLE_WEAK | XBOX_RUMBLE_STRONG,
+	XBOX_RUMBLE_RIGHT = 0x04,
+	XBOX_RUMBLE_LEFT = 0x08,
+	XBOX_RUMBLE_TRIGGERS = XBOX_RUMBLE_LEFT | XBOX_RUMBLE_RIGHT,
+	XBOX_RUMBLE_ALL = 0x0F
 } __packed;
 
 /* rumble packet structure */
@@ -148,7 +148,7 @@ static_assert(sizeof(struct rumble_data) == 8);
 #endif
 
 /* report number for rumble commands */
-#define XPADNEO_XB1S_FF_REPORT 0x03
+#define XPADNEO_XBOX_RUMBLE_REPORT 0x03
 
 /* maximum length of report 0x01 for duplicate packet filtering */
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)

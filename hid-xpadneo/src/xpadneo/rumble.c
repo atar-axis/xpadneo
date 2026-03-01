@@ -39,8 +39,8 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 	unsigned long flags;
 
 	memset(r, 0, sizeof(*r));
-	r->report_id = XPADNEO_XB1S_FF_REPORT;
-	r->data.enable = FF_RUMBLE_ALL;
+	r->report_id = XPADNEO_XBOX_RUMBLE_REPORT;
+	r->data.enable = XBOX_RUMBLE_ALL;
 
 	/*
 	 * if pulse is not supported, we do not have to care about explicitly
@@ -65,7 +65,7 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 		/* do not send these bits if not supported */
-		r->data.enable &= ~FF_RUMBLE_TRIGGERS;
+		r->data.enable &= ~XBOX_RUMBLE_TRIGGERS;
 	} else {
 		/* trigger motors */
 		r->data.magnitude_left = xdata->rumble.data.magnitude_left;
@@ -78,16 +78,16 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 
 	/* do not reprogram motors that have not changed */
 	if (unlikely(xdata->rumble.shadow.magnitude_strong == r->data.magnitude_strong))
-		r->data.enable &= ~FF_RUMBLE_STRONG;
+		r->data.enable &= ~XBOX_RUMBLE_STRONG;
 	if (unlikely(xdata->rumble.shadow.magnitude_weak == r->data.magnitude_weak))
-		r->data.enable &= ~FF_RUMBLE_WEAK;
+		r->data.enable &= ~XBOX_RUMBLE_WEAK;
 	if (likely(xdata->rumble.shadow.magnitude_left == r->data.magnitude_left))
-		r->data.enable &= ~FF_RUMBLE_LEFT;
+		r->data.enable &= ~XBOX_RUMBLE_LEFT;
 	if (likely(xdata->rumble.shadow.magnitude_right == r->data.magnitude_right))
-		r->data.enable &= ~FF_RUMBLE_RIGHT;
+		r->data.enable &= ~XBOX_RUMBLE_RIGHT;
 
 	/* do not send a report if nothing changed */
-	if (unlikely(r->data.enable == FF_RUMBLE_NONE)) {
+	if (unlikely(r->data.enable == XBOX_RUMBLE_NONE)) {
 		spin_unlock_irqrestore(&xdata->rumble.lock, flags);
 		return;
 	}
@@ -111,7 +111,7 @@ static void xpadneo_rumble_worker(struct work_struct *work)
 
 	/* set all bits if not supported (some clones require these set) */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
-		r->data.enable = FF_RUMBLE_ALL;
+		r->data.enable = XBOX_RUMBLE_ALL;
 
 	/* reverse the bits for trigger and main motors */
 	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
@@ -235,14 +235,14 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 	 * the magnitude to 0 instead.
 	 */
 	if (xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK) {
-		pck.data.enable = FF_RUMBLE_ALL;
-		if (!(enabled & FF_RUMBLE_WEAK))
+		pck.data.enable = XBOX_RUMBLE_ALL;
+		if (!(enabled & XBOX_RUMBLE_WEAK))
 			pck.data.magnitude_weak = 0;
-		if (!(enabled & FF_RUMBLE_STRONG))
+		if (!(enabled & XBOX_RUMBLE_STRONG))
 			pck.data.magnitude_strong = 0;
-		if (!(enabled & FF_RUMBLE_RIGHT))
+		if (!(enabled & XBOX_RUMBLE_RIGHT))
 			pck.data.magnitude_right = 0;
-		if (!(enabled & FF_RUMBLE_LEFT))
+		if (!(enabled & XBOX_RUMBLE_LEFT))
 			pck.data.magnitude_left = 0;
 	}
 
@@ -252,7 +252,7 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 	 * only if we enabled all before.
 	 */
 	if (xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)
-		pck.data.enable &= FF_RUMBLE_MAIN;
+		pck.data.enable &= XBOX_RUMBLE_MAIN;
 
 	/*
 	 * XPADNEO_QUIRK_REVERSE_MASK:
@@ -279,13 +279,13 @@ static void xpadneo_rumble_test(char *which, struct xpadneo_devdata *xdata,
 	 * stop the motors.
 	 */
 	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		if (enabled & FF_RUMBLE_WEAK)
+		if (enabled & XBOX_RUMBLE_WEAK)
 			pck.data.magnitude_weak = 0;
-		if (enabled & FF_RUMBLE_STRONG)
+		if (enabled & XBOX_RUMBLE_STRONG)
 			pck.data.magnitude_strong = 0;
-		if (enabled & FF_RUMBLE_RIGHT)
+		if (enabled & XBOX_RUMBLE_RIGHT)
 			pck.data.magnitude_right = 0;
-		if (enabled & FF_RUMBLE_LEFT)
+		if (enabled & XBOX_RUMBLE_LEFT)
 			pck.data.magnitude_left = 0;
 		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	}
@@ -297,7 +297,7 @@ static void xpadneo_rumble_welcome(struct hid_device *hdev)
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct rumble_report pck = { };
 
-	pck.report_id = XPADNEO_XB1S_FF_REPORT;
+	pck.report_id = XPADNEO_XBOX_RUMBLE_REPORT;
 
 	/*
 	 * Initialize the motor magnitudes here, the test command will individually zero masked
@@ -319,14 +319,14 @@ static void xpadneo_rumble_welcome(struct hid_device *hdev)
 		pck.data.loop_count = 2;
 	}
 
-	pck.data.enable = FF_RUMBLE_WEAK;
+	pck.data.enable = XBOX_RUMBLE_WEAK;
 	xpadneo_rumble_test("weak motor", xdata, pck);
 
-	pck.data.enable = FF_RUMBLE_STRONG;
+	pck.data.enable = XBOX_RUMBLE_STRONG;
 	xpadneo_rumble_test("strong motor", xdata, pck);
 
 	if (!(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
-		pck.data.enable = FF_RUMBLE_TRIGGERS;
+		pck.data.enable = XBOX_RUMBLE_TRIGGERS;
 		xpadneo_rumble_test("trigger motors", xdata, pck);
 	}
 }
