@@ -201,11 +201,11 @@ static int xpadneo_core_probe(struct hid_device *hdev, const struct hid_device_i
 		return ret;
 	}
 
-	ret = xpadneo_init_consumer(xdata);
+	ret = xpadneo_consumer_init(xdata);
 	if (ret)
 		return ret;
 
-	ret = xpadneo_init_keyboard(xdata);
+	ret = xpadneo_keyboard_init(xdata);
 	if (ret)
 		return ret;
 

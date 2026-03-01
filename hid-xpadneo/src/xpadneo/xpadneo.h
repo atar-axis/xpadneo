@@ -244,9 +244,6 @@ struct xpadneo_devdata {
 	} rumble;
 };
 
-extern int xpadneo_init_consumer(struct xpadneo_devdata *);
-extern int xpadneo_init_keyboard(struct xpadneo_devdata *);
-
 /* xpadneo helpers for synthetic drivers */
 extern int xpadneo_synthetic_init(struct xpadneo_devdata *, const char *, struct input_dev **);
 
@@ -260,6 +257,12 @@ extern u8 *xpadneo_device_report_fixup(struct hid_device *hdev, u8 *rdesc, unsig
 extern const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc,
 					       unsigned int *rsize);
 #endif
+
+/* xpadneo consumer driver */
+extern int xpadneo_consumer_init(struct xpadneo_devdata *);
+
+/* xpadneo keyboard driver */
+extern int xpadneo_keyboard_init(struct xpadneo_devdata *);
 
 /* xpadneo rumble driver */
 extern int xpadneo_rumble_init(struct hid_device *);

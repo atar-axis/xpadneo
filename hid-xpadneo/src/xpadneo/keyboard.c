@@ -8,7 +8,7 @@
 
 #include "xpadneo.h"
 
-extern int xpadneo_init_keyboard(struct xpadneo_devdata *xdata)
+extern int xpadneo_keyboard_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
 	int ret, synth = 0;

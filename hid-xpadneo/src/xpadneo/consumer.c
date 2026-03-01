@@ -8,7 +8,7 @@
 
 #include "xpadneo.h"
 
-extern int xpadneo_init_consumer(struct xpadneo_devdata *xdata)
+extern int xpadneo_consumer_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
 
