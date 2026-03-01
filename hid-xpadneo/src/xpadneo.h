@@ -248,4 +248,9 @@ extern void xpadneo_core_missing(struct xpadneo_devdata *, u32);
 extern void xpadneo_mouse_report(struct timer_list *);
 extern void xpadneo_toggle_mouse(struct xpadneo_devdata *);
 
+/* battery and power functions */
+extern int xpadneo_power_init(struct xpadneo_devdata *);
+extern void xpadneo_power_update(struct xpadneo_devdata *, u8);
+extern void xpadneo_power_remove(struct xpadneo_devdata *xdata);
+
 #endif

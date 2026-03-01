@@ -11,3 +11,4 @@ $(obj)/xpadneo.c: $(src)/hid-xpadneo.c
 	cp $< $@
 
 hid-xpadneo-y += xpadneo/core.o xpadneo/consumer.o xpadneo/keyboard.o xpadneo/mouse.o
+hid-xpadneo-y += xpadneo/power.o
