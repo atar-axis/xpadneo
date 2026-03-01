@@ -9,6 +9,9 @@
 
 #include "xpadneo.h"
 
+/* always include last */
+#include "compat.h"
+
 struct usage_map {
 	u32 usage;
 	enum {

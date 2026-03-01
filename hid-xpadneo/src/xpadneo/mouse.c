@@ -8,6 +8,9 @@
 
 #include "xpadneo.h"
 
+/* always include last */
+#include "compat.h"
+
 /* Mouse movement deadzone and trigger thresholds (raw values) */
 #define XPADNEO_MOUSE_MOVEMENT_DEADZONE   3072
 #define XPADNEO_TRIGGER_RELEASE_THRESHOLD 384

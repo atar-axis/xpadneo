@@ -11,6 +11,9 @@
 
 #include "xpadneo.h"
 
+/* always include last */
+#include "compat.h"
+
 static bool param_gamepad_compliance = 1;
 module_param_named(gamepad_compliance, param_gamepad_compliance, bool, 0444);
 MODULE_PARM_DESC(gamepad_compliance,
