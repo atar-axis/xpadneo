@@ -16,12 +16,7 @@
 #include <linux/power_supply.h>
 #include <linux/spinlock.h>
 #include <linux/timer.h>
-#include <linux/version.h>
 #include <linux/workqueue.h>
-
-#if KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE
-#error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
-#endif
 
 #ifndef VERSION
 #error "xpadneo version not defined"

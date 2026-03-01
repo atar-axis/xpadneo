@@ -113,6 +113,9 @@ static void xpadneo_core_remove(struct hid_device *hdev)
 	hid_hw_stop(hdev);
 }
 
+#if KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE
+#error "kernel version 4.18.0+ required for HID_QUIRK_INPUT_PER_APP"
+#endif
 static int xpadneo_core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	int ret, index;
