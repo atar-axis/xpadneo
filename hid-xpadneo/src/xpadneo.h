@@ -260,4 +260,9 @@ extern void xpadneo_power_remove(struct xpadneo_devdata *xdata);
 /* driver quirks handling */
 extern int xpadneo_quirks_init(struct xpadneo_devdata *);
 
+/* driver usage mappings */
+extern int xpadneo_mapping_input(struct hid_device *, struct hid_input *,
+				 struct hid_field *,
+				 struct hid_usage *, unsigned long **, int *);
+
 #endif
