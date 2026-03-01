@@ -23,7 +23,7 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
 		case 0x03:
 			if (len >= sizeof(*r)) {
 				hid_info(hdev,
-					 "HID debug: len %ld rumble cmd 0x%02x "
+					 "HID debug: len %zu rumble cmd 0x%02x "
 					 "motors left %d right %d strong %d weak %d "
 					 "magnitude left %d right %d strong %d weak %d "
 					 "pulse sustain %dms release %dms loop %d\n",
@@ -37,12 +37,12 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
 					 r->data.pulse_sustain_10ms * 10,
 					 r->data.pulse_release_10ms * 10, r->data.loop_count);
 			} else {
-				hid_info(hdev, "HID debug: len %ld malformed cmd 0x%02x\n", len,
+				hid_info(hdev, "HID debug: len %zu malformed cmd 0x%02x\n", len,
 					 buf[0]);
 			}
 			break;
 		default:
-			hid_info(hdev, "HID debug: len %ld unhandled cmd 0x%02x\n", len, buf[0]);
+			hid_info(hdev, "HID debug: len %zu unhandled cmd 0x%02x\n", len, buf[0]);
 		}
 	}
 	return hid_hw_output_report(hdev, buf, len);
