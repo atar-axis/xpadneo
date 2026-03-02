@@ -281,6 +281,10 @@ stop_processing:
 	if (xdata->profile >= XPADNEO_XBE2_PROFILES_MAX) {
 		hid_notice_once(hdev, "unexpected profile value %d\n", xdata->profile);
 	} else if (xdata->last_profile != xdata->profile) {
+		/*
+		 * Profile axis mirrors LED state; originating physical event already
+		 * forces sync.
+		 */
 		input_report_abs(gamepad, ABS_PROFILE, xdata->profile);
 		xdata->last_profile = xdata->profile;
 	}
