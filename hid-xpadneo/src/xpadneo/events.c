@@ -229,8 +229,8 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		xdata->keyboard.sync = true;
 		goto stop_processing;
 	} else if (xdata->shift_mode && (usage->type == EV_KEY)) {
-		hid_warn_once(hdev,
-			      "shift mode active: operation of the Xbox button may be limited in Steam Input\n");
+		hid_notice_once(hdev,
+				"shift mode active: operation of the Xbox button may be limited in Steam Input\n");
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
 			switch (usage->code) {
 			case BTN_A:
