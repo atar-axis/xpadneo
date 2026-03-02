@@ -203,11 +203,12 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		 * act as a shift key and only send the input events when
 		 * released without pressing an additional button.
 		 */
-		if (!xdata->xbox_button_down && (value == 1)) {
+
+		if (!xdata->shift_mode && (value == 1)) {
 			/* cache this event */
-			xdata->xbox_button_down = true;
-		} else if (xdata->xbox_button_down && (value == 0)) {
-			xdata->xbox_button_down = false;
+			xdata->shift_mode = true;
+		} else if (xdata->shift_mode && (value == 0)) {
+			xdata->shift_mode = false;
 			if (xdata->profile_switched) {
 				xdata->profile_switched = false;
 			} else {
@@ -227,7 +228,9 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		input_report_key(keyboard, BTN_SHARE, value);
 		xdata->keyboard.sync = true;
 		goto stop_processing;
-	} else if (xdata->xbox_button_down && (usage->type == EV_KEY)) {
+	} else if (xdata->shift_mode && (usage->type == EV_KEY)) {
+		hid_warn_once(hdev,
+			      "shift mode active: operation of the Xbox button may be limited in Steam Input\n");
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
 			switch (usage->code) {
 			case BTN_A:

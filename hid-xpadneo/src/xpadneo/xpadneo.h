@@ -124,7 +124,7 @@ struct xpadneo_devdata {
 	u32 quirks;
 
 	/* profile switching */
-	bool xbox_button_down, profile_switched;
+	bool shift_mode, profile_switched;
 	u8 last_profile, profile;
 
 	/* mouse mode */

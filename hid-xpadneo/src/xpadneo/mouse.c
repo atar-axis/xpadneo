@@ -175,7 +175,7 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 			 * if the Xbox button is pressed, ignore this event to allow turning
 			 * mouse mode off
 			 */
-			if (xdata->xbox_button_down)
+			if (xdata->shift_mode)
 				break;
 			report_key_and_sync(&xdata->mouse, BTN_BACK, value);
 			return 1;
