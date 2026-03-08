@@ -24,6 +24,12 @@ The top-level `Makefile` supports some configuration variables:
 - `ETC_PREFIX`: Allows to install files to `/usr/lib` which would
   normally go to `/etc`. This is applied relative to `PREFIX`.
 
+- `DOC_PREFIX`: Allows to install documentation files to a custom location.
+  Default is `/usr/share/doc/xpadneo`. This is applied relative to `PREFIX`.
+
+- `META_PREFIX`: Allows to install metainfo files to a custom location.
+  Default is `/usr/share/metainfo`. This is applied relative to `PREFIX`.
+
 **Example:**
 ```bash
 make PREFIX=/tmp/xpadneo-image ETC_PREFIX=/usr/lib install
