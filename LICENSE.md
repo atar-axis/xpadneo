@@ -21,8 +21,8 @@ This repository contains components under different licenses.
 
 The full license texts are provided in:
 
-- `LICENSES/LICENSE.gpl-2.0.txt`
-- `LICENSES/LICENSE.gpl-3.0.txt`
+- [GPL-2.0-only](LICENSES/LICENSE.gpl-2.0.txt)
+- [GPL-3.0-or-later](LICENSES/LICENSE.gpl-3.0.txt)
 
 
 ## File-level license identifiers (SPDX)
