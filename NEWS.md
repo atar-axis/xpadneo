@@ -1,5 +1,465 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.9 up to v0.10
+
+*Code name:*
+> COUCH POTATO
+
+This is a major release that bundles roughly five years of development since v0.9. During that time, xpadneo received
+substantial internal refactoring, broader device support, many compatibility fixes for modern userspace and kernel
+changes, and a lot of long-term maintenance work that is not always visible at first glance.
+
+The codename reflects one of the headline additions: xpadneo can now expose controller input as a virtual mouse. This
+enables couch-friendly navigation scenarios and rounds out the driver in a practical way beyond pure gamepad usage.
+At the same time, this feature is intentionally marked as experimental for now so we can continue to refine its
+behavior and ergonomics in v0.11.
+
+Another key focus of this cycle was improving real-world compatibility: updated quirks and heuristics for additional
+vendors and controller models, better handling of firmware and profile differences, and more robust interoperability
+with SDL/Steam/hidraw environments where mapping conflicts can otherwise become painful.
+
+We also spent significant effort on quality-of-life improvements around installation and packaging, especially in DKMS
+and udev handling, plus updated troubleshooting and configuration guidance for current Linux distributions and
+Bluetooth setups.
+
+A release of this size is only possible with continued support from users, contributors, testers, package maintainers,
+and everyone reporting regressions and sharing detailed logs over the years.
+
+Special thanks to all contributors who helped shape this cycle, including:
+
+  - Florian Dollinger (`@atar-axis`) for the original project foundation and long-standing code base that made this
+    evolution possible.
+  - Ben Schattinger (`@lights0123`) for Xbox Series X|S support contributions and Share button related integration
+    work.
+  - Erik Hajnal (`@ehats`) for non-trivial XBE2 mode support work and descriptor/mapping related fixes.
+  - Dugan Chen (`@duganchen`) for Elite Series 2 related device support updates.
+  - John Mather (`@NextDesign1`) and many others for incremental fixes, reports, and ecosystem feedback that helped
+    improve edge-case handling over time.
+
+
+## IMPORTANT: Updated Licensing
+
+As part of the ongoing refactor, the kernel module code has been relicensed to **GPL-2.0-only**. This change was made
+to ensure compatibility with the Linux kernel's licensing requirements and to allow for better integration with the
+kernel's codebase. Non-driver content, such as documentation and tooling, remains licensed under **GPL-3.0-or-later**
+unless specified otherwise in file headers.
+
+Package maintainers and contributors should take note of this change when distributing or contributing to the project,
+ensuring that they comply with the new licensing terms for the relevant parts of the codebase.
+
+As part of this change, we also added AppStream metadata to the repository, which should help with integration into
+Linux distribution packaging systems and improve discoverability of the project for users. Thanks to Michael Lloyd
+(`@michael-lloyd`) for the contribution of the AppStream metadata.
+
+
+## The Future
+
+- The virtual mouse mode introduced in this release is still **experimental** and will be improved further during the
+  v0.11 cycle, with improvements backported to v0.10 if possible.
+- The next release cycle will bring better rumble handling and lay the foundations for profile customization support.
+- Hopefully, we will also improve and streamline the documentation further, especially around configuration and
+  troubleshooting, to make it easier for users to get the most out of their controllers with xpadneo.
+
+
+*Thank you for your patience, testing effort, and continued trust in xpadneo.*
+
+
+## Headlines:
+
+  - core, quirks: Add GameSir T4 Nova Lite support
+  - core, quirks: Add GuliKit KK3 MAX quirks
+  - core, quirks: Add heuristics to detect GameSir Nova controllers
+  - dev: Fix gitignore
+  - dkms: Explicitly add version to the install phase
+  - dkms: Suggest trusting the git directory if version detection failed
+  - docs(#429): Elite S2 Profiles carry over
+  - docs: Document Bluetooth LE issues and work-arounds
+  - docs: Document workarounds for the Xbox Wireless controller
+  - docs: Replace Ko-fi link to attribute donations to current maintainer
+  - hid-xpadneo: Allow building with kernel 6.12
+  - hid-xpadneo: Do not use Nintendo layouts by default
+  - hid-xpadneo: Move share button quirk to `xpadneo_devices` database
+  - installer, dkms: Fix trying to install the wrong udev filename
+  - xpadneo: Add support for GuliKit KingKong2 PRO controllers
+  - xpadneo, core: Add configuration for disabling Xbox logo shift-mode
+  - xpadneo, core: Deprecate synthetic rolling axis from triggers
+  - xpadneo, core: Fix coding style
+  - xpadneo, core: Remove hard requirement of ida_{alloc,free}
+  - xpadneo, dkms: Drop deprecated variable CLEAN
+  - xpadneo, dkms: Get rid of redundant file installs/removes
+  - xpadneo, dkms: Hooks are now effectively a no-op
+  - xpadneo, docs: Align all of README.md with current distribution practice
+  - xpadneo, docs: Link troubleshooting more prominently
+  - xpadneo: Evade SDL-mismapping once again
+  - xpadneo: Fix documentation about Share button
+  - xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
+  - xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
+  - xpadneo, hidraw: Fixup previous commit to properly work with DKMS
+  - xpadneo, hidraw: Work around other software messing with our udev rules
+  - xpadneo, init: Actually save rumble test values before we replace them
+  - xpadneo: Map Share button to F12 by default
+  - xpadneo, mouse: Implement mouse support
+  - xpadneo, quirks: Add another Microsoft OUI
+  - xpadneo, quirks: Another Microsoft OUI
+  - xpadneo, quirks: Fix the haptics quirks for third-party controllers
+  - xpadneo, quirks: Let another Microsoft OUI bypass heuristics
+  - xpadneo, quirks: Prevent applying heuristics for some known vendors
+  - xpadneo: Remove deprecated ida_simple_{get,remove}() usage
+  - xpadneo: Revert fixups on device removal
+  - xpadneo, rumble: Fix rumble throttling for modern firmware
+  - xpadneo: Support GameSir T4 Cyclone models
+  - xpadneo: Work around invalid mapping in Steam Link
+
+```
+Kai Krakow (278):
+      xpadneo, udev: Properly re-order modalias
+      xpadneo, udev: Add Xbox One X|S PIDs to udev and modalias
+      hid-xpadneo: Improve SDL2 work-arounds to fix XBE2 button mappings
+      hid-xpadneo: Fix SDL2 button mapping for XBXS
+      docs: Fix typo
+      hid-xpadneo: Print version during load
+      hid-xpadneo: Ignore more files from current kernel tool chain
+      hid-xpadneo: Add some benchmark instrumentation
+      hid-xpadneo: Fix typo in comment
+      hid-xpadneo: Fix logging SDL2 work-around on wrong condition
+      hid-xpadneo: Log and record the original descriptor size
+      installer: Fix indentation
+      Makefile: Create version.h on the fly
+      dev: Fix gitignore
+      hid-xpadneo: Move share button quirk to `xpadneo_devices` database
+      hid-xpadneo: Improve descriptor logging
+      hid-xpadneo: Deprecate directional rumble
+      src: re-indent with newer indent version
+      docs: List incompatible Bluetooth chipsets and settings
+      docs: Improve troubleshooting instructions
+      docs: Amend list of bugs with known fixes
+      docs: Use Xbox Series X|S controller name consistently
+      udev: Update rules for upcoming systemd update
+      hid-xpadneo: Do not use Nintendo layouts by default
+      hid-xpadneo: Split gamepad into subdevices
+      hid-xpadneo: Send KEY_MODE for the Xbox button
+      hid-xpadneo: Enable detection of the XBE2 keyboard sub device
+      xpadneo: Drop kernel compatibility below version 4.18
+      docs: Replace Ko-fi link to attribute donations to current maintainer
+      hid-xpadneo: Report missing applications just once
+      hid-xpadneo: Drop dead module parameter `combined_z_axis`
+      docs: Put Ko-fi on a separate line
+      docs: Make original driver announcement a quote
+      docs: Link xow author
+      hid-xpadneo: Auto-detect hardware profiles instead of hard-coding it
+      docs: Add missing text about profile support
+      hid-xpadneo, udev: Move udev rules up in rules priority
+      configure: Remove disable-ff in favor of trigger-rumble-mode
+      configure: No options is an error, don't do anything
+      configure: Do not require dkms for configuration
+      dkms: Install files with proper permission
+      installer, dkms: Fix trying to install the wrong udev filename
+      hid-xpadneo: Allow modparams for manual re-installation
+      docs: Document more of the quirk flags
+      hid-xpadneo, Makefile: Make version.h an intermediate target
+      hid-xpadneo: Use jiffies converter functions instead of HZ
+      hid-xpadneo: Allow adding and removing quirk flags
+      hid-xpadneo: Fix indentation
+      xpadneo, mouse: Support toggling mouse mode
+      dkms: Fix CI
+      dkms: Simplify installation
+      xpadneo: Drop dynamic version file handling
+      docs: Document rumble behavior with SDL_JOYSTICK_HIDAPI
+      docs: Fix typo
+      docs: Add note about holding the Guide button for too long
+      hid-xpadneo: Sync consumer key events and stop processing
+      xpadneo: Add current maintainer to module authors
+      hid-xpadneo: Move SDL work-arounds to parent device
+      hid-xpadneo: Revoke hidraw user access to fix a Proton mapping problem
+      docs: Update pairing instruction to mitigate stability issues
+      kbuild: Add work-around for matching source and object filename
+      xpadneo, core: Add support for synthetic devices
+      xpadneo: Fix "consumer control" naming
+      xpadneo, consumer: Add synthetic consumer control device on demand
+      reporting: Add some space for easy insertion
+      reporting: Improve headers
+      reporting: Ask for applied firmware updates
+      automation: Extend the feedback response deadline
+      automation: Remove comments
+      reporting: Add model identification
+      reporting: Add installed software section
+      automation: Move no-response.yml to proper location
+      misc, docs: Remove ERTM patches and update docs
+      hid-xpadneo: Map instead of disable duplicate button "AC Back"
+      docs: Document Bluetooth LE issues and work-arounds
+      docs: Remove `Privacy=device` in favor of JustWorks re-pairing
+      docs: Mention the xone project which has gone public now
+      reporting: Improve formatting of reporting template
+      xpadneo, consumer: Fix comment
+      docs: List distribution packages
+      hid-xpadneo, rumble: Do not lose rumble strength while throttled
+      docs: Fix report descriptor syntax errors
+      xpadneo: Work around invalid mapping in Steam Link
+      xpadneo, hidraw: Also work around SDL2 hidraw mode conflicts
+      dkms: Create version instance in DKMS source archives
+      dkms: Explicitly add version to the install phase
+      dkms, installer: Increase verbosity
+      docs: Add note about audio support
+      xpadneo, udev: Make udev rule logic more readable
+      xpadneo: Add support for XB1S BLE firmware update
+      xpadneo: Revert fixups on device removal
+      xpadneo: Update devices db for PID 0x0B13
+      xpadneo: Add XBE2 firmware 5.13 support
+      xpadneo: Add paddles support
+      xpadneo, rumble: Fix rumble throttling for modern firmware
+      docs: Clarify some points
+      xpadneo, core: Warn about old firmware version with stability issues
+      dkms: Suggest trusting the git directory if version detection failed
+      dkms: Add another status line variant to split module and version
+      docs: Update documentation about the XBE2 paddles
+      docs: Update the documentation to use the "add quirks" feature
+      github: Change checkboxes to proper md format
+      github: Reorder checkboxes in bug report
+      github: Add problematic software to bug reports
+      github: Improve bug reports for identifying the failing layer
+      github: Improve feature requests
+      xpadneo, fixups: Apply SDL fixups unconditionally
+      xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
+      docs: Update description for the xone project
+      docs: Use capitalization for headlines consequently
+      docs: Don't exceed line length
+      docs: Fix typo
+      docs, installer: Add notes about needed kernel features
+      xpadneo, rumble: Remove deprecated directional rumble
+      docs: Remove obsolete ERTM notes
+      xpadneo: Evade SDL-mismapping once again
+      xpadneo, keyboard: Add keyboard support
+      xpadneo, consumer: Move buttons to keyboard device
+      xpadneo: Map Share button to F12 by default
+      xpadneo: Move bit swap helper to include file
+      xpadneo, init: Fix rumble testing logic on connect
+      xpadneo: Add support for GuliKit KingKong2 PRO controllers
+      xpadneo, init: Actually save rumble test values before we replace them
+      xpadneo: Upgrade CI to Ubuntu 22.04
+      xpadneo: Remove Ubuntu 18.04 from CI
+      docs: Fix headline for GuliKit controllers
+      Makefile: Use kernel build symlink from `/lib/modules`
+      xpadneo: Fix documentation about Share button
+      xpadneo, init: Do not report paddles unconditionally
+      xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
+      xpadneo, init: Really exclude the keyboard event from the HID bitmap
+      xpadneo, init: Remove bogus keys from the keymap
+      xpadneo, init: Detect HW profile support on current firmwares
+      xpadneo: Support GameSir T4 Cyclone models
+      xpadneo, docs: Reintroduce hint about using SDL_JOYSTICK_HIDAPI=0
+      xpadneo, core: Sort device quirks into proper order
+      xpadneo, quirks: Combine quirks that mean "no haptics support"
+      xpadneo, core: Deprecate synthetic rolling axis from triggers
+      docs: Improve BT_DONGLES.md
+      docs: Remove feature claims that are obsolete or no longer true
+      docs: Fix wording and casing
+      docs, README: Remove the broken Codacy badge
+      xpadneo, quirks: Fix the haptics quirks for third-party controllers
+      xpadneo, core: Reorder devices by PID
+      xpadneo, core: Remove explicit sync when not needed
+      xpadneo, core: Handle sync events in xpadneo
+      docs: Add troubleshoot instructions for controllers requesting a PIN
+      docs: Add troubleshooting instructions after upgrading firmware
+      docs: Add missing blank line
+      docs: Add compatibilty status for a Simplecom Bluetooth dongle
+      docs, README: Add notes for package maintainers and on module signing
+      github: Migrate stale and close automation
+      github: Improve feature request template
+      github: Do not mark issues stale automatically
+      xpadneo, core: Remove code duplication
+      xpadneo, hidraw: Work around other software messing with our udev rules
+      hid-xpadneo: Allow building with kernel 6.12
+      xpadneo, hidraw: Fixup previous commit to properly work with DKMS
+      hid-xpadneo, core: Match kernel 6.12 report_fixup signature
+      xpadneo, core: Fix coding style
+      core, quirks: Add GameSir T4 Nova Lite support
+      core, quirks: Add heuristics to detect GameSir Nova controllers
+      core, quirks: DRY the rumble tests
+      core, tests: Fix the pulse test and print test info
+      core, debug: Allow output of decoded rumble packets for debugging
+      core, quirks: Provide a way to remove quirks added by heuristics
+      xpadneo, debug: Fix indentation and output
+      core, quirks: Add GuliKit KK3 MAX quirks
+      xpadneo, quirks: Prevent applying heuristics for some known vendors
+      xpadneo, quirks: Let another Microsoft OUI bypass heuristics
+      xpadneo, installer: Fix some general issues with the scripts
+      xpadneo, dkms: Match minimum kernel version with source code
+      xpadneo, installer: Add new option parser to support multiple options
+      xpadneo, dkms: Add kernel source dir option for easier testing
+      xpadneo, installer: Allow forcing replacement of a newer kernel module
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, installer: Exit immediately on error
+      xpadneo: Add documentation about testing pull requests
+      xpadneo, installer: Fix option parser to not bubble up an error
+      xpadneo, dkms: Use "yes" for autoinstall instead of "Y"
+      xpadneo: Reorder gitignore
+      xpadneo, ci: Add missing dependencies
+      xpadneo, ci: Add Ubuntu 24.04
+      xpadneo, examples: Build hidraw properly on Ubuntu
+      xpadneo, tools: Build hidraw_c test example in CI
+      xpadneo, dkms: Remove DKMS work-around and let DKMS handle the source
+      xpadneo, installer: Use make to regenerate dkms.conf
+      xpadneo, installer: Introduce make-based installer
+      xpadneo, installer: Use the new make infrastructure
+      xpadneo, dkms: Add make-based installer to CI
+      xpadneo, docs: Fix various spelling mistakes and phrasing
+      xpadneo, installer: Fix usage of `ETC_PREFIX`
+      xpadneo, installer: Re-order config variables to the top of `Makefile`
+      xpadneo, installer: Support installing documentation
+      xpadneo, docs: Fix indentation, line length and whitespace
+      xpadneo, docs: Document the new quirk flags for configuration
+      xpadneo, docs: Use dashes instead of stars for list items
+      xpadneo, docs: Fix use of bare URLs
+      xpadneo, core: Remove left-over xdata indirection
+      xpadneo, installer: Delay `set -e` to not silence errors early
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, quirks: Another Microsoft OUI
+      xpadneo, ci: Drop Ubuntu 20.04 CI testing
+      xpadneo, installer: Get rid of ERTM work-around by requiring kernel 5.12
+      xpadneo, installer: Do not fail uninstallation early
+      xpadneo, udev: Trigger loading of `uhid` before `bluetooth`
+      xpadneo, psy: Fix potential pointer leak during battery registration
+      xpadneo, psy: Fix memory leak of device and battery name
+      xpadneo, core: Actually check the correct devm pointer in error path
+      Makefile: Do not leave a stray intermediate source file behind
+      xpadneo, docs: Align CONFIGURATION.md with current implementation
+      xpadneo, docs: Align README.md with current distribution practice
+      xpadneo, probe: Implement error path for ida_simple_get()
+      xpadneo: Remove deprecated ida_simple_{get,remove}() usage
+      xpadneo, headers: Drop kernel version check kept for cherry picking
+      xpadneo, docs: Document sensor drift and deadzones better
+      xpadneo, docs: Link troubleshooting more prominently
+      xpadneo, dkms: Fix shellcheck for unused variables
+      xpadneo, dkms: Drop deprecated variable CLEAN
+      xpadneo, docs: add GPL-2.0 relicensing requirement
+      xpadneo, licensing: Add driver relicensing tracking document
+      xpadneo, licensing: Record consent from Ben Schattinger
+      xpadneo, licensing: Record consent from Erik Hajnal
+      xpadneo, licensing: Record consent from Dugan Chen
+      xpadneo, licensing: Record consent from yjun
+      xpadneo, licensing: Record consent from John Mather
+      xpadneo, licensing: Do not chase consent from PiMaker
+      xpadneo, dkms: Fix warning about unassigned variables
+      xpadneo, dkms: Get rid of redundant file installs/removes
+      xpadneo, dkms: Hooks are now effectively a no-op
+      xpadneo, docs: Improve bug reporting template
+      xpadneo, docs: document safe firmware flashing for Xbox controllers
+      xpadneo, docs: improve Bluetooth dongle documentation
+      xpadneo, docs: add user-reported Bluetooth dongle compatibility report
+      xpadneo, docs: add PCIe Bluetooth adapter compatibility reports
+      xpadneo, profiles: Report current profile as absolute axis
+      xpadneo, docs: Unify list formatting of README.md
+      xpadneo, docs: Align all of README.md with current distribution practice
+      xpadneo, core: Remove hard requirement of ida_{alloc,free}
+      xpadneo, core: Support explicit paddle button usages
+      xpadneo, docs: Fix manufacturer name of a tested USB BLE adapter
+      xpadneo, quirks: Add another Microsoft OUI
+      xpadneo: Add LSP support for clangd
+      xpadneo: Get rid of hid-ids.h
+      xpadneo: Add .clangd to fix some more LSP warnings
+      xpadneo, core: Do not reset profile switch indicator unless emulated
+      xpadneo, core: Honor Guide+Select mouse toggle with hardware profiles
+      xpadneo, mouse: Implement mouse support
+      xpadneo, core: Remove unused headers
+      xpadneo, power: Move psy/battery function out of the legacy core
+      xpadneo, quirks: Move quirks handling out of the legacy core
+      xpadneo, mouse: Unify mouse driver naming conventions and structure
+      xpadneo, mappings: Move usage mappings out of the legacy core
+      xpadneo, profiles: Move events and profiles out of the legacy core
+      xpadneo, rumble: Move rumble handling outside of the legacy core
+      xpadneo, core: Move remaining code out of the legacy core
+      xpadneo, synthetic: Move helpers for synthetic drivers out of the core
+      xpadneo, devices: Move device helpers out of the legacy core
+      xpadneo, drivers: Streamline naming convention
+      xpadneo: Rename FF to RUMBLE to better match the functionality
+      xpadneo, device: Move kernel backward compatibility to separate header
+      xpadneo, compat: Move remaining compatibility functions into compat.h
+      xpadneo, core: Move HID_QUIRK_INPUT_PER_APP check to core
+      xpadneo, core: Move driver versioning to core
+      xpadneo, helpers: Move shared helpers into separate header file
+      xpadneo, headers: Move private definitions out of shared headers
+      xpadneo: Do not use "extern" on the implementation function signature
+      xpadneo: Align private and public symbol prefixes
+      xpadneo, core: Improve error paths on initialization failures
+      xpadneo, device: Fix potential format mismatch at compile time
+      xpadneo, quirks: Improve quirks argument parser
+      xpadneo: Refactor subdevices to re-use code and common error paths
+      xpadneo, events: Warn once if shift mode is active
+      xpadneo, events: Explain why no explicit sync is needed for ABS_PROFILE
+      xpadneo, events: Degrade shift mode warning to notice log level
+      xpadneo, CI: Add Github workflow to check commits
+      xpadneo, installer: Add metainfo as optional install target
+
+Alexander Tsoy (2):
+      docs: Suggest alternative command to get controller info
+      docs: Add compatibilty status for UGREEN CM390
+
+l3d00m (2):
+      xpadneo, docs: Update links to other projects
+      xpadneo, docs: Fix typo and add specific hardware support to xone
+
+Aniket (1):
+      Remove outdated secure boot docs
+
+Eduard Tolosa (1):
+      xpadneo, udev: update rules for systemd v258+
+
+Emil Velikov (1):
+      dkms: remove REMAKE_INITRD
+
+Florian Dollinger (1):
+      Update README.md
+
+John Mather (1):
+      xpadneo, quirks: Add another OUI
+
+Kevin Locke (1):
+      Add BUILD_EXCLUSIVE_CONFIG to dkms.conf
+
+Luis Davila (1):
+      Replaced Antergos with EndeavorOS
+
+Matthew Scharley (1):
+      bluez-tools isn't required on Tumbleweed
+
+Michael-Lloyd (1):
+      xpadneo, meta: Add AppStream metainfo with hardware modalias
+
+Moté (1):
+      docs: Document workarounds for the Xbox Wireless controller
+
+Scott Bailey (1):
+      Doc update for KK3 Max
+
+Willster Johnson (1):
+      docs(#429): Elite S2 Profiles carry over
+
+arnxxau (1):
+      added ff_connect_notify config option to configure.sh
+
+bouhaa (1):
+      xpadneo, core: Add configuration for disabling Xbox logo shift-mode
+
+jbillingredhat (1):
+      README.md: Fedora instructions are incorrect
+
+liberodark (1):
+      docs: Update BT_DONGLES
+
+mikaka (1):
+      Don't disable ERTM if kernel 5.12 or later
+
+ryanrms (1):
+      Adding openSUSE to readme.md
+
+thiccaxe (1):
+      Update TROUBLESHOOTING.md
+
+yjun (1):
+      xpadneo: Fix missing report check
+```
+
+
 # Changes since v0.8 up to v0.9
 
 *Quote of the day:*
