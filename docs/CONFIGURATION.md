@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Configuration
 
 **Alternatively** to using the config-script, you can also do it by hand:

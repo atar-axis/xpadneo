@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # HID Descriptor for 8BitDo SN30 Pro+ (Windows mode)
 
 Hex dump of the controller descriptor:

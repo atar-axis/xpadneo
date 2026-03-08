@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Troubleshooting
 
 ### Gamepad Does Not Connect Properly

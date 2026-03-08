@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # USB Descriptor for Xbox Elite 2 Wireless (Unknown mode)
 
 Hex dump of the original, unmodified controller descriptor:

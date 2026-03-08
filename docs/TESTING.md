@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Testing and Development
 
 ### Working with Pull Requests
@@ -32,4 +34,3 @@ git remote update --prune
 git reset --merge kakra/remote/branch/name # tries keeping your local modifications
 git reset --hard kakra/remote/branch/name  # discards your local modifications
 ```
-

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Third Party Bugs
 
 While developing this driver we recognized some bugs in KDE and linux itself,

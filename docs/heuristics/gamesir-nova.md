@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # GameSir Nova OUIs
 
 Gamesir Nova uses random MAC OUIs. We collect them here to implement a

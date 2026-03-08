@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O4O43SURE)
 
 If you want to support me or accelerate the development of a special feature, consider a small donation :heart:
@@ -37,9 +39,13 @@ Quote from [@atar-axis (Florian Dollinger)](https://github.com/atar-axis), creat
 These other projects may not support some of the advanced features of xpadneo.
 
 
-## Heads Up
+## Heads Up Package Maintainers
 
-**Package maintainers:** Please see [Packaging](https://atar-axis.github.io/xpadneo/#packaging).
+Licensing of the project has changed, so please update your packaging if you maintain a package for this driver.
+Please refer to [LICENSE.md](../LICENSE.md) for details. If you have any questions, please ask.
+
+The project introduced some packaging helpers and changed the installation process. Please see
+[Packaging](https://atar-axis.github.io/xpadneo/#packaging).
 
 
 ## Breaking Changes

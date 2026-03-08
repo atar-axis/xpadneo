@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # USB Descriptor for Xbox Series X|S Wireless
 
 Hex dump of the controller descriptor:

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # USB Descriptor for GuliKit KingKong 2 (Android mode)
 
 Hex dump of the controller descriptor:

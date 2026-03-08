@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
+
 /*
  * Force feedback support for XBOX ONE S and X gamepads via Bluetooth
  *

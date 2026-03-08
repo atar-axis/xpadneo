@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+
 # Changes since v0.8 up to v0.9
 
 *Quote of the day:*

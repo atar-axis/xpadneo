@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # USB Descriptor for Xbox One S Wireless (Windows mode)
 
 Hex dump of the controller descriptor:

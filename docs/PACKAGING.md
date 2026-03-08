@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Packaging
 
 From v0.10 on, xpadneo provides a `Makefile` to help package maintainers

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Firmware Update / Flashing Instructions
 
 There are multiple ways to update the controller firmware which require different technical skills. The easiest method

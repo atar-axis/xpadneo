@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## SDL Mapping
 
 We fixed the following problem by pretending we are in Windows wireless mode

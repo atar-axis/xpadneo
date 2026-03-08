@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## BT Dongles
 
 Please report your Dongles and how they work [here](https://github.com/atar-axis/xpadneo/issues/93)

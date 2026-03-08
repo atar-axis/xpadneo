@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 ## Debugging
 
 If you are asked to send debug info or want to fix bugs, follow the guide
