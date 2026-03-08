@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # FIXME(kakra): This file should be removed, the module rebuild should not
 # mangle files that are supposed to be handled by the package manager. But
