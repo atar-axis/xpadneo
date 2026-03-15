@@ -105,12 +105,6 @@ static void rumble_worker(struct work_struct *work)
 	/* shadow our current rumble values for the next cycle */
 	memcpy(&xdata->rumble.shadow, &xdata->rumble.data, sizeof(xdata->rumble.data));
 
-	/* clear the magnitudes to properly accumulate the maximum values */
-	xdata->rumble.data.magnitude_left = 0;
-	xdata->rumble.data.magnitude_right = 0;
-	xdata->rumble.data.magnitude_weak = 0;
-	xdata->rumble.data.magnitude_strong = 0;
-
 	/*
 	 * throttle next command submission, the firmware doesn't like us to
 	 * send rumble data any faster
@@ -136,9 +130,9 @@ static void rumble_worker(struct work_struct *work)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
 }
 
-static inline void update_magnitude(u8 *m, u8 v)
+static inline u8 calculate_magnitude(s32 magnitude, int fraction)
 {
-	*m = v > 0 ? max(*m, v) : 0;
+	return (u8)((magnitude * fraction + S16_MAX) / U16_MAX);
 }
 
 static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
@@ -189,16 +183,12 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 	spin_lock_irqsave(&xdata->rumble.lock, flags);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	update_magnitude(&xdata->rumble.data.magnitude_strong,
-			 (u8)((strong * fraction_MAIN + S16_MAX) / U16_MAX));
-	update_magnitude(&xdata->rumble.data.magnitude_weak,
-			 (u8)((weak * fraction_MAIN + S16_MAX) / U16_MAX));
+	xdata->rumble.data.magnitude_strong = calculate_magnitude(strong, fraction_MAIN);
+	xdata->rumble.data.magnitude_weak = calculate_magnitude(weak, fraction_MAIN);
 
 	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	update_magnitude(&xdata->rumble.data.magnitude_left,
-			 (u8)((max_main * fraction_TL + S16_MAX) / U16_MAX));
-	update_magnitude(&xdata->rumble.data.magnitude_right,
-			 (u8)((max_main * fraction_TR + S16_MAX) / U16_MAX));
+	xdata->rumble.data.magnitude_left = calculate_magnitude(max_main, fraction_TL);
+	xdata->rumble.data.magnitude_right = calculate_magnitude(max_main, fraction_TR);
 
 	/* synchronize: is our worker still scheduled? */
 	if (xdata->rumble.scheduled) {
