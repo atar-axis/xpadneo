@@ -292,7 +292,7 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 	mdelay(30);
 }
 
-static void xpadneo_rumble_welcome(struct hid_device *hdev)
+static void rumble_welcome(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct xpadneo_rumble_report pck = { };
@@ -348,7 +348,7 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
 
 	if (param_ff_connect_notify)
-		xpadneo_benchmark(xpadneo_rumble_welcome, hdev);
+		xpadneo_benchmark(rumble_welcome, hdev);
 
 	/* initialize our rumble command throttle */
 	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
