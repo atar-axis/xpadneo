@@ -61,7 +61,6 @@ static void rumble_worker(struct work_struct *work)
 	struct hid_device *hdev = xdata->hdev;
 	struct xpadneo_rumble_report *r = xdata->rumble.output_report_dmabuf;
 	int ret;
-	unsigned long flags;
 
 	memset(r, 0, sizeof(*r));
 	r->report_id = XPADNEO_XBOX_RUMBLE_REPORT;
@@ -83,62 +82,59 @@ static void rumble_worker(struct work_struct *work)
 		r->data.loop_count = 0xEB;
 	}
 
-	spin_lock_irqsave(&xdata->rumble.lock, flags);
+	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
 
-	/* let our scheduler know we've been called */
-	xdata->rumble.scheduled = false;
+		/* let our scheduler know we've been called */
+		xdata->rumble.scheduled = false;
 
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
-		/* do not send these bits if not supported */
-		r->data.enable &= ~XBOX_RUMBLE_TRIGGERS;
-	} else {
-		/* trigger motors */
-		r->data.magnitude_left = xdata->rumble.data.magnitude_left;
-		r->data.magnitude_right = xdata->rumble.data.magnitude_right;
+		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
+			/* do not send these bits if not supported */
+			r->data.enable &= ~XBOX_RUMBLE_TRIGGERS;
+		} else {
+			/* trigger motors */
+			r->data.magnitude_left = xdata->rumble.data.magnitude_left;
+			r->data.magnitude_right = xdata->rumble.data.magnitude_right;
+		}
+
+		/* main motors */
+		r->data.magnitude_strong = xdata->rumble.data.magnitude_strong;
+		r->data.magnitude_weak = xdata->rumble.data.magnitude_weak;
+
+		/* do not reprogram motors that have not changed */
+		if (unlikely(xdata->rumble.shadow.magnitude_strong == r->data.magnitude_strong))
+			r->data.enable &= ~XBOX_RUMBLE_STRONG;
+		if (unlikely(xdata->rumble.shadow.magnitude_weak == r->data.magnitude_weak))
+			r->data.enable &= ~XBOX_RUMBLE_WEAK;
+		if (likely(xdata->rumble.shadow.magnitude_left == r->data.magnitude_left))
+			r->data.enable &= ~XBOX_RUMBLE_LEFT;
+		if (likely(xdata->rumble.shadow.magnitude_right == r->data.magnitude_right))
+			r->data.enable &= ~XBOX_RUMBLE_RIGHT;
+
+		/* do not send a report if nothing changed */
+		if (unlikely(r->data.enable == XBOX_RUMBLE_NONE))
+			return;
+
+		/* shadow our current rumble values for the next cycle */
+		memcpy(&xdata->rumble.shadow, &xdata->rumble.data, sizeof(xdata->rumble.data));
+
+		/*
+		 * throttle next command submission, the firmware doesn't like us to
+		 * send rumble data any faster
+		 */
+		xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
+
+		/* set all bits if not supported (some clones require these set) */
+		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
+			r->data.enable = XBOX_RUMBLE_ALL;
+
+		/* reverse the bits for trigger and main motors */
+		if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
+			r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 1, 2), 0, 3);
+
+		/* swap the bits of trigger and main motors */
+		if (unlikely(xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK))
+			r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 	}
-
-	/* main motors */
-	r->data.magnitude_strong = xdata->rumble.data.magnitude_strong;
-	r->data.magnitude_weak = xdata->rumble.data.magnitude_weak;
-
-	/* do not reprogram motors that have not changed */
-	if (unlikely(xdata->rumble.shadow.magnitude_strong == r->data.magnitude_strong))
-		r->data.enable &= ~XBOX_RUMBLE_STRONG;
-	if (unlikely(xdata->rumble.shadow.magnitude_weak == r->data.magnitude_weak))
-		r->data.enable &= ~XBOX_RUMBLE_WEAK;
-	if (likely(xdata->rumble.shadow.magnitude_left == r->data.magnitude_left))
-		r->data.enable &= ~XBOX_RUMBLE_LEFT;
-	if (likely(xdata->rumble.shadow.magnitude_right == r->data.magnitude_right))
-		r->data.enable &= ~XBOX_RUMBLE_RIGHT;
-
-	/* do not send a report if nothing changed */
-	if (unlikely(r->data.enable == XBOX_RUMBLE_NONE)) {
-		spin_unlock_irqrestore(&xdata->rumble.lock, flags);
-		return;
-	}
-
-	/* shadow our current rumble values for the next cycle */
-	memcpy(&xdata->rumble.shadow, &xdata->rumble.data, sizeof(xdata->rumble.data));
-
-	/*
-	 * throttle next command submission, the firmware doesn't like us to
-	 * send rumble data any faster
-	 */
-	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
-
-	spin_unlock_irqrestore(&xdata->rumble.lock, flags);
-
-	/* set all bits if not supported (some clones require these set) */
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
-		r->data.enable = XBOX_RUMBLE_ALL;
-
-	/* reverse the bits for trigger and main motors */
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_REVERSE_MASK))
-		r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 1, 2), 0, 3);
-
-	/* swap the bits of trigger and main motors */
-	if (unlikely(xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK))
-		r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 
 	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
@@ -152,7 +148,6 @@ static inline u8 calculate_magnitude(s32 magnitude, int fraction)
 
 static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
-	unsigned long flags, delay_work;
 	int fraction_TL, fraction_TR, fraction_MAIN, percent_TRIGGERS, percent_MAIN;
 	s32 weak, strong, max_main;
 
@@ -194,34 +189,34 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 	 */
 	max_main = max(weak, strong);
 
-	spin_lock_irqsave(&xdata->rumble.lock, flags);
+	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
+		unsigned long delay_work;
 
-	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->rumble.data.magnitude_strong = calculate_magnitude(strong, fraction_MAIN);
-	xdata->rumble.data.magnitude_weak = calculate_magnitude(weak, fraction_MAIN);
+		/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+		xdata->rumble.data.magnitude_strong = calculate_magnitude(strong, fraction_MAIN);
+		xdata->rumble.data.magnitude_weak = calculate_magnitude(weak, fraction_MAIN);
 
-	/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
-	xdata->rumble.data.magnitude_left = calculate_magnitude(max_main, fraction_TL);
-	xdata->rumble.data.magnitude_right = calculate_magnitude(max_main, fraction_TR);
+		/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
+		xdata->rumble.data.magnitude_left = calculate_magnitude(max_main, fraction_TL);
+		xdata->rumble.data.magnitude_right = calculate_magnitude(max_main, fraction_TR);
 
-	/* synchronize: is our worker still scheduled? */
-	if (xdata->rumble.scheduled) {
-		/* the worker is still guarding rumble programming */
-		hid_notice_once(hdev, "throttling rumble reprogramming\n");
-		goto unlock_and_return;
+		/* synchronize: is our worker still scheduled? */
+		if (xdata->rumble.scheduled) {
+			/* the worker is still guarding rumble programming */
+			hid_notice_once(hdev, "throttling rumble reprogramming\n");
+			break;
+		}
+
+		/* we want to run now but may be throttled */
+		delay_work = calculate_throttling_delay(xdata);
+
+		/* schedule writing a rumble report to the controller */
+		if (queue_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work))
+			xdata->rumble.scheduled = true;
+		else
+			hid_err(hdev, "lost rumble packet\n");
 	}
 
-	/* we want to run now but may be throttled */
-	delay_work = calculate_throttling_delay(xdata);
-
-	/* schedule writing a rumble report to the controller */
-	if (queue_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work))
-		xdata->rumble.scheduled = true;
-	else
-		hid_err(hdev, "lost rumble packet\n");
-
-unlock_and_return:
-	spin_unlock_irqrestore(&xdata->rumble.lock, flags);
 	return 0;
 }
 
