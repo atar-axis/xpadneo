@@ -14,7 +14,7 @@
 #include "helpers.h"
 
 /* timing of rumble commands to work around firmware crashes */
-#define RUMBLE_THROTTLE_DELAY   msecs_to_jiffies(50)
+#define RUMBLE_THROTTLE_DELAY   (msecs_to_jiffies(10)+1)
 #define RUMBLE_THROTTLE_JIFFIES (jiffies + RUMBLE_THROTTLE_DELAY)
 
 /* module parameter "trigger_rumble_mode" */
@@ -117,12 +117,6 @@ static void rumble_worker(struct work_struct *work)
 		/* shadow our current rumble values for the next cycle */
 		memcpy(&xdata->rumble.shadow, &xdata->rumble.data, sizeof(xdata->rumble.data));
 
-		/*
-		 * throttle next command submission, the firmware doesn't like us to
-		 * send rumble data any faster
-		 */
-		xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
-
 		/* set all bits if not supported (some clones require these set) */
 		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_MOTOR_MASK))
 			r->data.enable = XBOX_RUMBLE_ALL;
@@ -139,6 +133,19 @@ static void rumble_worker(struct work_struct *work)
 	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
 		hid_warn(hdev, "failed to send FF report: %d\n", ret);
+
+	/*
+	 * throttle next command submission, the firmware doesn't like us to
+	 * send rumble data any faster
+	 */
+	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
+		xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
+		if (xdata->rumble.scheduled) {
+			unsigned long delay_work = calculate_throttling_delay(xdata);
+
+			mod_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work);
+		}
+	}
 }
 
 static inline u8 calculate_magnitude(s32 magnitude, int fraction)
@@ -211,10 +218,11 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 		delay_work = calculate_throttling_delay(xdata);
 
 		/* schedule writing a rumble report to the controller */
-		if (queue_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work))
-			xdata->rumble.scheduled = true;
-		else
-			hid_err(hdev, "lost rumble packet\n");
+		if (mod_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work)) {
+			/* this should never happen */
+			hid_err(hdev, "rumble_playback: unexpected scheduling state\n");
+		}
+		xdata->rumble.scheduled = true;
 	}
 
 	return 0;
