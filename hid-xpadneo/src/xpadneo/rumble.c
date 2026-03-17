@@ -39,6 +39,21 @@ MODULE_PARM_DESC(ff_connect_notify,
 
 static struct workqueue_struct *rumble_wq;
 
+static inline unsigned long calculate_throttling_delay(struct xpadneo_devdata *xdata)
+{
+	unsigned long rumble_run_at = jiffies, rumble_throttle_until = xdata->rumble.throttle_until;
+
+	if (time_before(rumble_run_at, rumble_throttle_until)) {
+		/* last rumble was recently executed */
+		long delay_work = (long)(rumble_throttle_until - rumble_run_at);
+
+		return clamp(delay_work, 0L, (long)RUMBLE_THROTTLE_DELAY);
+	}
+
+	/* the firmware is ready */
+	return 0;
+}
+
 static void rumble_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata =
@@ -137,8 +152,7 @@ static inline u8 calculate_magnitude(s32 magnitude, int fraction)
 
 static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
 {
-	unsigned long flags, rumble_run_at, rumble_throttle_until;
-	long delay_work;
+	unsigned long flags, delay_work;
 	int fraction_TL, fraction_TR, fraction_MAIN, percent_TRIGGERS, percent_MAIN;
 	s32 weak, strong, max_main;
 
@@ -198,16 +212,7 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 	}
 
 	/* we want to run now but may be throttled */
-	rumble_run_at = jiffies;
-	rumble_throttle_until = xdata->rumble.throttle_until;
-	if (time_before(rumble_run_at, rumble_throttle_until)) {
-		/* last rumble was recently executed */
-		delay_work = (long)rumble_throttle_until - (long)rumble_run_at;
-		delay_work = clamp(delay_work, 0L, (long)HZ);
-	} else {
-		/* the firmware is ready */
-		delay_work = 0;
-	}
+	delay_work = calculate_throttling_delay(xdata);
 
 	/* schedule writing a rumble report to the controller */
 	if (queue_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work))
