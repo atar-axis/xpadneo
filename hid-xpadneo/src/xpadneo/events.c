@@ -30,12 +30,6 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
-static bool param_enable_rolling_axis;
-module_param_named(enable_rolling_axis, param_enable_rolling_axis, bool, 0444);
-MODULE_PARM_DESC(enable_rolling_axis,
-		 "(bool) Enable rolling axis by combining both triggers, out of spec for many games. (deprecated) "
-		 "0: disable, 1: enable.");
-
 static bool param_disable_shift_mode;
 module_param_named(disable_shift_mode, param_disable_shift_mode, bool, 0644);
 MODULE_PARM_DESC(disable_shift_mode,
@@ -188,12 +182,6 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 				goto stop_processing;
 			}
 			break;
-		case ABS_Z:
-			xdata->last_abs_z = value;
-			goto combine_z_axes;
-		case ABS_RZ:
-			xdata->last_abs_rz = value;
-			goto combine_z_axes;
 		}
 	} else if (!param_disable_shift_mode && (usage->type == EV_KEY)
 		   && (usage->code == BTN_XBOX)) {
@@ -261,16 +249,6 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 
 	/* Let hid-core handle the event */
 	xdata->gamepad.sync = true;
-	return 0;
-
-combine_z_axes:
-	if (++xdata->count_abs_z_rz == 2) {
-		xdata->count_abs_z_rz = 0;
-		if (param_enable_rolling_axis) {
-			input_report_abs(gamepad, ABS_MISC, xdata->last_abs_rz - xdata->last_abs_z);
-			xdata->gamepad.sync = true;
-		}
-	}
 	return 0;
 
 keyboard_missing:
@@ -348,12 +326,6 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		/* set trigger parameters */
 		input_set_abs_params(gamepad, ABS_Z, 0, 1023, 4, 0);
 		input_set_abs_params(gamepad, ABS_RZ, 0, 1023, 4, 0);
-
-		/* combine triggers to form a rudder, use ABS_MISC to order after dpad */
-		if (param_enable_rolling_axis) {
-			hid_info(hdev, "enabling rolling axis is deprecated\n");
-			input_set_abs_params(gamepad, ABS_MISC, -1023, 1023, 3, 63);
-		}
 
 		/* do not report the keyboard buttons as part of the gamepad */
 		__clear_bit(BTN_SHARE, gamepad->keybit);
