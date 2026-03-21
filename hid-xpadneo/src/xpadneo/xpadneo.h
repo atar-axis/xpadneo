@@ -172,7 +172,7 @@ struct xpadneo_devdata {
 		spinlock_t lock;
 		struct delayed_work worker;
 		unsigned long throttle_until;
-		bool scheduled;
+		bool scheduled, enabled;
 		struct xpadneo_rumble_data data;
 		struct xpadneo_rumble_data shadow;
 		void *output_report_dmabuf;
