@@ -19,7 +19,7 @@ pool:
 steps:
 - script: |
     sudo apt-get update
-    sudo apt-get install -y build-essential pkg-config linux-headers-`uname -r`
+    sudo apt-get install -y build-essential pkg-config linux-headers-$(uname -r)
   displayName: 'setup'
 - script: |
     sudo apt-get install -y dkms
@@ -37,3 +37,4 @@ steps:
     sudo apt-get install -y libncurses-dev
     make -C misc/examples/c_hidraw
   displayName: 'misc'
+s

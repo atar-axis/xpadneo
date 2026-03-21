@@ -333,16 +333,16 @@ daemon.
 - On **Arch** and Arch-based distributions (like **EndeavourOS**), try
   `sudo pacman -S dkms linux-headers bluez bluez-utils`
 - On **Debian** based systems (like Ubuntu) you can install those packages by running
-  ``sudo apt-get install dkms linux-headers-`uname -r` ``
+  `sudo apt-get install dkms linux-headers-$(uname -r)`
 - On **Fedora**, it is
-  ``sudo dnf install dkms make bluez bluez-tools kernel-devel-`uname -r` kernel-headers ``
+  `sudo dnf install dkms make bluez bluez-tools kernel-devel-$(uname -r) kernel-headers`
 - On **Manjaro** try
   `sudo pacman -S dkms linux-latest-headers bluez bluez-utils`
 - On **openSUSE** (tested on Tumbleweed, should work for Leap), it is
   `sudo zypper install dkms make bluez kernel-devel kernel-source`
 - On **OSMC** you will have to run the following commands
-  ``sudo apt-get install dkms rbp2-headers-`uname -r`\``
-  ``sudo ln -s "/usr/src/rbp2-headers-`uname -r`" "/lib/modules/`uname -r`/build"`` (as a [workaround](https://github.com/osmc/osmc/issues/471))
+  `sudo apt-get install dkms rbp2-headers-$(uname -r)`
+  `sudo ln -s "/usr/src/rbp2-headers-$(uname -r)" "/lib/modules/$(uname -r)/build"` (as a [workaround](https://github.com/osmc/osmc/issues/471))
 - On **Raspbian**, it is
   `sudo apt-get install dkms raspberrypi-kernel-headers`
   If you recently updated your firmware using `rpi-update` the above package may not yet include the header files for
