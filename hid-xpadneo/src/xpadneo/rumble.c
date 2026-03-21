@@ -9,6 +9,7 @@
 
 #include <linux/delay.h>
 #include <linux/module.h>
+#include <linux/smp.h>
 
 #include "xpadneo.h"
 #include "helpers.h"
@@ -87,6 +88,10 @@ static void rumble_worker(struct work_struct *work)
 		/* let our scheduler know we've been called */
 		xdata->rumble.scheduled = false;
 
+		/* only proceed once initialization data is globally visible */
+		if (unlikely(!smp_load_acquire(&xdata->rumble.enabled)))
+			return;
+
 		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 			/* do not send these bits if not supported */
 			r->data.enable &= ~XBOX_RUMBLE_TRIGGERS;
@@ -161,7 +166,11 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
-	if (effect->type != FF_RUMBLE)
+	/* do not let FF clients run before rumble state is ready */
+	if (unlikely(!smp_load_acquire(&xdata->rumble.enabled)))
+		return 0;
+
+	if (unlikely(effect->type != FF_RUMBLE))
 		return 0;
 
 	/* copy data from effect structure at the very beginning */
@@ -343,6 +352,10 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct input_dev *gamepad = xdata->gamepad.idev;
+	int ret;
+
+	/* publish that rumble is not ready until init finishes */
+	smp_store_release(&xdata->rumble.enabled, false);
 
 	spin_lock_init(&xdata->rumble.lock);
 	INIT_DELAYED_WORK(&xdata->rumble.worker, rumble_worker);
@@ -355,14 +368,22 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	if (param_trigger_rumble_mode == PARAM_TRIGGER_RUMBLE_DISABLE)
 		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
 
-	if (param_ff_connect_notify)
-		xpadneo_benchmark(rumble_welcome, hdev);
-
 	/* initialize our rumble command throttle */
 	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
 
+	/* set capabilities */
 	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
-	return input_ff_create_memless(gamepad, NULL, rumble_play);
+	ret = input_ff_create_memless(gamepad, NULL, rumble_play);
+	if (ret)
+		return ret;
+
+	if (param_ff_connect_notify)
+		xpadneo_benchmark(rumble_welcome, hdev);
+
+	/* publish readiness once all rumble state is initialized */
+	smp_store_release(&xdata->rumble.enabled, true);
+
+	return 0;
 }
 
 int xpadneo_rumble_init_workqueue(void)
@@ -385,5 +406,8 @@ void xpadneo_rumble_destroy_workqueue(void)
 
 void xpadneo_rumble_remove(struct xpadneo_devdata *xdata)
 {
+	/* disable rumble before removable to prevent queueing new data */
+	smp_store_release(&xdata->rumble.enabled, false);
+
 	cancel_delayed_work_sync(&xdata->rumble.worker);
 }
