@@ -4,37 +4,36 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/c-cpp/gcc
 
 trigger:
-- master
+  - master
 
 strategy:
   matrix:
     Ubuntu 22.04 LTS:
-      imageName: 'ubuntu-22.04'
+      imageName: "ubuntu-22.04"
     Ubuntu 24.04 LTS:
-      imageName: 'ubuntu-24.04'
+      imageName: "ubuntu-24.04"
 
 pool:
   vmImage: $(imageName)
 
 steps:
-- script: |
-    sudo apt-get update
-    sudo apt-get install -y build-essential pkg-config linux-headers-$(uname -r)
-  displayName: 'setup'
-- script: |
-    sudo apt-get install -y dkms
-    sudo ./install.sh --verbose
-  displayName: 'install'
-- script: |
-    sudo apt-get install -y dkms
-    sudo ./uninstall.sh --verbose
-  displayName: 'uninstall'
-- script: |
-    sudo make install
-    sudo dkms autoinstall
-  displayName: 'autoinstall'
-- script: |
-    sudo apt-get install -y libncurses-dev
-    make -C misc/examples/c_hidraw
-  displayName: 'misc'
-s
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y build-essential pkg-config linux-headers-$(uname -r)
+    displayName: "setup"
+  - script: |
+      sudo apt-get install -y dkms
+      sudo ./install.sh --verbose
+    displayName: "install"
+  - script: |
+      sudo apt-get install -y dkms
+      sudo ./uninstall.sh --verbose
+    displayName: "uninstall"
+  - script: |
+      sudo make install
+      sudo dkms autoinstall
+    displayName: "autoinstall"
+  - script: |
+      sudo apt-get install -y libncurses-dev
+      make -C misc/examples/c_hidraw
+    displayName: "misc"
