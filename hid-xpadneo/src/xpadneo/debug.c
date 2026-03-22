@@ -34,7 +34,9 @@ struct crc_name {
 	char *name;
 };
 
-const struct crc_name known_checksums[] = { };
+const struct crc_name known_checksums[] = {
+	{ .crc16 = 0x8BC5, .name = "Xbox Wireless Controller (legacy)" },
+};
 
 /*
  * Parse the first three OUI bytes from a Bluetooth MAC address string of
