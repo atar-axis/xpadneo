@@ -25,6 +25,10 @@ module_param_named(debug_descriptor, param_debug_descriptor, bool, 0644);
 MODULE_PARM_DESC(debug_descriptor,
 		 "(bool) Dump unpatched HID descriptor to dmesg. 0: auto, 1: always.");
 
+static bool param_debug_hid;
+module_param_named(debug_hid, param_debug_hid, bool, 0644);
+MODULE_PARM_DESC(debug_hid, "(bool) Debug HID reports. 0: disable, 1: enable.");
+
 struct crc_name {
 	u16 crc16;
 	char *name;
@@ -57,6 +61,44 @@ static int parse_oui(const char *uniq, u8 *b0, u8 *b1, u8 *b2)
 		return -EINVAL;
 
 	return 0;
+}
+
+void xpadneo_debug_hid_report(struct hid_device *hdev, const struct xpadneo_rumble_report *r,
+			      const size_t len)
+{
+	if (likely(!param_debug_hid))
+		return;
+
+	if (unlikely(len == 0)) {
+		hid_err(hdev, "HID debug: invalid length %zu\n", len);
+		return;
+	}
+
+	switch (r->report_id) {
+	case 0x03:
+		if (unlikely(len != sizeof(*r))) {
+			hid_info(hdev, "HID debug: len %zu malformed cmd 0x%02x\n", len,
+				 r->report_id);
+		} else {
+			hid_info(hdev,
+				 "HID debug: rumble cmd 0x%02x "
+				 "motors left %d right %d strong %d weak %d "
+				 "magnitude left %d right %d strong %d weak %d "
+				 "pulse sustain %dms release %dms loop %d\n",
+				 r->report_id,
+				 !!(r->data.enable & XBOX_RUMBLE_LEFT),
+				 !!(r->data.enable & XBOX_RUMBLE_RIGHT),
+				 !!(r->data.enable & XBOX_RUMBLE_STRONG),
+				 !!(r->data.enable & XBOX_RUMBLE_WEAK),
+				 r->data.magnitude_left, r->data.magnitude_right,
+				 r->data.magnitude_strong, r->data.magnitude_weak,
+				 r->data.pulse_sustain_10ms * 10,
+				 r->data.pulse_release_10ms * 10, r->data.loop_count);
+		}
+		break;
+	default:
+		hid_info(hdev, "HID debug: unhandled cmd 0x%02x\n", r->report_id);
+	}
 }
 
 /*

@@ -10,41 +10,12 @@
 
 #include "xpadneo.h"
 
-static bool param_debug_hid;
-module_param_named(debug_hid, param_debug_hid, bool, 0644);
-MODULE_PARM_DESC(debug_hid, "(bool) Debug HID reports. 0: disable, 1: enable.");
-
 int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
 {
 	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
-	if (unlikely(param_debug_hid && (len > 0))) {
-		switch (buf[0]) {
-		case 0x03:
-			if (len >= sizeof(*r)) {
-				hid_info(hdev,
-					 "HID debug: len %zu rumble cmd 0x%02x "
-					 "motors left %d right %d strong %d weak %d "
-					 "magnitude left %d right %d strong %d weak %d "
-					 "pulse sustain %dms release %dms loop %d\n",
-					 len, r->report_id,
-					 !!(r->data.enable & XBOX_RUMBLE_LEFT),
-					 !!(r->data.enable & XBOX_RUMBLE_RIGHT),
-					 !!(r->data.enable & XBOX_RUMBLE_STRONG),
-					 !!(r->data.enable & XBOX_RUMBLE_WEAK),
-					 r->data.magnitude_left, r->data.magnitude_right,
-					 r->data.magnitude_strong, r->data.magnitude_weak,
-					 r->data.pulse_sustain_10ms * 10,
-					 r->data.pulse_release_10ms * 10, r->data.loop_count);
-			} else {
-				hid_info(hdev, "HID debug: len %zu malformed cmd 0x%02x\n", len,
-					 buf[0]);
-			}
-			break;
-		default:
-			hid_info(hdev, "HID debug: len %zu unhandled cmd 0x%02x\n", len, buf[0]);
-		}
-	}
+	xpadneo_debug_hid_report(hdev, r, len);
+
 	return hid_hw_output_report(hdev, buf, len);
 }
 
