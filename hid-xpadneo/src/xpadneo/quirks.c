@@ -41,24 +41,16 @@ struct quirk {
 };
 
 /* MAC OUI masks */
-#define XPADNEO_OUI_MASK(oui, mask)   XPADNEO_OUI_CHECK(oui, mask, mask)
-#define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
+#define XPADNEO_OUI_MASK_LAA_MULTICAST (XPADNEO_OUI_IS_MULTICAST | XPADNEO_OUI_IS_LAA)
 
 static const struct quirk quirks[] = {
-	DEVICE_OUI_QUIRK("28:EA:0B", XPADNEO_QUIRK_NO_HEURISTICS),
-	DEVICE_OUI_QUIRK("3C:FA:06", XPADNEO_QUIRK_NO_HEURISTICS),
-	DEVICE_OUI_QUIRK("68:6C:E6", XPADNEO_QUIRK_NO_HEURISTICS),
-	DEVICE_OUI_QUIRK("78:86:2E", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("98:B6:EA",
 			 XPADNEO_QUIRK_NO_PULSE | XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
 			 XPADNEO_QUIRK_REVERSE_MASK),
 	DEVICE_OUI_QUIRK("98:B6:EC",
 			 XPADNEO_QUIRK_SIMPLE_CLONE | XPADNEO_QUIRK_SWAPPED_MASK),
 	DEVICE_OUI_QUIRK("A0:5A:5D", XPADNEO_QUIRK_NO_HAPTICS),
-	DEVICE_OUI_QUIRK("A8:8C:3E", XPADNEO_QUIRK_NO_HEURISTICS),
-	DEVICE_OUI_QUIRK("AC:8E:BD", XPADNEO_QUIRK_NO_HEURISTICS),
 	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_SIMPLE_CLONE),
-	DEVICE_OUI_QUIRK("EC:83:50", XPADNEO_QUIRK_NO_HEURISTICS),
 };
 
 int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
@@ -66,7 +58,7 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	struct hid_device *hdev = xdata->hdev;
 	struct input_dev *gamepad = xdata->gamepad.idev;
 	u32 quirks_set = 0, quirks_unset = 0, quirks_override = U32_MAX;
-	u8 oui_byte;
+	u8 oui_byte = 0;
 	char oui[3] = { };
 
 	for (int i = 0; i < ARRAY_SIZE(quirks); i++) {
@@ -141,15 +133,20 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	 * Check whether we should enable heuristics checks at all, and then
 	 * copy the first two characters from the uniq ID (MAC address) and
 	 * expect it being too big to copy, then `kstrtou8()` converts the
-	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte
+	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte.
 	 */
 	if (((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
 	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)
 	    && (strscpy(oui, gamepad->uniq, sizeof(oui)) == -E2BIG)
 	    && (kstrtou8(oui, 16, &oui_byte) == 0)) {
-		if ((xdata->original_rsize == 283)
-		    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)) {
-			hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
+		/*
+		 * All known GameSir devices at least one of the LAA or
+		 * multicast bits set, and a descriptor length of 283 or 306
+		 * bytes.
+		 */
+		if (((xdata->original_rsize == 283) || (xdata->original_rsize == 306))
+		    && ((oui_byte & XPADNEO_OUI_MASK_LAA_MULTICAST) > 0)) {
+			hid_info(hdev, "enabling heuristic GameSir quirks\n");
 			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 		}
 	}

@@ -20,9 +20,6 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 
-/* check OUI masks */
-#define XPADNEO_OUI_CHECK(oui, m, v) (((oui)&(m)) == (v))
-
 /* detect locally administered unicast MAC addresses */
 #define XPADNEO_OUI_IS_MULTICAST       (1 << 0)
 #define XPADNEO_OUI_IS_LAA             (1 << 1)
