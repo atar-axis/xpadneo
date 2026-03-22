@@ -20,6 +20,13 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 
+/* check OUI masks */
+#define XPADNEO_OUI_CHECK(oui, m, v) (((oui)&(m)) == (v))
+
+/* detect locally administered unicast MAC addresses */
+#define XPADNEO_OUI_IS_MULTICAST       (1 << 0)
+#define XPADNEO_OUI_IS_LAA             (1 << 1)
+
 /* button aliases */
 #define BTN_SHARE KEY_F12
 #define BTN_XBOX  BTN_MODE
@@ -183,6 +190,9 @@ extern int xpadneo_synthetic_register(struct xpadneo_devdata *, const char *,
 				      struct xpadneo_subdevice *);
 extern void xpadneo_synthetic_remove(struct xpadneo_devdata *, const char *,
 				     struct xpadneo_subdevice *);
+
+/* xpadneo descriptor debug helpers */
+extern void xpadneo_debug_descriptor(struct hid_device *, const __u8 *, unsigned int);
 
 /* xpadneo core device functions */
 extern void xpadneo_device_report(struct hid_device *, struct hid_report *);

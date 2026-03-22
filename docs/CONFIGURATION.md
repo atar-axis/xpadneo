@@ -42,6 +42,8 @@ files in `/sys/module/hid_xpadneo/parameters`:
   - Let's you disable Xbox logo button shift behavior
   - '0' Xbox logo button will be used as shift
   - '1' will pass through the Xbox logo button as is
+- `debug_descriptor` (default 0)
+  - Enable debug logging for HID descriptor parsing
 
 Some settings may need to be changed at loading time of the module, take a look at the following example to see how
 that works:
