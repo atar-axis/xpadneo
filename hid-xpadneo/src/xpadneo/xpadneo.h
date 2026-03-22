@@ -218,7 +218,7 @@ extern void xpadneo_rumble_remove(struct xpadneo_devdata *);
 extern int xpadneo_mouse_init(struct xpadneo_devdata *);
 extern void xpadneo_mouse_init_timer(struct xpadneo_devdata *);
 extern void xpadneo_mouse_report(struct timer_list *);
-extern void xpadneo_mouse_toggle(struct xpadneo_devdata *);
+extern bool xpadneo_mouse_toggle(struct xpadneo_devdata *);
 extern int xpadneo_mouse_event(struct xpadneo_devdata *, struct hid_usage *, __s32);
 extern int xpadneo_mouse_raw_event(struct xpadneo_devdata *, struct hid_report *, u8 *, int);
 extern void xpadneo_mouse_remove_timer(struct xpadneo_devdata *);
