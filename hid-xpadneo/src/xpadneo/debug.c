@@ -36,6 +36,7 @@ struct crc_name {
 
 const struct crc_name known_checksums[] = {
 	{ .crc16 = 0x8BC5, .name = "Xbox Wireless Controller (legacy)" },
+	{ .crc16 = 0x931D, .name = "Xbox Wireless Controller (modern)" },
 };
 
 /*
