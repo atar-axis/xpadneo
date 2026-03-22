@@ -110,7 +110,7 @@ Please describe how it is failing below in the next sections.
 
 <!-- Paste the output below the line prepended with # -->
 ```console
-# xxd -c20 -g1 /sys/module/hid_xpadneo/drivers/hid:xpadneo/0005:045E:*/report_descriptor | tee >(cksum)
+# dmesg -H | egrep -i 'bt|bluetooth|hci|l2cap|att|xbox|045e|hid|input|xpadneo' | tee xpadneo-dmesg.txt
 
 ```
 
@@ -127,8 +127,6 @@ Please describe how it is failing below in the next sections.
      - rfkill list
      - systemctl status bluetooth --no-pager
 -->
-
-<!-- Run `dmesg -H | egrep -i 'bt|bluetooth|hci|l2cap|att|xbox|045e|hid|input|xpadneo' | tee xpadneo-dmesg.txt`. -->
 
 <!-- Run `lsusb` and pick the device number of your dongle. -->
 

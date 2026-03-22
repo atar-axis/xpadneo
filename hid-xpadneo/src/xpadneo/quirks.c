@@ -41,7 +41,7 @@ struct quirk {
 };
 
 /* MAC OUI masks */
-#define XPADNEO_OUI_MASK(oui, mask)   (((oui)&(mask)) == (mask))
+#define XPADNEO_OUI_MASK(oui, mask)   XPADNEO_OUI_CHECK(oui, mask, mask)
 #define XPADNEO_OUI_MASK_GAMESIR_NOVA 0x28
 
 static const struct quirk quirks[] = {
@@ -138,18 +138,20 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	}
 
 	/*
+	 * Check whether we should enable heuristics checks at all, and then
 	 * copy the first two characters from the uniq ID (MAC address) and
 	 * expect it being too big to copy, then `kstrtou8()` converts the
 	 * uniq ID "aa:bb:cc:dd:ee:ff" to u8, so we get the first OUI byte
 	 */
-	if ((xdata->original_rsize == 283)
-	    && ((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
+	if (((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
 	    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)
 	    && (strscpy(oui, gamepad->uniq, sizeof(oui)) == -E2BIG)
-	    && (kstrtou8(oui, 16, &oui_byte) == 0)
-	    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)) {
-		hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
-		xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+	    && (kstrtou8(oui, 16, &oui_byte) == 0)) {
+		if ((xdata->original_rsize == 283)
+		    && XPADNEO_OUI_MASK(oui_byte, XPADNEO_OUI_MASK_GAMESIR_NOVA)) {
+			hid_info(hdev, "enabling heuristic GameSir Nova quirks\n");
+			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+		}
 	}
 
 	/* handle quirk flags which remove a behavior after heuristics */

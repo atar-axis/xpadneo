@@ -93,8 +93,11 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 
+	/* preserve the original descriptor size for post-parse quirk heuristics */
 	xdata->original_rsize = *rsize;
-	hid_info(hdev, "report descriptor size: %d bytes\n", *rsize);
+
+	/* log size/CRC and optionally hex-dump before any in-place patches */
+	xpadneo_debug_descriptor(hdev, rdesc, *rsize);
 
 	/* fixup trailing NUL byte */
 	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
