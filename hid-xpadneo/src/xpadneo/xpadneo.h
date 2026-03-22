@@ -218,7 +218,7 @@ extern void xpadneo_mouse_remove(struct xpadneo_devdata *);
 /* battery and power functions */
 extern int xpadneo_power_init(struct xpadneo_devdata *);
 extern void xpadneo_power_update(struct xpadneo_devdata *, u8);
-extern void xpadneo_power_remove(struct xpadneo_devdata *xdata);
+extern void xpadneo_power_remove(struct xpadneo_devdata *);
 
 /* driver quirks handling */
 extern int xpadneo_quirks_init(struct xpadneo_devdata *);
