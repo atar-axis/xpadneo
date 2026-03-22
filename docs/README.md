@@ -302,7 +302,9 @@ The driver can switch to emulating a mouse (and limited keyboard) on all support
 - B for <key>Escape</key>
 
 **Important:** The mouse profile won't work if you disabled the shift-mode of the Xbox logo button (module parameter
-`disable_shift_mode`).
+`disable_shift_mode`). If you set the new `disable_mouse` module parameter to `1`, xpadneo will no longer register a
+mouse device at all, so the Guide button combo will simply pass through to the desktop and no mouse emulation will be
+started.
 
 
 ## Getting Started

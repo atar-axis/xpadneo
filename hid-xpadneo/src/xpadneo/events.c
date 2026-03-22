@@ -253,8 +253,8 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		}
 		switch (usage->code) {
 		case BTN_SELECT:
-			if (value == 1)
-				xpadneo_mouse_toggle(xdata);
+			if ((value == 1) && xpadneo_mouse_toggle(xdata))
+				xdata->profile_switched = true;
 			goto stop_processing;
 		}
 	}

@@ -42,6 +42,10 @@ files in `/sys/module/hid_xpadneo/parameters`:
   - Let's you disable Xbox logo button shift behavior
   - '0' Xbox logo button will be used as shift
   - '1' will pass through the Xbox logo button as is
+- `disable_mouse` (default 0)
+  - Let's you disable initialization of a mouse device through xpadneo, thus disabling mouse mode.
+  - '0' mouse device will be available
+  - '1' mouse device will be absent
 - `debug_descriptor` (default 0)
   - Enable debug logging for HID descriptor parsing
 

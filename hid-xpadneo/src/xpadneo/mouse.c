@@ -6,21 +6,29 @@
  * Copyright (c) 2021 Kai Krakow <kai@kaishome.de>
  */
 
+#include <linux/module.h>
+
 #include "xpadneo.h"
 
 /* always include last */
 #include "compat.h"
+
+static bool param_disable_mouse;
+module_param_named(disable_mouse, param_disable_mouse, bool, 0444);
+MODULE_PARM_DESC(disable_mouse,
+		 "(bool) Disable mouse device permanently. 0: allow mouse, 1: disallow mouse.");
 
 /* Mouse movement deadzone and trigger thresholds (raw values) */
 #define XPADNEO_MOUSE_MOVEMENT_DEADZONE   3072
 #define XPADNEO_TRIGGER_RELEASE_THRESHOLD 384
 #define XPADNEO_TRIGGER_PRESS_THRESHOLD   640
 
-void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
+bool xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 {
 	if (!xdata->mouse.idev) {
 		xdata->mouse_mode = false;
 		hid_info(xdata->hdev, "mouse not available\n");
+		return false;
 	} else if (xdata->mouse_mode) {
 		xdata->mouse_mode = false;
 		hid_info(xdata->hdev, "mouse mode disabled\n");
@@ -30,7 +38,7 @@ void xpadneo_mouse_toggle(struct xpadneo_devdata *xdata)
 	}
 
 	/* Indicate that a request was made */
-	xdata->profile_switched = true;
+	return true;
 }
 
 #define mouse_report_rel(a,v) if((v)!=0)input_report_rel(mouse,(a),(v))
@@ -91,7 +99,7 @@ int xpadneo_mouse_event(struct xpadneo_devdata *xdata, struct hid_usage *usage, 
 	struct input_dev *consumer = xdata->consumer.idev;
 	struct input_dev *keyboard = xdata->keyboard.idev;
 
-	if (!xdata->mouse_mode)
+	if (!xdata->mouse_mode || !xdata->mouse.idev)
 		return 0;
 
 	if (usage->type == EV_ABS) {
@@ -203,6 +211,12 @@ int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 {
 	int ret;
 
+	if (param_disable_mouse) {
+		xdata->mouse.idev = NULL;
+		hid_info(xdata->hdev, "Mouse device disabled permanently.\n");
+		return 0;
+	}
+
 	if (!xdata->mouse.idev) {
 		ret = xpadneo_synthetic_init(xdata, "Mouse", &xdata->mouse);
 		if (ret || !xdata->mouse.idev)
@@ -240,16 +254,25 @@ int xpadneo_mouse_init(struct xpadneo_devdata *xdata)
 
 void xpadneo_mouse_init_timer(struct xpadneo_devdata *xdata)
 {
+	if (param_disable_mouse)
+		return;
+
 	timer_setup(&xdata->mouse_timer, xpadneo_mouse_report, 0);
 	mod_timer(&xdata->mouse_timer, jiffies);
 }
 
 void xpadneo_mouse_remove_timer(struct xpadneo_devdata *xdata)
 {
+	if (param_disable_mouse)
+		return;
+
 	timer_delete_sync(&xdata->mouse_timer);
 }
 
 void xpadneo_mouse_remove(struct xpadneo_devdata *xdata)
 {
+	if (param_disable_mouse)
+		return;
+
 	xpadneo_synthetic_remove(xdata, "mouse", &xdata->mouse);
 }
