@@ -83,7 +83,7 @@ static void rumble_worker(struct work_struct *work)
 		r->data.loop_count = 0xEB;
 	}
 
-	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
+	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
 
 		/* let our scheduler know we've been called */
 		xdata->rumble.scheduled = false;
@@ -143,7 +143,7 @@ static void rumble_worker(struct work_struct *work)
 	 * throttle next command submission, the firmware doesn't like us to
 	 * send rumble data any faster
 	 */
-	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
+	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
 		xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
 		if (xdata->rumble.scheduled) {
 			unsigned long delay_work = calculate_throttling_delay(xdata);
@@ -205,7 +205,7 @@ static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effe
 	 */
 	max_main = max(weak, strong);
 
-	scoped_guard(spinlock_irq, &xdata->rumble.lock) {
+	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
 		unsigned long delay_work;
 
 		/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
