@@ -84,9 +84,6 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		memcpy(&xdata->input_report_0x01, data, size);
 	}
 
-	/* reset the count at the beginning of the frame */
-	xdata->count_abs_z_rz = 0;
-
 	/* we are taking care of the battery report ourselves */
 	if (xdata->battery.report_id && report->id == xdata->battery.report_id && reportsize == 2) {
 		xpadneo_power_update(xdata, data[1]);
@@ -181,6 +178,12 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 				xdata->gamepad.sync = true;
 				goto stop_processing;
 			}
+			break;
+		case ABS_Z:
+			xdata->last_abs_z = value;
+			break;
+		case ABS_RZ:
+			xdata->last_abs_rz = value;
 			break;
 		}
 	} else if (!param_disable_shift_mode && (usage->type == EV_KEY)

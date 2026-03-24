@@ -164,7 +164,6 @@ struct xpadneo_devdata {
 	u8 input_report_0x01[XPADNEO_REPORT_0x01_LENGTH];
 
 	/* axis states */
-	u8 count_abs_z_rz;
 	s32 last_abs_z;
 	s32 last_abs_rz;
 
