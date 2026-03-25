@@ -1,5 +1,55 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.10 up to v0.10.1
+
+This is a focused maintenance release for the v0.10 series with an emphasis on stability and compatibility.
+
+The main work in v0.10.1 targets rumble reliability. We now advertise rumble support early while deferring actual
+rumble traffic until initialization is fully complete, reducing race conditions with userspace stacks that probe
+capabilities immediately after hotplug. In addition, rumble locking was corrected to properly preserve IRQ state,
+fixing a regression that could lead to hard lockups under force-feedback load.
+
+Beyond rumble, this update improves day-to-day usability and hardware coverage: the optional virtual mouse device can
+now be disabled completely, quirk detection was extended for newer GameSir Nova variants, and several
+documentation/debugging details were cleaned up.
+
+As a v0.10 maintenance release, this branch intentionally keeps the existing ff-memless-based architecture. The larger
+native-rumble rework remains part of the v0.11 development line.
+
+Thanks to everyone who reported regressions, provided traces, and helped validate fixes on real hardware and different
+userspace environments.
+
+
+## Headlines:
+
+  - xpadneo, docs: Replace back ticks syntax for shell substitution
+  - xpadneo, mouse: Allow disabling the mouse device completely
+  - xpadneo, quirks: Add OUI flag checks for new GameSir Nova
+  - xpadneo, rumble: Do not send rumble commands unless ready
+  - xpadneo, rumble: Properly save and restore IRQ state during locking
+
+```
+Kai Krakow (17):
+      xpadneo, licensing: Link the licenses for convenience
+      xpadneo, rumble: Remove rumble accumulation
+      xpadneo, rumble: Rename private function `xpadneo_rumble_welcome`
+      xpadneo, rumble: Introduce helper to calculate throttling delay
+      xpadneo, rumble: Migrate to more modern scoped locks
+      xpadneo, docs: Replace back ticks syntax for shell substitution
+      xpadneo, rumble: Tighten the rumble throttle timing
+      xpadneo, docs: Fix style of `disable_shift_mode`
+      xpadneo, power: Fix header export signature
+      xpadneo, debug: Add new debug mode to improve logging for new devices
+      xpadneo, debug: Move HID report debugger to new debug module
+      xpadneo, quirks: Add OUI flag checks for new GameSir Nova
+      xpadneo, debug: Add Xbox Wireless Controller modern descriptor
+      xpadneo, debug: Add Xbox Elite 2 Controller descriptor
+      xpadneo, mouse: Allow disabling the mouse device completely
+      xpadneo, rumble: Do not send rumble commands unless ready
+      xpadneo, rumble: Properly save and restore IRQ state during locking
+```
+
+
 # Changes since v0.9 up to v0.10
 
 *Code name:*
