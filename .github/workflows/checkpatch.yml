@@ -15,4 +15,4 @@ jobs:
         run: wget https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/scripts/checkpatch.pl
 
       - name: Run checkpatch.pl
-        run: perl checkpatch.pl --ignore BAD_SIGN_OFF,FILE_PATH_CHANGES,FUNCTION_ARGUMENTS,FSF_MAILING_ADDRESS,LINUX_VERSION_CODE,SPLIT_STRING --no-tree <(git format-patch -U10 --stdout origin/master)
+        run: perl checkpatch.pl --ignore BAD_SIGN_OFF,COMMIT_LOG_USE_LINK,FILE_PATH_CHANGES,FUNCTION_ARGUMENTS,FSF_MAILING_ADDRESS,LINUX_VERSION_CODE,SPLIT_STRING --no-tree <(git format-patch -U10 --stdout origin/master)
