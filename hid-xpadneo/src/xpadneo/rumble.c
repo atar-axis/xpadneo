@@ -68,16 +68,14 @@ static void rumble_worker(struct work_struct *work)
 	r->data.enable = XBOX_RUMBLE_ALL;
 
 	/*
-	 * if pulse is not supported, we do not have to care about explicitly
-	 * stopping the effect, the kernel will do this for us as part of its
-	 * ff-memless emulation
+	 * if pulse is not supported, we do not care about explicitly stopping
+	 * the effect, the game (or another client) is expected to do this
 	 */
 	if (likely((xdata->quirks & XPADNEO_QUIRK_NO_PULSE) == 0)) {
 		/*
-		 * ff-memless has a time resolution of 50ms but we pulse the
-		 * motors for 60 minutes as the Windows driver does. To work
-		 * around a potential firmware crash, we filter out repeated
-		 * motor programming further below.
+		 * We pulse the motors for 60 minutes as the Windows driver
+		 * does. To work around a potential firmware crash, we filter
+		 * out repeated motor programming further below.
 		 */
 		r->data.pulse_sustain_10ms = 0xFF;
 		r->data.loop_count = 0xEB;
@@ -158,24 +156,36 @@ static inline u8 calculate_magnitude(s32 magnitude, int fraction)
 	return (u8)((magnitude * fraction + S16_MAX) / U16_MAX);
 }
 
-static int rumble_play(struct input_dev *dev, void *data, struct ff_effect *effect)
+static int rumble_playback(struct input_dev *dev, int effect_id, int value)
 {
 	int fraction_TL, fraction_TR, fraction_MAIN, percent_TRIGGERS, percent_MAIN;
 	s32 weak, strong, max_main;
 
 	struct hid_device *hdev = input_get_drvdata(dev);
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
+	struct ff_effect *effect = &xdata->gamepad.idev->ff->effects[effect_id];
 
 	/* do not let FF clients run before rumble state is ready */
 	if (unlikely(!smp_load_acquire(&xdata->rumble.enabled)))
 		return 0;
 
-	if (unlikely(effect->type != FF_RUMBLE))
+	if (unlikely(effect->type != FF_RUMBLE)) {
+		hid_info(hdev, "%s unexpected effect_id %d value %d\n", __func__, effect_id, value);
 		return 0;
+	}
 
-	/* copy data from effect structure at the very beginning */
-	weak = effect->u.rumble.weak_magnitude;
-	strong = effect->u.rumble.strong_magnitude;
+	if (value == 0) {
+		/* explicitly stop the effect */
+		weak = 0;
+		strong = 0;
+	} else {
+		if (value > 1)
+			hid_warn_once(hdev, "%s unexpected value %d > 1\n", __func__, value);
+
+		/* copy data from effect structure at the very beginning */
+		weak = effect->u.rumble.weak_magnitude;
+		strong = effect->u.rumble.strong_magnitude;
+	}
 
 	/* calculate the rumble attenuation */
 	percent_MAIN = 100 - param_rumble_attenuation[0];
@@ -348,6 +358,63 @@ static void rumble_welcome(struct hid_device *hdev)
 	}
 }
 
+static int ff_upload_effect(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old)
+{
+	struct hid_device *hdev = input_get_drvdata(dev);
+	const char *type_name = "UNKNOWN";
+
+	/* only log what effect type is being uploaded */
+
+	switch (effect->type) {
+	case FF_PERIODIC:
+		type_name = "FF_PERIODIC";
+		break;
+	case FF_CONSTANT:
+		type_name = "FF_CONSTANT";
+		break;
+	case FF_SPRING:
+		type_name = "FF_SPRING";
+		break;
+	case FF_DAMPER:
+		type_name = "FF_DAMPER";
+		break;
+	case FF_RUMBLE:
+		/* only force effects should have a direction */
+		if (unlikely(effect->direction))
+			hid_warn_once(hdev, "%s unexpected direction %d for non-force effect\n",
+				      __func__, effect->direction);
+
+		/* games are expected to trigger rumble effects autonomously */
+		if (unlikely(effect->trigger.button || effect->trigger.interval))
+			hid_warn_once(hdev,
+				      "%s unexpected triggering condition %d:%d for rumble effect\n",
+				      __func__, effect->trigger.button, effect->trigger.interval);
+
+		/* replay should not be used when streaming rumble effects */
+		if (unlikely(((effect->replay.length != U16_MAX) && (effect->replay.length != 0))
+			     || effect->replay.delay))
+			hid_warn_once(hdev,
+				      "%s unexpected replay parameters %u:%u while streaming rumble\n",
+				      __func__, effect->replay.length, effect->replay.delay);
+
+		/* do not log, effect is known */
+		return 0;
+	}
+
+	hid_info(hdev, "ff: effect upload requested (id %d, type %s), rejecting.\n",
+		 effect->id, type_name);
+
+	return -EOPNOTSUPP;
+}
+
+static int ff_erase_effect(struct input_dev *dev, int effect_id)
+{
+	struct hid_device *hdev = input_get_drvdata(dev);
+
+	hid_info(hdev, "ff: effect %d erased\n", effect_id);
+	return 0;
+}
+
 int xpadneo_rumble_init(struct hid_device *hdev)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -373,9 +440,14 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 
 	/* set capabilities */
 	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
-	ret = input_ff_create_memless(gamepad, NULL, rumble_play);
+	ret = input_ff_create(gamepad, FF_MAX_EFFECTS);
 	if (ret)
 		return ret;
+
+	/* initialize rumble callbacks */
+	gamepad->ff->upload = ff_upload_effect;
+	gamepad->ff->erase = ff_erase_effect;
+	gamepad->ff->playback = rumble_playback;
 
 	if (param_ff_connect_notify)
 		xpadneo_benchmark(rumble_welcome, hdev);

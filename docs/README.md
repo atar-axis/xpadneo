@@ -47,6 +47,10 @@ Please refer to [LICENSE.md](../LICENSE.md) for details. If you have any questio
 The project introduced some packaging helpers and changed the installation process. Please see
 [Packaging](https://atar-axis.github.io/xpadneo/#packaging).
 
+Version v0.11 dropped the dependency on `CONFIG_INPUT_FF_MEMLESS` and uses a more precise method to run rumble effects,
+eliminating aliasing effects due to different frequencies of games (60 fps and above) and `ff-memless` (20 hz). Our
+new method allows frequencies up to 100 hz which is the limit of the controller's hardware.
+
 
 ## Breaking Changes
 
@@ -96,7 +100,7 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 ## Advantages of this Driver
 
 - Supports Bluetooth
-- Supports most force feedback and all rumble effects through Linux `ff-memless` effect emulation
+- Supports direct rumble effects avoiding aliasing effects by not using `ff-memless` (streaming mode only)
 - Supports [Trigger Force Feedback](https://www.youtube.com/watch?v=G4PHupKm2OQ) in every game by applying a
   pressure-dependent effect intensity to the current rumble effect (not even supported in Windows)
 - Supports adjusting rumble intensity including disabling rumble
@@ -119,6 +123,12 @@ PID 0x0B22 while the other models identify with PID 0x0B13. This has some known 
 
 Across all models, xpadneo won't support audio features of the controllers because the firmware doesn't support audio
 in Bluetooth mode. In the future, xpadneo may support audio when USB and dongle support will be added.
+
+There are two modes for rumble: Streaming and non-streaming. Streaming means, a game will send one rumble command per
+frame. Non-streaming means, effects are sent in advance, planned into the future, and can potentially play at the same
+time. This is mostly useful for force feedback effects, which Xbox controllers cannot replicate, they only support
+haptic feedback. Thus, non-streaming rumble programming is not supported, and we found no game that uses it. We will
+still detect it and log that incident to dmesg once, so users can report if they found a game that uses it.
 
 
 ### Xbox One S Wireless Controller
