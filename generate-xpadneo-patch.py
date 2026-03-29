@@ -3,10 +3,16 @@
 Generate xpadneo Kernel Integration Patch
 
 This script automatically generates a kernel patch to integrate xpadneo
-for any Linux kernel version.
+for any Linux kernel version, along with required udev rules and modprobe
+configuration files.
 
 Usage: ./generate-xpadneo-patch.py <kernel-version>
 Example: ./generate-xpadneo-patch.py 6.20.5
+
+Output:
+  - xpadneo-kernel-integration.patch - Kernel patch
+  - 60-xpadneo.rules - Udev rules for device permissions
+  - xpadneo.conf - Modprobe configuration and module aliases
 
 Requirements:
   - linux-<version>/ directory with kernel source
@@ -138,6 +144,7 @@ obj-$(CONFIG_HID_XPADNEO) += hid-xpadneo.o
 hid-xpadneo-y := \\
 	consumer.o \\
 	core.o \\
+	debug.o \\
 	device.o \\
 	events.o \\
 	keyboard.o \\
@@ -147,6 +154,44 @@ hid-xpadneo-y := \\
 	quirks.o \\
 	rumble.o \\
 	synthetic.o
+"""
+
+def create_udev_rules():
+    """Generate xpadneo udev rules content"""
+    return """# xpadneo - Xbox Wireless Controller driver udev rules
+# This file provides proper permissions and access for xpadneo controllers
+
+# Rebind driver to xpadneo
+ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
+
+# Tag xpadneo devices for access in the user session
+# MODE="0664" allows user read/write access for proper Steam Input detection
+# LIBINPUT_IGNORE_DEVICE prevents desktop environments from using controller as mouse
+ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+
+# Allow hidraw access for Steam Input to properly detect controller models and features
+# This is needed with PID spoofing disabled (default) for Elite paddle detection
+ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", TAG+="uaccess", MODE="0660"
+"""
+
+def create_modprobe_conf():
+    """Generate xpadneo modprobe configuration"""
+    return """# xpadneo - Xbox Wireless Controller driver module configuration
+
+# Module aliases for automatic loading
+alias hid:b0005g*v0000045Ep000002E0 hid_xpadneo
+alias hid:b0005g*v0000045Ep000002FD hid_xpadneo
+alias hid:b0005g*v0000045Ep00000B05 hid_xpadneo
+alias hid:b0005g*v0000045Ep00000B13 hid_xpadneo
+alias hid:b0005g*v0000045Ep00000B20 hid_xpadneo
+alias hid:b0005g*v0000045Ep00000B22 hid_xpadneo
+
+# Ensure uhid is loaded before bluetooth for controller firmware 5.x support
+softdep bluetooth pre: uhid
+
+# Optional: Enable PID spoofing for legacy SDL2 (<2.28) compatibility
+# Uncomment the line below if you have games with SDL2 < 2.28 button mapping issues
+# options hid_xpadneo enable_pid_spoof=1
 """
 
 def create_patch_header(xpadneo_version):
@@ -178,7 +223,11 @@ def generate_patch(kernel_version):
     info(f"Target kernel version: {kernel_version}")
     info(f"Kernel directory: {kernel_dir}")
     info(f"xpadneo directory: {xpadneo_dir}")
-    info(f"Output patch: {patch_file}")
+    print()
+    info("Output files:")
+    info(f"  - Kernel patch: {patch_file}")
+    info(f"  - Udev rules: 60-xpadneo.rules")
+    info(f"  - Modprobe config: xpadneo.conf")
 
     # Warn if patch file already exists
     if patch_file.exists():
@@ -370,6 +419,17 @@ def generate_patch(kernel_version):
     if not patch_file.exists():
         error("Patch file was not created")
 
+    # Generate udev rules and modprobe configuration
+    info("Generating udev rules and modprobe configuration...")
+    udev_rules_file = script_dir / "60-xpadneo.rules"
+    modprobe_conf_file = script_dir / "xpadneo.conf"
+
+    udev_rules_file.write_text(create_udev_rules())
+    modprobe_conf_file.write_text(create_modprobe_conf())
+
+    success(f"Created udev rules: {udev_rules_file}")
+    success(f"Created modprobe config: {modprobe_conf_file}")
+
     # Get patch statistics
     patch_size = patch_file.stat().st_size
     patch_lines = len(patch_file.read_text().split('\n'))
@@ -381,6 +441,9 @@ def generate_patch(kernel_version):
     print("=" * 60)
     print()
     success(f"Patch file: {patch_file}")
+    success(f"Udev rules: {udev_rules_file}")
+    success(f"Modprobe config: {modprobe_conf_file}")
+    print()
     info(f"Patch size: {patch_size / 1024:.1f} KB ({patch_lines} lines)")
     info(f"Files modified/added: {file_count}")
     print()
@@ -426,6 +489,15 @@ def generate_patch(kernel_version):
     print("Or with git:")
     print(f"  cd linux-{kernel_version}")
     print(f"  git apply {patch_file}")
+    print()
+    print("After building and installing the kernel, install udev rules:")
+    print(f"  sudo cp {udev_rules_file.name} /etc/udev/rules.d/")
+    print(f"  sudo cp {modprobe_conf_file.name} /etc/modprobe.d/")
+    print("  sudo udevadm control --reload")
+    print()
+    print("Or for packaging (e.g., RPM spec):")
+    print(f"  install -Dm644 {udev_rules_file.name} %{{buildroot}}/usr/lib/udev/rules.d/60-xpadneo.rules")
+    print(f"  install -Dm644 {modprobe_conf_file.name} %{{buildroot}}/usr/lib/modprobe.d/xpadneo.conf")
     print()
 
 def main():
