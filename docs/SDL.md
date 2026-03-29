@@ -2,12 +2,28 @@
 
 ## SDL Mapping
 
-We fixed the following problem by pretending we are in Windows wireless mode
-by faking the *input device PID* to `0x02E0`. The original PID `0x02FD`
-triggers several unwanted fixups at multiple layers, i.e. SDL or the HTML5
-game controller API. The following paragraphs document the originally
-wrong behavior observed and we clearly don't want our fixed mappings to be
-"fixed" again by layers detected a seemingly wrong button mapping:
+### Modern SDL2 (2.28+)
+
+**As of xpadneo v0.11+**, PID spoofing is **disabled by default**. Modern SDL2 versions
+(2.28+, released in 2023) correctly handle Xbox controller mappings without needing
+workarounds. This allows:
+- Steam Input to properly detect Elite controllers and their paddles
+- Series X|S controllers to be recognized correctly
+- Proper device identification in modern games
+
+### Legacy SDL2 Support (<2.28)
+
+For older games using SDL2 versions before 2.28, you can enable PID spoofing to
+work around button mapping issues:
+
+```bash
+echo "options hid_xpadneo enable_pid_spoof=1" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf
+```
+
+The following paragraphs document the historical problem that required PID spoofing.
+The original PID `0x02FD` triggered several unwanted fixups at multiple layers (SDL,
+HTML5 game controller API). We fixed this by pretending we are in Windows wireless mode
+by faking the *input device PID* to `0x02E0`:
 
 Since after libSDL2 2.0.8, SDL contains a fix for the wrong mapping introduced
 by the generic hid driver. Thus, you may experience wrong button mappings

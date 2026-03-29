@@ -46,6 +46,11 @@ files in `/sys/module/hid_xpadneo/parameters`:
   - Let's you disable initialization of a mouse device through xpadneo, thus disabling mouse mode.
   - '0' mouse device will be available
   - '1' mouse device will be absent
+- `enable_pid_spoof` (default 0)
+  - Enable PID/version spoofing to pretend Xbox 360 controller for older SDL2 compatibility
+  - '0' (default) uses real controller PID for proper Steam Input detection and Xbox Elite paddle support
+  - '1' spoofs all controllers as Xbox 360 (0x028E) for compatibility with SDL2 versions older than 2.28
+  - **Note:** Only enable this if you have games with SDL2 < 2.28 that have button mapping issues
 - `debug_descriptor` (default 0)
   - Enable debug logging for HID descriptor parsing
 
