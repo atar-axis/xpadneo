@@ -2,4 +2,10 @@
 ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
 
 # Tag xpadneo devices for access in the user session
-ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", TAG+="uaccess"
+# MODE="0664" allows user read/write access for proper Steam Input detection
+# LIBINPUT_IGNORE_DEVICE prevents desktop environments from using controller as mouse
+ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+
+# Allow hidraw access for Steam Input to properly detect controller models and features
+# This is needed with PID spoofing disabled (default) for Elite paddle detection
+ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", TAG+="uaccess", MODE="0660"

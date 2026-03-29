@@ -3,7 +3,8 @@ DOC_PREFIX ?= /usr/share/doc/xpadneo
 META_PREFIX ?= /usr/share/metainfo
 
 MODPROBE_CONFS := xpadneo.conf
-UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
+UDEV_RULES := 60-xpadneo.rules
+UDEV_RULES_OPTIONAL := 70-xpadneo-disable-hidraw.rules
 DOC_SRCS := NEWS.md $(wildcard docs/[0-9A-Z]*.md)
 DOCS := $(notdir $(DOC_SRCS))
 
@@ -25,25 +26,27 @@ all: build
 
 help:
 	@echo "Targets:"
-	@echo "help              This help"
-	@echo "build             Prepare the package for DKMS deployment"
-	@echo "clangd-lsp        Generate compile_commands.json for clangd (requires bear)"
-	@echo "install           Install the package, documentation and DKMS source code"
-	@echo "uninstall         Uninstall the package, documentation and DKMS source code"
-	@echo "install-all       Install everything including optional targets"
+	@echo "help                    This help"
+	@echo "build                   Prepare the package for DKMS deployment"
+	@echo "clangd-lsp              Generate compile_commands.json for clangd (requires bear)"
+	@echo "install                 Install the package, documentation and DKMS source code"
+	@echo "uninstall               Uninstall the package, documentation and DKMS source code"
+	@echo "install-all             Install everything including optional targets"
 	@echo
 	@echo "Optional targets:"
-	@echo "install-metainfo  Install appstream metainfo"
+	@echo "install-metainfo        Install appstream metainfo"
+	@echo "install-steamlink-fix   Install hidraw blocking rule for Steam Link compatibility"
+	@echo "                        (WARNING: Breaks Steam Input! Only for Steam Link users)"
 	@echo
 	@echo "Variables:"
-	@echo "PREFIX            Install files into this prefix"
-	@echo "DOC_PREFIX        Install doc files relative to the prefix (defaults to /usr/share/doc/xpadneo)"
-	@echo "ETC_PREFIX        Install etc files relative to the prefix (defaults to /etc)"
-	@echo "META_PREFIX       Install metainfo files relative to the prefix (defaults to /usr/share/metainfo)"
+	@echo "PREFIX                  Install files into this prefix"
+	@echo "DOC_PREFIX              Install doc files relative to the prefix (defaults to /usr/share/doc/xpadneo)"
+	@echo "ETC_PREFIX              Install etc files relative to the prefix (defaults to /etc)"
+	@echo "META_PREFIX             Install metainfo files relative to the prefix (defaults to /usr/share/metainfo)"
 	@echo
 	@echo "Using PREFIX requires handling dkms commands in your package script."
 
-.PHONY: build clangd-lsp install uninstall install-all install-metainfo help
+.PHONY: build clangd-lsp install uninstall install-all install-metainfo install-steamlink-fix help
 
 .INTERMEDIATE: VERSION
 
@@ -67,11 +70,18 @@ install: build
 install-metainfo:
 	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) io.github.atar_axis.xpadneo.metainfo.xml
 
+install-steamlink-fix:
+	@echo "WARNING: Installing hidraw blocking rule for Steam Link"
+	@echo "         This will BREAK Steam Input! Only use for Steam Link setups."
+	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(UDEV_RULES_OPTIONAL:%=hid-xpadneo/etc-udev-rules.d/%)
+	$(UDEVADM) control --reload
+
 uninstall: VERSION
 	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all || echo "dkms: remove failed: ignored"
 	rm -Rf "$(PREFIX)/usr/src/hid-xpadneo-$(shell cat VERSION)"
 	rm -f $(DOCS:%=$(PREFIX)$(DOC_PREFIX)/%)
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
+	rm -f $(UDEV_RULES_OPTIONAL:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
 	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
 	rm -f $(PREFIX)$(META_PREFIX)/io.github.atar_axis.xpadneo.metainfo.xml
 	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)

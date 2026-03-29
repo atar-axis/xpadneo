@@ -1,3 +1,14 @@
-#FIXME(issue-291) Work around Steamlink not properly detecting the mappings
-#FIXME(issue-457) Word around QMK overriding our hidraw rules
+# OPTIONAL: Disable hidraw for Steam Link compatibility (issue #291)
+# WARNING: Do NOT install this file if using Steam Input (desktop Steam)!
+#          Steam Input requires hidraw access to detect Elite paddles and controller models.
+#
+# This rule is ONLY needed for:
+# - Steam Link users experiencing mapping issues
+# - QMK firmware conflicts (issue #457)
+#
+# To enable this workaround:
+# 1. Copy this file to /etc/udev/rules.d/70-xpadneo-disable-hidraw.rules
+# 2. Run: sudo udevadm control --reload && sudo udevadm trigger
+#
+# By default, this rule is NOT installed to support Steam Input properly.
 ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", MODE:="0000", TAG-="uaccess"
