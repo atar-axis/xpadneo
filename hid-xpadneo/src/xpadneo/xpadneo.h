@@ -246,4 +246,7 @@ extern int xpadneo_events_raw_event(struct hid_device *, struct hid_report *, u8
 extern int xpadneo_events_event(struct hid_device *, struct hid_field *, struct hid_usage *, __s32);
 extern int xpadneo_events_input_configured(struct hid_device *, struct hid_input *);
 
+/* module parameters */
+extern bool xpadneo_param_enable_pid_spoof(void);
+
 #endif

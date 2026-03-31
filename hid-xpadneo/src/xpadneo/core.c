@@ -38,8 +38,15 @@ static DEFINE_IDA(xpadneo_core_device_id_allocator);
 static bool param_enable_pid_spoof = false;
 module_param_named(enable_pid_spoof, param_enable_pid_spoof, bool, 0444);
 MODULE_PARM_DESC(enable_pid_spoof,
-		 "(bool) Enable PID/version spoofing to pretend Xbox 360 controller for SDL2 compatibility (default: disabled). "
-		 "Only needed for older SDL2 versions (<2.28). Modern games and Steam Input work better with real PIDs.");
+		 "(bool) Enable PID/version spoofing and Linux gamepad spec compliance mode (default: disabled). "
+		 "When enabled: pretends to be Xbox 360, applies HID descriptor mods, uses strict button mapping. "
+		 "When disabled (default): uses real PID, native firmware layout, works with Steam Input and Wine/Proton. "
+		 "Only enable for legacy SDL2 (<2.28) games that need Xbox 360 emulation.");
+
+bool xpadneo_param_enable_pid_spoof(void)
+{
+	return param_enable_pid_spoof;
+}
 
 #ifndef USB_VENDOR_ID_MICROSOFT
 #define USB_VENDOR_ID_MICROSOFT 0x045e

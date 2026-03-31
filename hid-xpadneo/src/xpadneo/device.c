@@ -121,15 +121,25 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	/* fixup reported button count for Xbox controllers in Linux mode */
 	if (*rsize >= 164) {
 		/*
-		 * 12 buttons instead of 10: properly remap the
-		 * Xbox button (button 11)
-		 * Share button (button 12)
+		 * Button count modifications + LINUX_BUTTONS quirk create Linux
+		 * gamepad spec compliance, but break Wine/Proton/Steam Input when
+		 * using real PIDs (default).
+		 *
+		 * ONLY apply these modifications when PID spoofing is enabled
+		 * (enable_pid_spoof=1). In spoof mode, we're pretending to be an
+		 * Xbox 360 controller for legacy SDL2 compatibility, so strict
+		 * Linux gamepad spec compliance is desired.
+		 *
+		 * With real PIDs (default), leave descriptor unmodified like
+		 * hid_microsoft does, which works for both Steam Input AND
+		 * Wine/Proton with the firmware's native button order.
 		 */
-		if (rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
+		if (xpadneo_param_enable_pid_spoof() &&
+		    rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
-			hid_notice(hdev, "fixing up button mapping\n");
+			hid_notice(hdev, "fixing up button mapping (PID spoof mode)\n");
 			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
 			rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
 			rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
