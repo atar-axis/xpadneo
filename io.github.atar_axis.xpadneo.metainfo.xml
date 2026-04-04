@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="driver">
-  <id>xpadneo</id>
+  <id>io.github.atar_axis.xpadneo</id>
   <name>xpadneo</name>
   <summary>Advanced Linux Driver for Xbox One Wireless Gamepad</summary>
   <description>
