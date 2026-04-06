@@ -2,9 +2,7 @@ ETC_PREFIX ?= /etc
 DOC_PREFIX ?= /usr/share/doc/xpadneo
 META_PREFIX ?= /usr/share/metainfo
 
-MODPROBE_CONFS := xpadneo.conf
 UDEV_RULES := 60-xpadneo.rules
-UDEV_RULES_OPTIONAL := 70-xpadneo-disable-hidraw.rules
 DOC_SRCS := NEWS.md $(wildcard docs/[0-9A-Z]*.md)
 DOCS := $(notdir $(DOC_SRCS))
 
@@ -35,8 +33,6 @@ help:
 	@echo
 	@echo "Optional targets:"
 	@echo "install-metainfo        Install appstream metainfo"
-	@echo "install-steamlink-fix   Install hidraw blocking rule for Steam Link compatibility"
-	@echo "                        (WARNING: Breaks Steam Input! Only for Steam Link users)"
 	@echo
 	@echo "Variables:"
 	@echo "PREFIX                  Install files into this prefix"
@@ -46,7 +42,7 @@ help:
 	@echo
 	@echo "Using PREFIX requires handling dkms commands in your package script."
 
-.PHONY: build clangd-lsp install uninstall install-all install-metainfo install-steamlink-fix help
+.PHONY: build clangd-lsp install uninstall install-all install-metainfo help
 
 .INTERMEDIATE: VERSION
 
@@ -60,8 +56,7 @@ clangd-lsp: compile_commands.json
 install-all: install install-metainfo
 
 install: build
-	mkdir -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
-	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/modprobe.d $(MODPROBE_CONFS:%=hid-xpadneo/etc-modprobe.d/%)
+	mkdir -p $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
 	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(UDEV_RULES:%=hid-xpadneo/etc-udev-rules.d/%)
 	install -D -m 0644 -t $(PREFIX)$(DOC_PREFIX) $(DOC_SRCS)
 	$(UDEVADM) control --reload
@@ -69,12 +64,6 @@ install: build
 
 install-metainfo:
 	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) io.github.atar_axis.xpadneo.metainfo.xml
-
-install-steamlink-fix:
-	@echo "WARNING: Installing hidraw blocking rule for Steam Link"
-	@echo "         This will BREAK Steam Input! Only use for Steam Link setups."
-	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(UDEV_RULES_OPTIONAL:%=hid-xpadneo/etc-udev-rules.d/%)
-	$(UDEVADM) control --reload
 
 uninstall: VERSION
 	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all || echo "dkms: remove failed: ignored"
