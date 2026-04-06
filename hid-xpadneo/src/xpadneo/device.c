@@ -13,6 +13,7 @@
 
 int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len, bool uses_hogp)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
 	xpadneo_debug_hid_report(hdev, r, len);
