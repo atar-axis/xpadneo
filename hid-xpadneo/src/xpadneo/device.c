@@ -128,20 +128,24 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			 * Xbox Elite Series 2 BLE (0x0B22): Steam Input has no database
 			 * entry for this controller's BLE firmware layout, so it falls back
 			 * to generic sequential mapping which misreads the non-sequential
-			 * firmware button order. Apply LINUX_BUTTONS remapping and descriptor
-			 * fixup unconditionally so both Steam Input and native Linux see a
-			 * clean sequential 12-button layout.
+			 * firmware button order. Enable LINUX_BUTTONS remapping so raw_event
+			 * reorders the button bits sequentially for both Steam Input and
+			 * native Linux.
+			 *
+			 * Do NOT modify the descriptor bytes here. The XBE2 has a larger
+			 * descriptor than the Series X|S (extra paddle/profile fields), so
+			 * the byte offsets 145/153/163 land in different places and would
+			 * corrupt the rumble output report definition. The 15-button
+			 * descriptor with 12 real sequential bits + 3 always-zero trailing
+			 * bits is harmless.
 			 *
 			 * Xbox Series X|S (0x0B13) is intentionally excluded: Steam Input
 			 * has a native database entry for it and correctly handles the raw
-			 * firmware layout without modification.
+			 * firmware layout without any modification.
 			 */
 			if (hdev->product == 0x0B22) {
 				hid_notice(hdev, "fixing up XBE2 button mapping\n");
 				xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-				rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
-				rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
-				rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
 			}
 
 			/*
