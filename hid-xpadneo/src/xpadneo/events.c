@@ -112,6 +112,24 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[16] = 0;
 	}
 
+	/*
+	 * Handle Share button for Xbox Series X|S (0x0B13) in native (non-remapped)
+	 * mode. The firmware's button-12 slot (data[15] bit 3) carries Menu/Start as
+	 * a ghost signal; the physical Share button is at data[16] bit 0, outside the
+	 * 15-button HID descriptor and ignored by HID core. Inject it directly to the
+	 * keyboard device for native Linux consumers. Steam reads from hidraw (post
+	 * raw_event) and handles both data[15] bit 3 (Menu) and data[16] bit 0
+	 * (Share) itself. NOTE: do NOT modify data[15] here — Steam needs it intact.
+	 */
+	if ((xdata->quirks & XPADNEO_QUIRK_MENU_GHOST) &&
+	    !(xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) &&
+	    report->id == 1 && reportsize >= 17) {
+		if (xdata->keyboard.idev) {
+			input_report_key(xdata->keyboard.idev, BTN_SHARE, data[16] & BIT(0));
+			xdata->keyboard.sync = true;
+		}
+	}
+
 	/* swap button A with B and X with Y for Nintendo style controllers */
 	if ((xdata->quirks & XPADNEO_QUIRK_NINTENDO) && report->id == 1 && reportsize >= 15) {
 		data[14] = SWAP_BITS(data[14], 0, 1);
@@ -213,6 +231,22 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 		}
 		goto stop_processing;
 	} else if ((usage->type == EV_KEY) && (usage->code == BTN_SHARE)) {
+		if ((xdata->quirks & XPADNEO_QUIRK_MENU_GHOST) &&
+		    !(xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS)) {
+			/*
+			 * For Xbox Series X|S (0x0B13) in native mode, HID usage 0x09000C
+			 * (button-12 slot, data[15] bit 3) carries Menu/Start, not Share.
+			 * The real Share button is injected directly from data[16] in
+			 * raw_event. Redirect this event to BTN_START on the gamepad so
+			 * native Linux apps see the correct button, while Steam continues
+			 * to read the unmodified hidraw data and handle Menu itself.
+			 */
+			if (!gamepad)
+				goto stop_processing;
+			input_report_key(gamepad, BTN_START, value);
+			xdata->gamepad.sync = true;
+			goto stop_processing;
+		}
 		/* move the Share button to the keyboard device */
 		if (!keyboard)
 			goto keyboard_missing;

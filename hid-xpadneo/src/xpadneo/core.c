@@ -62,11 +62,11 @@ static const struct hid_device_id core_devices[] = {
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST },
 
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST },
 
 	/* SENTINEL VALUE, indicates the end */
 	{ }

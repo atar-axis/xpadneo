@@ -120,30 +120,42 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 
 	/* fixup reported button count for Xbox controllers in Linux mode */
 	if (*rsize >= 164) {
-		/*
-		 * Button count modifications + LINUX_BUTTONS quirk create Linux
-		 * gamepad spec compliance, but break Wine/Proton/Steam Input when
-		 * using real PIDs (default).
-		 *
-		 * ONLY apply these modifications when PID spoofing is enabled
-		 * (enable_pid_spoof=1). In spoof mode, we're pretending to be an
-		 * Xbox 360 controller for legacy SDL2 compatibility, so strict
-		 * Linux gamepad spec compliance is desired.
-		 *
-		 * With real PIDs (default), leave descriptor unmodified like
-		 * hid_microsoft does, which works for both Steam Input AND
-		 * Wine/Proton with the firmware's native button order.
-		 */
-		if (xpadneo_param_enable_pid_spoof() &&
-		    rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
+		if (rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
-			hid_notice(hdev, "fixing up button mapping (PID spoof mode)\n");
-			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
-			rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
-			rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
+			/*
+			 * Xbox Elite Series 2 BLE (0x0B22): Steam Input has no database
+			 * entry for this controller's BLE firmware layout, so it falls back
+			 * to generic sequential mapping which misreads the non-sequential
+			 * firmware button order. Apply LINUX_BUTTONS remapping and descriptor
+			 * fixup unconditionally so both Steam Input and native Linux see a
+			 * clean sequential 12-button layout.
+			 *
+			 * Xbox Series X|S (0x0B13) is intentionally excluded: Steam Input
+			 * has a native database entry for it and correctly handles the raw
+			 * firmware layout without modification.
+			 */
+			if (hdev->product == 0x0B22) {
+				hid_notice(hdev, "fixing up XBE2 button mapping\n");
+				xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+				rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
+				rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
+				rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
+			}
+
+			/*
+			 * All controllers: apply button remapping + descriptor fixup when
+			 * PID spoofing is enabled (enable_pid_spoof=1) for legacy SDL2
+			 * (<2.28) compatibility via the Xbox 360 protocol.
+			 */
+			if (xpadneo_param_enable_pid_spoof()) {
+				hid_notice(hdev, "fixing up button mapping (PID spoof mode)\n");
+				xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+				rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
+				rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
+				rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
+			}
 		}
 	}
 
