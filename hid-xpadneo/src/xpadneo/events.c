@@ -90,6 +90,7 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		return -1;
 	}
 
+
 	/* correct button mapping of Xbox controllers in Linux mode */
 	if ((xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) && report->id == 1 && reportsize >= 17) {
 		u16 bits = 0;
@@ -368,6 +369,7 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		__clear_bit(BTN_SHARE, gamepad->keybit);
 		__clear_bit(KEY_RECORD, gamepad->keybit);
 		__clear_bit(KEY_UNKNOWN, gamepad->keybit);
+
 
 		/* ensure all four paddles exist as part of the gamepad */
 		if (test_bit(BTN_GRIPL, gamepad->keybit)) {

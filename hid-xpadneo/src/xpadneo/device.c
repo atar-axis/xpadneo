@@ -139,10 +139,6 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			 * corrupt the rumble output report definition. The 15-button
 			 * descriptor with 12 real sequential bits + 3 always-zero trailing
 			 * bits is harmless.
-			 *
-			 * Xbox Series X|S (0x0B13) is intentionally excluded: Steam Input
-			 * has a native database entry for it and correctly handles the raw
-			 * firmware layout without any modification.
 			 */
 			if (hdev->product == 0x0B22) {
 				hid_notice(hdev, "fixing up XBE2 button mapping\n");
@@ -162,6 +158,51 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 				rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
 			}
 		}
+	}
+
+	/*
+	 * Xbox Series X|S BLE (0x0B13): same button hole at HID usage 0x90003
+	 * (bit 2 of the raw report) as XBE2 BLE (0x0B22). The physical X button
+	 * sends usage 0x90004 and physical Y sends 0x90005, shifting all buttons
+	 * from X onward by one slot. Without LINUX_BUTTONS reordering, evdev
+	 * applications see X→BTN_Y, Y→BTN_TL, LB→BTN_TR, etc.
+	 *
+	 * Steam Input reads hidraw directly (before raw_event processing), so
+	 * enabling LINUX_BUTTONS fixes evdev without affecting Steam HIDAPI.
+	 * MENU_GHOST handling is automatically bypassed when LINUX_BUTTONS is set.
+	 *
+	 * This check is outside the descriptor byte-check block above because
+	 * Series X|S has 12 buttons (0x0C) and that block matches 15 (0x0F).
+	 */
+	if (hdev->product == 0x0B13) {
+		hid_notice(hdev, "fixing up Xbox Series X|S button mapping\n");
+		xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+	}
+
+	/*
+	 * 8BitDo Pro 2 (PID 0x02E0, shared with Xbox One S Windows mode):
+	 * SDL3's HIDAPI Xbox One driver claims any 045E:02E0 device connected via
+	 * Bluetooth and applies a built-in mapping with guide:b10,leftstick:b8,
+	 * rightstick:b9 — designed for the real Xbox One S which exposes no Guide
+	 * on the gamepad device. The 8BitDo's Guide (0x10085, inside the Gamepad
+	 * Application Collection) maps naturally to BTN_MODE (316), which sorts
+	 * before BTN_THUMBL (317) and BTN_THUMBR (318), making the real layout
+	 * guide:b8,leftstick:b9,rightstick:b10. HIDAPI cannot be tricked by
+	 * descriptor changes since it reads hidraw directly.
+	 *
+	 * Spoof as Xbox One model 1697 (0x02DD): this was a USB-only controller
+	 * with no wireless capability, so SDL3 HIDAPI has no Xbox One BT driver
+	 * path that would claim 045E:02DD via Bluetooth. SDL3 falls back to evdev
+	 * and auto-detects by key code: BTN_MODE→guide, BTN_THUMBL→leftstick,
+	 * BTN_THUMBR→rightstick — correct for our layout. Steam and other apps
+	 * still identify it as an Xbox One controller.
+	 */
+	if (hdev->product == 0x02E0 && *rsize >= 0xac &&
+	    rdesc[0xa6] == 0x05 && rdesc[0xa7] == 0x01 &&
+	    rdesc[0xa8] == 0x09 && rdesc[0xa9] == 0x80) {
+		hid_notice(hdev, "8BitDo Pro 2 detected, spoofing as Xbox One 1697 (0x02DD) to bypass SDL3 HIDAPI\n");
+		xdata->quirks |= XPADNEO_QUIRK_NO_GUIDE_BTN;
+		hdev->product = 0x02DD;
 	}
 
 	return rdesc;
