@@ -31,6 +31,7 @@ MODULE_AUTHOR("Florian Dollinger <dollinger.florian@gmx.de>");
 MODULE_AUTHOR("Kai Krakow <kai@kaishome.de>");
 MODULE_DESCRIPTION("Linux kernel driver for Xbox ONE S+ gamepads (Bluetooth), including rumble");
 MODULE_VERSION(XPADNEO_VERSION);
+MODULE_SOFTDEP("pre: uhid");
 
 static DEFINE_IDA(xpadneo_core_device_id_allocator);
 
