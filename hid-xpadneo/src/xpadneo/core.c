@@ -244,7 +244,7 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 
 	ret = xpadneo_rumble_init(hdev);
 	if (ret)
-		hid_err(hdev, "could not initialize ff, continuing anyway\n");
+		hid_err(hdev, "could not initialize rumble, continuing anyway\n");
 
 	xpadneo_mouse_init_timer(xdata);
 
