@@ -298,7 +298,7 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 		pck.data.enable = SWAP_BITS(SWAP_BITS(pck.data.enable, 0, 2), 1, 3);
 
 	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
-	mdelay(300);
+	msleep(300);
 
 	/*
 	 * XPADNEO_QUIRK_NO_PULSE:
@@ -316,7 +316,7 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 			pck.data.magnitude_left = 0;
 		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
 	}
-	mdelay(30);
+	msleep(30);
 }
 
 static void rumble_welcome(struct hid_device *hdev)
