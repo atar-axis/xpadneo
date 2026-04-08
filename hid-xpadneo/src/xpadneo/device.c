@@ -10,13 +10,24 @@
 
 #include "xpadneo.h"
 
-int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len)
+int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len, bool uses_hogp)
 {
 	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
 	xpadneo_debug_hid_report(hdev, r, len);
 
-	return hid_hw_output_report(hdev, buf, len);
+	/*
+	 * Some BLE controllers (e.g. XBE2 0x0B22) require a GATT Write Request
+	 * (acknowledged) rather than the unacknowledged GATT Write Command that
+	 * hid_hw_output_report sends. Use hid_hw_raw_request with HID_OUTPUT_REPORT
+	 * and HID_REQ_SET_REPORT to force the acknowledged path for these devices.
+	 */
+	if (uses_hogp) {
+		return hid_hw_raw_request(hdev, r->report_id, buf, len,
+					  HID_OUTPUT_REPORT, HID_REQ_SET_REPORT);
+	} else {
+		return hid_hw_output_report(hdev, buf, len);
+	}
 }
 
 void xpadneo_device_missing(struct xpadneo_devdata *xdata, u32 flag)
