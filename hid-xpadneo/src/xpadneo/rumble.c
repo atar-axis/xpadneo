@@ -133,7 +133,7 @@ static void rumble_worker(struct work_struct *work)
 			r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 	}
 
-	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r));
+	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r), xdata->uses_hogp);
 	if (ret < 0)
 		hid_warn(hdev, "failed to send rumble report: %d\n", ret);
 
@@ -297,7 +297,7 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 	if (xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK)
 		pck.data.enable = SWAP_BITS(SWAP_BITS(pck.data.enable, 0, 2), 1, 3);
 
-	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp);
 	msleep(300);
 
 	/*
@@ -314,7 +314,8 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 			pck.data.magnitude_right = 0;
 		if (enabled & XBOX_RUMBLE_LEFT)
 			pck.data.magnitude_left = 0;
-		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck));
+		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck),
+					     xdata->uses_hogp);
 	}
 	msleep(30);
 }
@@ -449,8 +450,12 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	gamepad->ff->erase = ff_erase_effect;
 	gamepad->ff->playback = rumble_playback;
 
-	if (param_ff_connect_notify)
+	if (param_ff_connect_notify) {
 		xpadneo_benchmark(rumble_welcome, hdev);
+		hid_info(hdev,
+			 "please report a bug if your controller did not rumble: uses_hogp %d\n",
+			 xdata->uses_hogp);
+	}
 
 	/* publish readiness once all rumble state is initialized */
 	smp_store_release(&xdata->rumble.enabled, true);

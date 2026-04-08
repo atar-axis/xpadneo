@@ -198,7 +198,7 @@ extern void xpadneo_debug_descriptor(struct hid_device *, const __u8 *, unsigned
 /* xpadneo core device functions */
 extern void xpadneo_device_report(struct hid_device *, struct hid_report *);
 extern void xpadneo_device_missing(struct xpadneo_devdata *, u32);
-extern int xpadneo_device_output_report(struct hid_device *, __u8 *, size_t);
+extern int xpadneo_device_output_report(struct hid_device *, __u8 *, size_t, bool);
 extern const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc,
 					       unsigned int *rsize);
 
