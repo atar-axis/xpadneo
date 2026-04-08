@@ -154,19 +154,29 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	hdev->quirks |= HID_QUIRK_NO_INPUT_SYNC;
 	hid_set_drvdata(hdev, xdata);
 
+	xdata->uses_hogp = false;
 	if (hdev->version == 0x00000903)
 		hid_warn(hdev, "buggy firmware detected, please upgrade to the latest version\n");
 	else if (hdev->version < 0x00000500)
 		hid_warn(hdev,
 			 "classic Bluetooth firmware version %x.%02x, please upgrade for better stability\n",
 			 hdev->version >> 8, (u8)hdev->version);
-	else if (hdev->version < 0x00000512)
+	else if (hdev->version < 0x00000512) {
+		xdata->uses_hogp = (hdev->bus == BUS_BLUETOOTH);
 		hid_warn(hdev,
 			 "BLE firmware version %x.%02x, please upgrade for better stability\n",
 			 hdev->version >> 8, (u8)hdev->version);
-	else
+	} else {
+		xdata->uses_hogp = (hdev->bus == BUS_BLUETOOTH);
 		hid_info(hdev, "BLE firmware version %x.%02x\n",
 			 hdev->version >> 8, (u8)hdev->version);
+	}
+
+	/* log if we are using the HOGP protocol */
+	if (xdata->uses_hogp) {
+		hid_info(hdev,
+			 "expecting HOGP protocol, this will cause rumble issues if the controller does not use BLE\n");
+	}
 
 	/*
 	 * Pretend that we are in Windows pairing mode as we are actually
