@@ -133,6 +133,9 @@ struct xpadneo_devdata {
 	bool shift_mode, profile_switched;
 	u8 last_profile, profile;
 
+	/* HOGP protocol */
+	bool uses_hogp;
+
 	/* mouse mode */
 	bool mouse_mode;
 	struct timer_list mouse_timer;
