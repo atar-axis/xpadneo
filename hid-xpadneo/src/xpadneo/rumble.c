@@ -135,7 +135,7 @@ static void rumble_worker(struct work_struct *work)
 
 	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r));
 	if (ret < 0)
-		hid_warn(hdev, "failed to send FF report: %d\n", ret);
+		hid_warn(hdev, "failed to send rumble report: %d\n", ret);
 
 	/*
 	 * throttle next command submission, the firmware doesn't like us to
