@@ -173,9 +173,8 @@ struct xpadneo_devdata {
 	/* buffer for rumble_worker */
 	struct {
 		spinlock_t lock;
-		struct delayed_work worker;
-		unsigned long throttle_until;
-		bool scheduled, enabled;
+		struct work_struct worker;
+		bool enabled, pending;
 		struct xpadneo_rumble_data data;
 		struct xpadneo_rumble_data shadow;
 		void *output_report_dmabuf;

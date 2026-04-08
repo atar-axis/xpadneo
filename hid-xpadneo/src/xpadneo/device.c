@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Kai Krakow <kai@kaishome.de>
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 
 #include "xpadneo.h"
@@ -21,12 +22,18 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len,
 	 * (acknowledged) rather than the unacknowledged GATT Write Command that
 	 * hid_hw_output_report sends. Use hid_hw_raw_request with HID_OUTPUT_REPORT
 	 * and HID_REQ_SET_REPORT to force the acknowledged path for these devices.
+	 *
+	 * For non-HOGP devices, add a 20ms delay after the report is sent to
+	 * give the device time to process the report before the next one is sent.
 	 */
 	if (uses_hogp) {
 		return hid_hw_raw_request(hdev, r->report_id, buf, len,
 					  HID_OUTPUT_REPORT, HID_REQ_SET_REPORT);
 	} else {
-		return hid_hw_output_report(hdev, buf, len);
+		int ret = hid_hw_output_report(hdev, buf, len);
+
+		msleep(20);
+		return ret;
 	}
 }
 

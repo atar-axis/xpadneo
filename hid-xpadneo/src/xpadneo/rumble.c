@@ -7,16 +7,13 @@
  * Copyright (c) 2026 Kai Krakow <kai@kaishome.de>
  */
 
+#include <linux/atomic.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/smp.h>
 
 #include "xpadneo.h"
 #include "helpers.h"
-
-/* timing of rumble commands to work around firmware crashes */
-#define RUMBLE_THROTTLE_DELAY   (msecs_to_jiffies(10)+1)
-#define RUMBLE_THROTTLE_JIFFIES (jiffies + RUMBLE_THROTTLE_DELAY)
 
 /* module parameter "trigger_rumble_mode" */
 #define PARAM_TRIGGER_RUMBLE_PRESSURE 0
@@ -40,32 +37,15 @@ MODULE_PARM_DESC(ff_connect_notify,
 
 static struct workqueue_struct *rumble_wq;
 
-static inline unsigned long calculate_throttling_delay(struct xpadneo_devdata *xdata)
-{
-	unsigned long rumble_run_at = jiffies, rumble_throttle_until = xdata->rumble.throttle_until;
-
-	if (time_before(rumble_run_at, rumble_throttle_until)) {
-		/* last rumble was recently executed */
-		long delay_work = (long)(rumble_throttle_until - rumble_run_at);
-
-		return clamp(delay_work, 0L, (long)RUMBLE_THROTTLE_DELAY);
-	}
-
-	/* the firmware is ready */
-	return 0;
-}
-
 static void rumble_worker(struct work_struct *work)
 {
-	struct xpadneo_devdata *xdata =
-	    container_of(to_delayed_work(work), struct xpadneo_devdata, rumble.worker);
+	struct xpadneo_devdata *xdata = container_of(work, struct xpadneo_devdata, rumble.worker);
 	struct hid_device *hdev = xdata->hdev;
 	struct xpadneo_rumble_report *r = xdata->rumble.output_report_dmabuf;
 	int ret;
 
 	memset(r, 0, sizeof(*r));
 	r->report_id = XPADNEO_XBOX_RUMBLE_REPORT;
-	r->data.enable = XBOX_RUMBLE_ALL;
 
 	/*
 	 * if pulse is not supported, we do not care about explicitly stopping
@@ -81,14 +61,13 @@ static void rumble_worker(struct work_struct *work)
 		r->data.loop_count = 0xEB;
 	}
 
+reschedule:
+	r->data.enable = XBOX_RUMBLE_ALL;
+
 	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
-
-		/* let our scheduler know we've been called */
-		xdata->rumble.scheduled = false;
-
 		/* only proceed once initialization data is globally visible */
 		if (unlikely(!smp_load_acquire(&xdata->rumble.enabled)))
-			return;
+			goto check_pending;
 
 		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
 			/* do not send these bits if not supported */
@@ -115,7 +94,7 @@ static void rumble_worker(struct work_struct *work)
 
 		/* do not send a report if nothing changed */
 		if (unlikely(r->data.enable == XBOX_RUMBLE_NONE))
-			return;
+			goto check_pending;
 
 		/* shadow our current rumble values for the next cycle */
 		memcpy(&xdata->rumble.shadow, &xdata->rumble.data, sizeof(xdata->rumble.data));
@@ -137,17 +116,11 @@ static void rumble_worker(struct work_struct *work)
 	if (ret < 0)
 		hid_warn(hdev, "failed to send rumble report: %d\n", ret);
 
-	/*
-	 * throttle next command submission, the firmware doesn't like us to
-	 * send rumble data any faster
-	 */
-	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
-		xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
-		if (xdata->rumble.scheduled) {
-			unsigned long delay_work = calculate_throttling_delay(xdata);
-
-			mod_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work);
-		}
+check_pending:
+	/* pairs with smp_store_release() in rumble_playback() so we see fresh pending state */
+	if (unlikely(cmpxchg(&xdata->rumble.pending, true, false))) {
+		/* rumble data was still pending */
+		goto reschedule;
 	}
 }
 
@@ -216,8 +189,6 @@ static int rumble_playback(struct input_dev *dev, int effect_id, int value)
 	max_main = max(weak, strong);
 
 	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
-		unsigned long delay_work;
-
 		/* calculate the physical magnitudes, scale from 16 bit to 0..100 */
 		xdata->rumble.data.magnitude_strong = calculate_magnitude(strong, fraction_MAIN);
 		xdata->rumble.data.magnitude_weak = calculate_magnitude(weak, fraction_MAIN);
@@ -226,22 +197,12 @@ static int rumble_playback(struct input_dev *dev, int effect_id, int value)
 		xdata->rumble.data.magnitude_left = calculate_magnitude(max_main, fraction_TL);
 		xdata->rumble.data.magnitude_right = calculate_magnitude(max_main, fraction_TR);
 
-		/* synchronize: is our worker still scheduled? */
-		if (xdata->rumble.scheduled) {
-			/* the worker is still guarding rumble programming */
-			hid_notice_once(hdev, "throttling rumble reprogramming\n");
-			break;
-		}
-
-		/* we want to run now but may be throttled */
-		delay_work = calculate_throttling_delay(xdata);
-
 		/* schedule writing a rumble report to the controller */
-		if (mod_delayed_work(rumble_wq, &xdata->rumble.worker, delay_work)) {
-			/* this should never happen */
-			hid_err(hdev, "rumble_playback: unexpected scheduling state\n");
+		if (!queue_work(rumble_wq, &xdata->rumble.worker)) {
+			/* the worker is still waiting on the hardware */
+			smp_store_release(&xdata->rumble.pending, true);
+			hid_notice_once(hdev, "throttled rumble reprogramming\n");
 		}
-		xdata->rumble.scheduled = true;
 	}
 
 	return 0;
@@ -425,8 +386,11 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	/* publish that rumble is not ready until init finishes */
 	smp_store_release(&xdata->rumble.enabled, false);
 
+	/* clear any pending rumble data */
+	smp_store_release(&xdata->rumble.pending, false);
+
 	spin_lock_init(&xdata->rumble.lock);
-	INIT_DELAYED_WORK(&xdata->rumble.worker, rumble_worker);
+	INIT_WORK(&xdata->rumble.worker, rumble_worker);
 	xdata->rumble.output_report_dmabuf = devm_kzalloc(&hdev->dev,
 							  sizeof(struct xpadneo_rumble_report),
 							  GFP_KERNEL);
@@ -435,9 +399,6 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 
 	if (param_trigger_rumble_mode == PARAM_TRIGGER_RUMBLE_DISABLE)
 		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
-
-	/* initialize our rumble command throttle */
-	xdata->rumble.throttle_until = RUMBLE_THROTTLE_JIFFIES;
 
 	/* set capabilities */
 	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
@@ -486,5 +447,5 @@ void xpadneo_rumble_remove(struct xpadneo_devdata *xdata)
 	/* disable rumble before removable to prevent queueing new data */
 	smp_store_release(&xdata->rumble.enabled, false);
 
-	cancel_delayed_work_sync(&xdata->rumble.worker);
+	cancel_work_sync(&xdata->rumble.worker);
 }
