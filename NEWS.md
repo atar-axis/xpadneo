@@ -22,11 +22,11 @@ userspace environments.
 
 ## Headlines:
 
-  - xpadneo, docs: Replace back ticks syntax for shell substitution
-  - xpadneo, mouse: Allow disabling the mouse device completely
-  - xpadneo, quirks: Add OUI flag checks for new GameSir Nova
-  - xpadneo, rumble: Do not send rumble commands unless ready
-  - xpadneo, rumble: Properly save and restore IRQ state during locking
+- xpadneo, docs: Replace back ticks syntax for shell substitution
+- xpadneo, mouse: Allow disabling the mouse device completely
+- xpadneo, quirks: Add OUI flag checks for new GameSir Nova
+- xpadneo, rumble: Do not send rumble commands unless ready
+- xpadneo, rumble: Properly save and restore IRQ state during locking
 
 ```
 Kai Krakow (17):
@@ -77,14 +77,14 @@ and everyone reporting regressions and sharing detailed logs over the years.
 
 Special thanks to all contributors who helped shape this cycle, including:
 
-  - Florian Dollinger (`@atar-axis`) for the original project foundation and long-standing code base that made this
-    evolution possible.
-  - Ben Schattinger (`@lights0123`) for Xbox Series X|S support contributions and Share button related integration
-    work.
-  - Erik Hajnal (`@ehats`) for non-trivial XBE2 mode support work and descriptor/mapping related fixes.
-  - Dugan Chen (`@duganchen`) for Elite Series 2 related device support updates.
-  - John Mather (`@NextDesign1`) and many others for incremental fixes, reports, and ecosystem feedback that helped
-    improve edge-case handling over time.
+- Florian Dollinger (`@atar-axis`) for the original project foundation and long-standing code base that made this
+  evolution possible.
+- Ben Schattinger (`@lights0123`) for Xbox Series X|S support contributions and Share button related integration
+  work.
+- Erik Hajnal (`@ehats`) for non-trivial XBE2 mode support work and descriptor/mapping related fixes.
+- Dugan Chen (`@duganchen`) for Elite Series 2 related device support updates.
+- John Mather (`@NextDesign1`) and many others for incremental fixes, reports, and ecosystem feedback that helped
+  improve edge-case handling over time.
 
 
 ## IMPORTANT: Updated Licensing
@@ -116,49 +116,49 @@ Linux distribution packaging systems and improve discoverability of the project 
 
 ## Headlines:
 
-  - core, quirks: Add GameSir T4 Nova Lite support
-  - core, quirks: Add GuliKit KK3 MAX quirks
-  - core, quirks: Add heuristics to detect GameSir Nova controllers
-  - dev: Fix gitignore
-  - dkms: Explicitly add version to the install phase
-  - dkms: Suggest trusting the git directory if version detection failed
-  - docs(#429): Elite S2 Profiles carry over
-  - docs: Document Bluetooth LE issues and work-arounds
-  - docs: Document workarounds for the Xbox Wireless controller
-  - docs: Replace Ko-fi link to attribute donations to current maintainer
-  - hid-xpadneo: Allow building with kernel 6.12
-  - hid-xpadneo: Do not use Nintendo layouts by default
-  - hid-xpadneo: Move share button quirk to `xpadneo_devices` database
-  - installer, dkms: Fix trying to install the wrong udev filename
-  - xpadneo: Add support for GuliKit KingKong2 PRO controllers
-  - xpadneo, core: Add configuration for disabling Xbox logo shift-mode
-  - xpadneo, core: Deprecate synthetic rolling axis from triggers
-  - xpadneo, core: Fix coding style
-  - xpadneo, core: Remove hard requirement of ida_{alloc,free}
-  - xpadneo, dkms: Drop deprecated variable CLEAN
-  - xpadneo, dkms: Get rid of redundant file installs/removes
-  - xpadneo, dkms: Hooks are now effectively a no-op
-  - xpadneo, docs: Align all of README.md with current distribution practice
-  - xpadneo, docs: Link troubleshooting more prominently
-  - xpadneo: Evade SDL-mismapping once again
-  - xpadneo: Fix documentation about Share button
-  - xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
-  - xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
-  - xpadneo, hidraw: Fixup previous commit to properly work with DKMS
-  - xpadneo, hidraw: Work around other software messing with our udev rules
-  - xpadneo, init: Actually save rumble test values before we replace them
-  - xpadneo: Map Share button to F12 by default
-  - xpadneo, mouse: Implement mouse support
-  - xpadneo, quirks: Add another Microsoft OUI
-  - xpadneo, quirks: Another Microsoft OUI
-  - xpadneo, quirks: Fix the haptics quirks for third-party controllers
-  - xpadneo, quirks: Let another Microsoft OUI bypass heuristics
-  - xpadneo, quirks: Prevent applying heuristics for some known vendors
-  - xpadneo: Remove deprecated ida_simple_{get,remove}() usage
-  - xpadneo: Revert fixups on device removal
-  - xpadneo, rumble: Fix rumble throttling for modern firmware
-  - xpadneo: Support GameSir T4 Cyclone models
-  - xpadneo: Work around invalid mapping in Steam Link
+- core, quirks: Add GameSir T4 Nova Lite support
+- core, quirks: Add GuliKit KK3 MAX quirks
+- core, quirks: Add heuristics to detect GameSir Nova controllers
+- dev: Fix gitignore
+- dkms: Explicitly add version to the install phase
+- dkms: Suggest trusting the git directory if version detection failed
+- docs(#429): Elite S2 Profiles carry over
+- docs: Document Bluetooth LE issues and work-arounds
+- docs: Document workarounds for the Xbox Wireless controller
+- docs: Replace Ko-fi link to attribute donations to current maintainer
+- hid-xpadneo: Allow building with kernel 6.12
+- hid-xpadneo: Do not use Nintendo layouts by default
+- hid-xpadneo: Move share button quirk to `xpadneo_devices` database
+- installer, dkms: Fix trying to install the wrong udev filename
+- xpadneo: Add support for GuliKit KingKong2 PRO controllers
+- xpadneo, core: Add configuration for disabling Xbox logo shift-mode
+- xpadneo, core: Deprecate synthetic rolling axis from triggers
+- xpadneo, core: Fix coding style
+- xpadneo, core: Remove hard requirement of ida_{alloc,free}
+- xpadneo, dkms: Drop deprecated variable CLEAN
+- xpadneo, dkms: Get rid of redundant file installs/removes
+- xpadneo, dkms: Hooks are now effectively a no-op
+- xpadneo, docs: Align all of README.md with current distribution practice
+- xpadneo, docs: Link troubleshooting more prominently
+- xpadneo: Evade SDL-mismapping once again
+- xpadneo: Fix documentation about Share button
+- xpadneo, fixups: Adapt SDL fixup to fix the Xbox button
+- xpadneo, hid: Move paddles to range BTN_TRIGGER_HAPPY5
+- xpadneo, hidraw: Fixup previous commit to properly work with DKMS
+- xpadneo, hidraw: Work around other software messing with our udev rules
+- xpadneo, init: Actually save rumble test values before we replace them
+- xpadneo: Map Share button to F12 by default
+- xpadneo, mouse: Implement mouse support
+- xpadneo, quirks: Add another Microsoft OUI
+- xpadneo, quirks: Another Microsoft OUI
+- xpadneo, quirks: Fix the haptics quirks for third-party controllers
+- xpadneo, quirks: Let another Microsoft OUI bypass heuristics
+- xpadneo, quirks: Prevent applying heuristics for some known vendors
+- xpadneo: Remove deprecated ida_simple_{get,remove}() usage
+- xpadneo: Revert fixups on device removal
+- xpadneo, rumble: Fix rumble throttling for modern firmware
+- xpadneo: Support GameSir T4 Cyclone models
+- xpadneo: Work around invalid mapping in Steam Link
 
 ```
 Kai Krakow (278):
