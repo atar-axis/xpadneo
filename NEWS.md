@@ -1,5 +1,49 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.10.1 up to v0.10.2
+
+This maintenance release for the v0.10 series focuses on improving rumble performance for modern controllers and
+enhancing device compatibility.
+
+The core of this update is a significant overhaul of rumble handling for devices using the HID-over-GATT Profile
+(HOGP). By switching to acknowledged GATT writes, we now ensure rumble commands are delivered more reliably to these
+modern Bluetooth LE controllers. This improvement allowed us to remove the previous artificial throttling, unlocking
+more responsive and immediate force-feedback. We also optimized the "welcome rumble" sequence to reduce CPU usage
+during controller initialization.
+
+To improve forward-compatibility, the driver can now heuristically detect devices that use the HOGP protocol, making it
+more robust when encountering new hardware. Additionally, the device descriptor for the GuliKit ES PRO has been added,
+which aids in debugging and is a first step towards full support.
+
+Finally, this release includes several smaller fixes and cleanups, including corrected AppStream metainfo for better
+software center integration and improved internal handling of the `uhid` module dependency.
+
+A big thank you to everyone in the community for your contributions, testing, and detailed bug reports.
+
+Special thanks go to @GloriousEggroll for starting a series of improvements. In this release, his contributions have
+helped to increase rumble reliability and modernize module dependency handling.
+
+
+## Headlines:
+
+- xpadneo, installer: Properly handle metainfo in the Makefile
+
+```
+Kai Krakow (8):
+      xpadneo, core: move softdep on uhid into the driver
+      xpadneo: Rename log messages from ff to rumble
+      xpadneo, debug: Add GuliKit ES PRO descriptor as a known descriptor
+      xpadneo, core: Add heuristic detection of HOGP protocol
+      xpadneo, rumble: Reduce CPU busy usage during welcome rumble
+      xpadneo, device: Use acknowledged GATT Write Request for rumble
+      xpadneo, rumble: Eliminate artificial rumble throttling for HOGP
+      xpadneo, installer: Properly handle metainfo in the Makefile
+
+LeahTheSlug (1):
+      xpadneo, meta: Fix AppStream metainfo file name and contents
+```
+
+
 # Changes since v0.10 up to v0.10.1
 
 This is a focused maintenance release for the v0.10 series with an emphasis on stability and compatibility.
