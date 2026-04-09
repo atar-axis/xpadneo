@@ -79,6 +79,21 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 	sync_device(&xdata->mouse);
 }
 
+/*
+ * 8BitDo controllers that connect in Xbox BT mode, spoofing as 045E:02E0
+ * (Xbox One S). Identified by device name since descriptor layout varies
+ * between models and cannot be used as a reliable fingerprint.
+ * The real Xbox One S reports "Xbox Wireless Controller" and is not listed.
+ */
+static const char * const xpadneo_8bitdo_02e0_names[] = {
+	"8BitDo Pro 2",
+	"8Bitdo SN30 Pro",
+	"8Bitdo SF30 Pro",
+	"8BitDo Zero 2 gamepad",
+	"8BitDo M30 gamepad",
+	NULL,
+};
+
 const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -180,15 +195,15 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	}
 
 	/*
-	 * 8BitDo Pro 2 (PID 0x02E0, shared with Xbox One S Windows mode):
-	 * SDL3's HIDAPI Xbox One driver claims any 045E:02E0 device connected via
-	 * Bluetooth and applies a built-in mapping with guide:b10,leftstick:b8,
+	 * 8BitDo controllers in Xbox BT mode (PID 0x02E0, shared with the real
+	 * Xbox One S): SDL3's HIDAPI Xbox One driver claims any 045E:02E0 device
+	 * via Bluetooth and applies a built-in mapping with guide:b10,leftstick:b8,
 	 * rightstick:b9 — designed for the real Xbox One S which exposes no Guide
-	 * on the gamepad device. The 8BitDo's Guide (0x10085, inside the Gamepad
-	 * Application Collection) maps naturally to BTN_MODE (316), which sorts
-	 * before BTN_THUMBL (317) and BTN_THUMBR (318), making the real layout
-	 * guide:b8,leftstick:b9,rightstick:b10. HIDAPI cannot be tricked by
-	 * descriptor changes since it reads hidraw directly.
+	 * on the gamepad device. These 8BitDo controllers' Guide button (0x10085,
+	 * inside the Gamepad Application Collection) maps naturally to BTN_MODE
+	 * (316), which sorts before BTN_THUMBL (317) and BTN_THUMBR (318), making
+	 * the real layout guide:b8,leftstick:b9,rightstick:b10. HIDAPI cannot be
+	 * tricked by descriptor changes since it reads hidraw directly.
 	 *
 	 * Spoof as Xbox One model 1697 (0x02DD): this was a USB-only controller
 	 * with no wireless capability, so SDL3 HIDAPI has no Xbox One BT driver
@@ -196,13 +211,32 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	 * and auto-detects by key code: BTN_MODE→guide, BTN_THUMBL→leftstick,
 	 * BTN_THUMBR→rightstick — correct for our layout. Steam and other apps
 	 * still identify it as an Xbox One controller.
+	 *
+	 * Detection is name-based (see xpadneo_8bitdo_02e0_names[]) so the real
+	 * Xbox One S ("Xbox Wireless Controller") is never affected.
 	 */
-	if (hdev->product == 0x02E0 && *rsize >= 0xac &&
-	    rdesc[0xa6] == 0x05 && rdesc[0xa7] == 0x01 &&
-	    rdesc[0xa8] == 0x09 && rdesc[0xa9] == 0x80) {
-		hid_notice(hdev, "8BitDo Pro 2 detected, spoofing as Xbox One 1697 (0x02DD) to bypass SDL3 HIDAPI\n");
-		xdata->quirks |= XPADNEO_QUIRK_NO_GUIDE_BTN;
-		hdev->product = 0x02DD;
+	if (hdev->product == 0x02E0) {
+		int i;
+
+		for (i = 0; xpadneo_8bitdo_02e0_names[i]; i++) {
+			if (!strcmp(hdev->name, xpadneo_8bitdo_02e0_names[i]))
+				break;
+		}
+		if (xpadneo_8bitdo_02e0_names[i]) {
+			hid_notice(hdev, "%s detected, spoofing as Xbox One 1697 (0x02DD) to bypass SDL3 HIDAPI\n",
+				   hdev->name);
+			xdata->quirks |= XPADNEO_QUIRK_NO_GUIDE_BTN;
+
+			/*
+			 * 8BitDo M30: X and Y face buttons are physically swapped
+			 * relative to the standard Xbox layout. Swap bits 2 and 3
+			 * of data[14] in raw_event to correct BTN_NORTH ↔ BTN_WEST.
+			 */
+			if (!strcmp(hdev->name, "8BitDo M30 gamepad"))
+				xdata->quirks |= XPADNEO_QUIRK_SWAP_XY;
+
+			hdev->product = 0x02DD;
+		}
 	}
 
 	return rdesc;

@@ -137,6 +137,11 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		data[14] = SWAP_BITS(data[14], 2, 3);
 	}
 
+	/* swap X (BTN_NORTH) with Y (BTN_WEST) for controllers with non-standard XY layout */
+	if ((xdata->quirks & XPADNEO_QUIRK_SWAP_XY) && report->id == 1 && reportsize >= 15) {
+		data[14] = SWAP_BITS(data[14], 2, 3);
+	}
+
 	/* XBE2: track the current controller settings */
 	if (report->id == 1 && reportsize >= 20) {
 		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
