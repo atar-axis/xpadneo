@@ -37,6 +37,18 @@ MODULE_PARM_DESC(ff_connect_notify,
 
 static struct workqueue_struct *rumble_wq;
 
+inline void xpadneo_rumble_streaming_set(struct xpadneo_devdata *xdata, const bool enabled)
+{
+	if (likely(cmpxchg(&xdata->rumble.enabled, !enabled, enabled) == !enabled))
+		hid_info(xdata->hdev, "rumble streaming %s\n", enabled ? "enabled" : "disabled");
+}
+
+inline bool xpadneo_rumble_streaming_get(const struct xpadneo_devdata *xdata)
+{
+	/* get globally visible state if rumble streaming is enabled */
+	return smp_load_acquire(&xdata->rumble.enabled);
+}
+
 static void rumble_worker(struct work_struct *work)
 {
 	struct xpadneo_devdata *xdata = container_of(work, struct xpadneo_devdata, rumble.worker);
@@ -66,7 +78,7 @@ reschedule:
 
 	scoped_guard(spinlock_irqsave, &xdata->rumble.lock) {
 		/* only proceed once initialization data is globally visible */
-		if (unlikely(!smp_load_acquire(&xdata->rumble.enabled)))
+		if (unlikely(!xpadneo_rumble_streaming_get(xdata)))
 			goto check_pending;
 
 		if (unlikely(xdata->quirks & XPADNEO_QUIRK_NO_TRIGGER_RUMBLE)) {
@@ -208,7 +220,7 @@ static int rumble_playback(struct input_dev *dev, int effect_id, int value)
 	return 0;
 }
 
-static void rumble_test(char *which, struct xpadneo_devdata *xdata,
+static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 			struct xpadneo_rumble_report pck)
 {
 	enum xpadneo_rumble_motors enabled = pck.data.enable;
@@ -281,9 +293,8 @@ static void rumble_test(char *which, struct xpadneo_devdata *xdata,
 	msleep(30);
 }
 
-static void rumble_welcome(struct hid_device *hdev)
+static void rumble_welcome(const struct xpadneo_devdata *xdata)
 {
-	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct xpadneo_rumble_report pck = { };
 
 	pck.report_id = XPADNEO_XBOX_RUMBLE_REPORT;
@@ -318,6 +329,20 @@ static void rumble_welcome(struct hid_device *hdev)
 		pck.data.enable = XBOX_RUMBLE_TRIGGERS;
 		rumble_test("trigger motors", xdata, pck);
 	}
+}
+
+static void rumble_welcome_worker(struct work_struct *work)
+{
+	struct xpadneo_devdata *xdata =
+	    container_of(work, struct xpadneo_devdata, rumble.init_worker);
+
+	xpadneo_benchmark(rumble_welcome, xdata);
+
+	hid_info(xdata->hdev,
+		 "please report a bug if your controller did not rumble: uses_hogp %d\n",
+		 xdata->uses_hogp);
+
+	xpadneo_rumble_streaming_set(xdata, true);
 }
 
 static int ff_upload_effect(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old)
@@ -391,6 +416,7 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 
 	spin_lock_init(&xdata->rumble.lock);
 	INIT_WORK(&xdata->rumble.worker, rumble_worker);
+	INIT_WORK(&xdata->rumble.init_worker, rumble_welcome_worker);
 	xdata->rumble.output_report_dmabuf = devm_kzalloc(&hdev->dev,
 							  sizeof(struct xpadneo_rumble_report),
 							  GFP_KERNEL);
@@ -411,15 +437,11 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	gamepad->ff->erase = ff_erase_effect;
 	gamepad->ff->playback = rumble_playback;
 
-	if (param_ff_connect_notify) {
-		xpadneo_benchmark(rumble_welcome, hdev);
-		hid_info(hdev,
-			 "please report a bug if your controller did not rumble: uses_hogp %d\n",
-			 xdata->uses_hogp);
-	}
-
-	/* publish readiness once all rumble state is initialized */
-	smp_store_release(&xdata->rumble.enabled, true);
+	if (param_ff_connect_notify)
+		queue_work(rumble_wq, &xdata->rumble.init_worker);
+	else
+		/* publish readiness once all rumble state is initialized */
+		xpadneo_rumble_streaming_set(xdata, true);
 
 	return 0;
 }
@@ -445,7 +467,8 @@ void xpadneo_rumble_destroy_workqueue(void)
 void xpadneo_rumble_remove(struct xpadneo_devdata *xdata)
 {
 	/* disable rumble before removable to prevent queueing new data */
-	smp_store_release(&xdata->rumble.enabled, false);
+	xpadneo_rumble_streaming_set(xdata, false);
 
+	cancel_work_sync(&xdata->rumble.init_worker);
 	cancel_work_sync(&xdata->rumble.worker);
 }

@@ -174,6 +174,7 @@ struct xpadneo_devdata {
 	struct {
 		spinlock_t lock;
 		struct work_struct worker;
+		struct work_struct init_worker;
 		bool enabled, pending;
 		struct xpadneo_rumble_data data;
 		struct xpadneo_rumble_data shadow;
@@ -213,6 +214,8 @@ extern void xpadneo_keyboard_remove(struct xpadneo_devdata *);
 extern int xpadneo_rumble_init(struct hid_device *);
 extern int xpadneo_rumble_init_workqueue(void);
 extern void xpadneo_rumble_destroy_workqueue(void);
+extern inline void xpadneo_rumble_streaming_set(struct xpadneo_devdata *, const bool);
+extern inline bool xpadneo_rumble_streaming_get(const struct xpadneo_devdata *);
 extern void xpadneo_rumble_remove(struct xpadneo_devdata *);
 
 /* xpadneo mouse driver */
