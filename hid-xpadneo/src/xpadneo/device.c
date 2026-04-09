@@ -91,7 +91,7 @@ static const char * const xpadneo_02e0_spoof_names[] = {
 	"8Bitdo SF30 Pro",
 	"8BitDo Zero 2 gamepad",
 	"8BitDo M30 gamepad",
-	"Gulikit Controller XW",
+	"GuliKit Controller XW",
 	NULL,
 };
 
@@ -237,14 +237,33 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 				xdata->quirks |= XPADNEO_QUIRK_SWAP_XY;
 
 			/*
-			 * Gulikit Controller XW: does not implement the Xbox rumble
-			 * protocol correctly — sending rumble commands causes the
-			 * motors to latch on indefinitely at connect time. Disable
-			 * all haptics to prevent this.
+			 * GuliKit Controller XW: all share the same device name but
+			 * have different hardware revisions requiring different quirks,
+			 * identified by MAC address OUI.
 			 */
-			if (!strcmp(hdev->name, "Gulikit Controller XW"))
-				xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+			if (!strcmp(hdev->name, "GuliKit Controller XW")) {
+				if (strncasecmp("98:B6:EA", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_NO_PULSE |
+							 XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
+							 XPADNEO_QUIRK_REVERSE_MASK;
+				else if (strncasecmp("98:B6:EC", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE |
+							 XPADNEO_QUIRK_SWAPPED_MASK;
+			}
 
+			/*
+			 * GameSir controllers register themselves as 'Xbox Wireless Controller'
+			 * but have different hardware revisions requiring different quirks,
+			 */
+			if (!strcmp(hdev->name, "Xbox Wireless Controller")) {
+				if (strncasecmp("A0:5A:5D", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_NO_HAPTICS;
+				else if (strncasecmp("E4:17:D8", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+			}
+
+			/* Force all devices to be recognized as "Xbox Wireless Controller" */
+			strscpy(hdev->name, "Xbox Wireless Controller", sizeof(hdev->name));
 			hdev->product = 0x02DD;
 		}
 	}
