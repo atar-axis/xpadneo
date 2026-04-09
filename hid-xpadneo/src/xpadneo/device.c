@@ -80,17 +80,18 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 }
 
 /*
- * 8BitDo controllers that connect in Xbox BT mode, spoofing as 045E:02E0
+ * Third-party controllers that connect in Xbox BT mode, spoofing as 045E:02E0
  * (Xbox One S). Identified by device name since descriptor layout varies
  * between models and cannot be used as a reliable fingerprint.
  * The real Xbox One S reports "Xbox Wireless Controller" and is not listed.
  */
-static const char * const xpadneo_8bitdo_02e0_names[] = {
+static const char * const xpadneo_02e0_spoof_names[] = {
 	"8BitDo Pro 2",
 	"8Bitdo SN30 Pro",
 	"8Bitdo SF30 Pro",
 	"8BitDo Zero 2 gamepad",
 	"8BitDo M30 gamepad",
+	"Gulikit Controller XW",
 	NULL,
 };
 
@@ -212,17 +213,17 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	 * BTN_THUMBR→rightstick — correct for our layout. Steam and other apps
 	 * still identify it as an Xbox One controller.
 	 *
-	 * Detection is name-based (see xpadneo_8bitdo_02e0_names[]) so the real
+	 * Detection is name-based (see xpadneo_02e0_spoof_names[]) so the real
 	 * Xbox One S ("Xbox Wireless Controller") is never affected.
 	 */
 	if (hdev->product == 0x02E0) {
 		int i;
 
-		for (i = 0; xpadneo_8bitdo_02e0_names[i]; i++) {
-			if (!strcmp(hdev->name, xpadneo_8bitdo_02e0_names[i]))
+		for (i = 0; xpadneo_02e0_spoof_names[i]; i++) {
+			if (!strcmp(hdev->name, xpadneo_02e0_spoof_names[i]))
 				break;
 		}
-		if (xpadneo_8bitdo_02e0_names[i]) {
+		if (xpadneo_02e0_spoof_names[i]) {
 			hid_notice(hdev, "%s detected, spoofing as Xbox One 1697 (0x02DD) to bypass SDL3 HIDAPI\n",
 				   hdev->name);
 			xdata->quirks |= XPADNEO_QUIRK_NO_GUIDE_BTN;
@@ -234,6 +235,15 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			 */
 			if (!strcmp(hdev->name, "8BitDo M30 gamepad"))
 				xdata->quirks |= XPADNEO_QUIRK_SWAP_XY;
+
+			/*
+			 * Gulikit Controller XW: does not implement the Xbox rumble
+			 * protocol correctly — sending rumble commands causes the
+			 * motors to latch on indefinitely at connect time. Disable
+			 * all haptics to prevent this.
+			 */
+			if (!strcmp(hdev->name, "Gulikit Controller XW"))
+				xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 
 			hdev->product = 0x02DD;
 		}
