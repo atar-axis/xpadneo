@@ -65,7 +65,7 @@ install: build
 	$(DKMS) add hid-xpadneo
 
 install-metainfo:
-	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) xpadneo.metainfo.xml
+	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) io.github.atar_axis.xpadneo.metainfo.xml
 
 uninstall: VERSION
 	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all || echo "dkms: remove failed: ignored"
@@ -73,6 +73,7 @@ uninstall: VERSION
 	rm -f $(DOCS:%=$(PREFIX)$(DOC_PREFIX)/%)
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
 	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
+	rm -f $(PREFIX)$(META_PREFIX)/io.github.atar_axis.xpadneo.metainfo.xml
 	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
 	$(UDEVADM) control --reload
 
