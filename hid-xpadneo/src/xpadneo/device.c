@@ -213,12 +213,40 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	 * BTN_THUMBR→rightstick — correct for our layout. Steam and other apps
 	 * still identify it as an Xbox One controller.
 	 *
-	 * Detection is name-based (see xpadneo_02e0_spoof_names[]) so the real
-	 * Xbox One S ("Xbox Wireless Controller") is never affected.
+	 * Detection is name- or OUI-based so the real Xbox One S
+	 * ("Xbox Wireless Controller", Microsoft OUI) is never affected.
+	 *
+	 * This spoof path is architecturally separate from enable_pid_spoof=1:
+	 * ┌────────────┬──────────────────────────┬───────────────────────────┐
+	 * │            │    enable_pid_spoof=1    │   3rd party 02E0 → 02DD   │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ PID target │ 028E (Xbox 360)          │ 02DD (Xbox One 1697)      │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Descriptor │ Modified (15→12 buttons) │ Native (untouched)        │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Goal       │ Legacy SDL2 <2.28 compat │ SDL3 HIDAPI bypass        │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Scope      │ All controllers          │ Named/OUI 3rd party only  │
+	 * └────────────┴──────────────────────────┴───────────────────────────┘
 	 */
 	if (hdev->product == 0x02E0) {
-		int i;
+		/*
+		 * GameSir controllers register themselves as "Xbox Wireless Controller"
+		 * with PID 02E0, making them indistinguishable from the real Xbox One S
+		 * by name. Use OUI to identify them and apply the 02DD spoof.
+		 */
+		if (strncasecmp("A0:5A:5D", hdev->uniq, 8) == 0) {
+			hid_notice(hdev, "GameSir (OUI A0:5A:5D) detected, spoofing as Xbox One 1697 (0x02DD)\n");
+			xdata->quirks |= XPADNEO_QUIRK_NO_HAPTICS;
+			hdev->product = 0x02DD;
+		} else if (strncasecmp("E4:17:D8", hdev->uniq, 8) == 0) {
+			hid_notice(hdev, "GameSir (OUI E4:17:D8) detected, spoofing as Xbox One 1697 (0x02DD)\n");
+			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+			hdev->product = 0x02DD;
+		}
 
+		/* The rest we can identify by name then fine-tune by device mac */
+		int i;
 		for (i = 0; xpadneo_02e0_spoof_names[i]; i++) {
 			if (!strcmp(hdev->name, xpadneo_02e0_spoof_names[i]))
 				break;
@@ -249,17 +277,6 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 				else if (strncasecmp("98:B6:EC", hdev->uniq, 8) == 0)
 					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE |
 							 XPADNEO_QUIRK_SWAPPED_MASK;
-			}
-
-			/*
-			 * GameSir controllers register themselves as 'Xbox Wireless Controller'
-			 * but have different hardware revisions requiring different quirks,
-			 */
-			if (!strcmp(hdev->name, "Xbox Wireless Controller")) {
-				if (strncasecmp("A0:5A:5D", hdev->uniq, 8) == 0)
-					xdata->quirks |= XPADNEO_QUIRK_NO_HAPTICS;
-				else if (strncasecmp("E4:17:D8", hdev->uniq, 8) == 0)
-					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 			}
 
 			/* Force all devices to be recognized as "Xbox Wireless Controller" */
