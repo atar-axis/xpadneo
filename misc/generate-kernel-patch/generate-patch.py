@@ -302,7 +302,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
 
         # 6. Generate patch from commit
         info("Generating patch from git commit...")
-        run_command("git add .", cwd=kernel_worktree, capture=False)
+        run_command(["git", "add", "."], cwd=kernel_worktree, capture=False)
 
         # Create commit message from template
         commit_tmpl = (script_dir / "commit-message.tmpl").read_text()
@@ -312,7 +312,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
 
         # Create commit and export patch
         run_command(["git", "commit", "--signoff", "-F", str(commit_msg_file)], cwd=kernel_worktree, capture=False)
-        patch_content = run_command("git format-patch -1 HEAD --stdout", cwd=kernel_worktree)
+        patch_content = run_command(["git", "format-patch", "-1", "HEAD", "--stdout"], cwd=kernel_worktree)
         patch_file.write_text(patch_content)
 
         if not patch_content:
@@ -358,8 +358,8 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
 
         info("Testing patch application (dry-run)...")
         # Reset the worktree to before our commit to test the patch
-        run_command("git reset --hard HEAD~1", cwd=kernel_worktree, capture=False)
-        run_command("git clean -fdx", cwd=kernel_worktree, capture=False)
+        run_command(["git", "reset", "--hard", "HEAD~1"], cwd=kernel_worktree, capture=False)
+        run_command(["git", "clean", "-fdx"], cwd=kernel_worktree, capture=False)
         result = subprocess.run(
             ["git", "apply", "--check", str(patch_file.resolve())], cwd=kernel_worktree, capture_output=True, text=True
         )
