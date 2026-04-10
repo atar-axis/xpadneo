@@ -152,6 +152,8 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
 
         # Define the final output directory structure AFTER versions are known
         final_output_dir = out_dir / f"xpadneo-{xpadneo_version}" / f"linux-{kernel_version}"
+        if final_output_dir.exists():
+            shutil.rmtree(final_output_dir)
         final_output_dir.mkdir(parents=True)
 
         patch_file = final_output_dir / "xpadneo-kernel-integration.patch"
@@ -398,11 +400,9 @@ def main():
     if not is_git_repo(xpadneo_repo_path):
         error(f"Could not find xpadneo git repository at '{xpadneo_repo_path}'.")
 
-    # Setup output directory
+    # Ensure output directory exists
     out_dir = script_dir / "out"
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir()
+    out_dir.mkdir(exist_ok=True)
 
     try:
         run_patch_generation(kernel_repo_path, xpadneo_repo_path, args.kernel_ref, out_dir, script_dir)
