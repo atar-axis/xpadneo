@@ -87,6 +87,7 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
  */
 static const char * const xpadneo_02e0_spoof_names[] = {
 	"8BitDo Pro 2",
+	"8BitDo SN30 Pro+",
 	"8Bitdo SN30 Pro",
 	"8Bitdo SF30 Pro",
 	"8BitDo Zero 2 gamepad",
