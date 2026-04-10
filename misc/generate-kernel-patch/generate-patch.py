@@ -191,10 +191,20 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         info("Creating xpadneo Kconfig and Makefile...")
         (xpadneo_dest / "Kconfig").write_text((script_dir / "xpadneo.Kconfig").read_text())
 
-        # Read the template Makefile, replace the version, and write it
+        # Read the template Makefile, adjust it for in-tree build, and write it
         src_makefile_content = (xpadneo_worktree / "hid-xpadneo" / "src" / "Makefile").read_text()
+
+        # Replace version string
         modified_makefile_content = src_makefile_content.replace(
-            "ccflags-y += -DVERSION=$(VERSION)", f'ccflags-y += -DVERSION="{xpadneo_version}"'
+            "ccflags-y += -DVERSION=$(VERSION)", f'ccflags-y += -DVERSION=\\"{xpadneo_version}\\"'
+        )
+
+        # Remove the 'xpadneo/' prefix for in-tree build
+        modified_makefile_content = modified_makefile_content.replace("xpadneo/", "")
+
+        # Use the correct config variable for in-tree build
+        modified_makefile_content = modified_makefile_content.replace(
+            "obj-m += hid-xpadneo.o", "obj-$(CONFIG_HID_XPADNEO) += hid-xpadneo.o"
         )
         (xpadneo_dest / "Makefile").write_text(modified_makefile_content)
 
