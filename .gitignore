@@ -14,5 +14,5 @@ hid-xpadneo/dkms.conf
 hid-xpadneo/src/*.ko*
 hid-xpadneo/src/*.symvers*
 
-#FIXME(kakra) remove after source file split
-hid-xpadneo/src/xpadneo.c
+# Generated files from patch generator
+/misc/generate-kernel-patch/out/
