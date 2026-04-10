@@ -125,106 +125,7 @@ def find_kconfig_insertion_point(kconfig_content):
     return None
 
 
-def create_xpadneo_kconfig():
-    return """# SPDX-License-Identifier: GPL-2.0-only
-config HID_XPADNEO
-	tristate "Xbox Wireless Controller Bluetooth support (xpadneo)"
-	depends on HID && BT_HIDP
-	help
-	  Support for Xbox One S/X, Xbox Series X|S, and Xbox Elite Series 2
-	  controllers connected via Bluetooth.
-
-	  This driver provides advanced features including:
-	  - Force feedback (rumble) support for main and trigger motors
-	  - Battery level reporting
-	  - Profile switching (Elite controllers)
-	  - Mouse mode emulation
-	  - Improved button mappings
-
-	  This driver will be preferred over the generic HID driver for
-	  Xbox controllers connected via Bluetooth.
-
-	  To compile this driver as a module, choose M here: the module
-	  will be called hid-xpadneo.
-"""
-
-
-def create_xpadneo_makefile(xpadneo_version):
-    return f"""# SPDX-License-Identifier: GPL-2.0-only
-
-ccflags-y += -DVERSION="{xpadneo_version}"
-
-obj-$(CONFIG_HID_XPADNEO) += hid-xpadneo.o
-
-hid-xpadneo-y :=
-	consumer.o
-	core.o
-	debug.o
-	device.o
-	events.o
-	keyboard.o
-	mappings.o
-	mouse.o
-	power.o
-	quirks.o
-	rumble.o
-	synthetic.o
-"""
-
-
-def create_udev_rules():
-    return """# xpadneo - Xbox Wireless Controller driver udev rules
-# This file provides proper permissions and access for xpadneo controllers
-
-# Rebind driver to xpadneo
-ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
-
-# Tag xpadneo devices for access in the user session
-# MODE="0664" allows user read/write access for proper Steam Input detection
-# LIBINPUT_IGNORE_DEVICE prevents desktop environments from using controller as mouse
-ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
-
-# Allow hidraw access for Steam Input to properly detect controller models and features
-# This is needed with PID spoofing disabled (default) for Elite paddle detection
-ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", TAG+="uaccess", MODE="0660"
-"""
-
-
-def create_modprobe_conf():
-    return """# xpadneo - Xbox Wireless Controller driver module configuration
-
-# Module aliases for automatic loading
-alias hid:b0005g*v0000045Ep000002E0 hid_xpadneo
-alias hid:b0005g*v0000045Ep000002FD hid_xpadneo
-alias hid:b0005g*v0000045Ep00000B05 hid_xpadneo
-alias hid:b0005g*v0000045Ep00000B13 hid_xpadneo
-alias hid:b0005g*v0000045Ep00000B20 hid_xpadneo
-alias hid:b0005g*v0000045Ep00000B22 hid_xpadneo
-
-# Ensure uhid is loaded before bluetooth for controller firmware 5.x support
-softdep bluetooth pre: uhid
-
-# Optional: Enable PID spoofing for legacy SDL2 (<2.28) compatibility
-# Uncomment the line below if you have games with SDL2 < 2.28 button mapping issues
-# options hid_xpadneo enable_pid_spoof=1
-"""
-
-
-def create_patch_header(xpadneo_version):
-    return f"""Add xpadneo Xbox Wireless Controller driver for Bluetooth support
-
-This patch integrates the xpadneo driver ({xpadneo_version}) into the kernel tree.
-xpadneo provides advanced support for Xbox One S/X, Series X|S, and Elite
-controllers connected via Bluetooth, including force feedback, battery
-reporting, and profile switching.
-
-Signed-off-by: GloriousEggroll <gloriouseggroll@gmail.com>
----
-
-"""
-
-
-def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_dir):
+def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_dir, script_dir):
     """Main patch generation function"""
     work_dir = out_dir / f"work-{os.getpid()}"
     work_dir.mkdir()
@@ -233,8 +134,9 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
     xpadneo_worktree = work_dir / "xpadneo"
 
     patch_file = out_dir / "xpadneo-kernel-integration.patch"
-    udev_rules_file = out_dir / "60-xpadneo.rules"
-    modprobe_conf_file = out_dir / "xpadneo.conf"
+    udev_rules_file_loader = out_dir / "60-xpadneo-kernel.rules"
+    udev_rules_file_hidraw = out_dir / "70-xpadneo-kernel-disable-hidraw.rules"
+    modprobe_conf_file = out_dir / "xpadneo-kernel.conf"
 
     try:
         # 1. Setup worktrees
@@ -258,7 +160,9 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         print()
         info("Output files:")
         info(f"  - Kernel patch: {patch_file}")
-        info(f"  - Udev rules: {udev_rules_file}")
+        info("  - Udev rules:")
+        info(f"    - {udev_rules_file_loader}")
+        info(f"    - {udev_rules_file_hidraw}")
         info(f"  - Modprobe config: {modprobe_conf_file}")
         print()
 
@@ -282,8 +186,14 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         shutil.copytree(xpadneo_src, xpadneo_dest)
 
         info("Creating xpadneo Kconfig and Makefile...")
-        (xpadneo_dest / "Kconfig").write_text(create_xpadneo_kconfig())
-        (xpadneo_dest / "Makefile").write_text(create_xpadneo_makefile(xpadneo_version))
+        (xpadneo_dest / "Kconfig").write_text((script_dir / "xpadneo.Kconfig").read_text())
+
+        # Read the template Makefile, replace the version, and write it
+        src_makefile_content = (xpadneo_worktree / "hid-xpadneo" / "src" / "Makefile").read_text()
+        modified_makefile_content = src_makefile_content.replace(
+            "ccflags-y += -DVERSION=$(VERSION)", f'ccflags-y += -DVERSION=\\"{xpadneo_version}\\"'
+        )
+        (xpadneo_dest / "Makefile").write_text(modified_makefile_content)
 
         info("Modifying drivers/hid/Kconfig...")
         kconfig_file = kernel_worktree / "drivers" / "hid" / "Kconfig"
@@ -348,24 +258,55 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         else:
             warning("hid-microsoft.c not found, skipping modification.")
 
-        # 5. Generate diff
-        info("Generating patch using 'git diff'...")
+        # 5. Generate patch from commit
+        info("Generating patch from git commit...")
         run_command("git add .", cwd=kernel_worktree, capture=False)
-        diff_output = run_command("git diff --staged", cwd=kernel_worktree)
-        patch_content = create_patch_header(xpadneo_version) + (diff_output or "")
+
+        # Create commit message from template
+        commit_tmpl = (script_dir / "commit-message.tmpl").read_text()
+        commit_msg = commit_tmpl.format(xpadneo_version=xpadneo_version)
+        commit_msg_file = work_dir / "commit_msg.txt"
+        commit_msg_file.write_text(commit_msg)
+
+        # Create commit and export patch
+        run_command(f"git commit --signoff -F {commit_msg_file}", cwd=kernel_worktree, capture=False)
+        patch_content = run_command("git format-patch -1 HEAD --stdout", cwd=kernel_worktree)
         patch_file.write_text(patch_content)
 
-        if not diff_output:
-            error("Failed to generate diff output with 'git diff'.")
+        if not patch_content:
+            error("Failed to generate patch with 'git format-patch'.")
 
         # 6. Generate other files
         info("Generating udev rules and modprobe configuration...")
-        udev_rules_file.write_text(create_udev_rules())
-        modprobe_conf_file.write_text(create_modprobe_conf())
 
+        # Read and filter 60-xpadneo.rules
+        rules60_content = (xpadneo_worktree / "hid-xpadneo" / "etc-udev-rules.d" / "60-xpadneo.rules").read_text()
+        # Filter out comments, empty lines, and the bind action
+        filtered_rules60 = [
+            line.strip()
+            for line in rules60_content.splitlines()
+            if line.strip() and not line.strip().startswith("#") and 'ACTION=="bind"' not in line
+        ]
+        udev_rules_file_loader.write_text("\n".join(filtered_rules60))  # This is the 60-xpadneo-kernel.rules file
+
+        # Read and write 70-xpadneo-disable-hidraw.rules
+        rules70_content = (
+            xpadneo_worktree / "hid-xpadneo" / "etc-udev-rules.d" / "70-xpadneo-disable-hidraw.rules"
+        ).read_text()
+        # Filter out comments and empty lines
+        filtered_rules70 = [
+            line.strip() for line in rules70_content.splitlines() if line.strip() and not line.strip().startswith("#")
+        ]
+        udev_rules_file_hidraw.write_text("\n".join(filtered_rules70))  # Filtered content
+
+        modprobe_conf_file.write_text(
+            (xpadneo_worktree / "hid-xpadneo" / "etc-modprobe.d" / "xpadneo.conf").read_text()
+        )
         # 7. Final summary and verification
         patch_size = patch_file.stat().st_size
-        file_count = patch_content.count("diff --git")
+        # Get file count from the patch content itself
+        file_count_str = re.search(r"(\d+)\s+files? changed", patch_content)
+        file_count = int(file_count_str.group(1)) if file_count_str else 0
 
         print()
         print("=" * 60)
@@ -373,7 +314,9 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         print("=" * 60)
         print()
         success(f"Patch file: {patch_file}")
-        success(f"Udev rules: {udev_rules_file}")
+        success("Udev rules:")
+        success(f"  - {udev_rules_file_loader}")
+        success(f"  - {udev_rules_file_hidraw}")
         success(f"Modprobe config: {modprobe_conf_file}")
         print()
         info(f"Patch size: {patch_size / 1024:.1f} KB")
@@ -381,8 +324,8 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         print()
 
         info("Testing patch application (dry-run)...")
-        # Reset the worktree to its clean state to test the patch
-        run_command("git reset --hard HEAD", cwd=kernel_worktree, capture=False)
+        # Reset the worktree to before our commit to test the patch
+        run_command("git reset --hard HEAD~1", cwd=kernel_worktree, capture=False)
         run_command("git clean -fdx", cwd=kernel_worktree, capture=False)
         result = subprocess.run(
             f"git apply --check {patch_file.resolve()}", shell=True, cwd=kernel_worktree, capture_output=True, text=True
@@ -448,7 +391,7 @@ def main():
     out_dir.mkdir()
 
     try:
-        run_patch_generation(kernel_repo_path, xpadneo_repo_path, args.kernel_ref, out_dir)
+        run_patch_generation(kernel_repo_path, xpadneo_repo_path, args.kernel_ref, out_dir, script_dir)
         success("All files generated in 'out' directory.")
     except KeyboardInterrupt:
         print("\n\nInterrupted by user.", file=sys.stderr)
