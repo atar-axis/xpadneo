@@ -1,5 +1,10 @@
-# Rebind driver to xpadneo
+# Rebind Xbox controller devices to xpadneo when loaded as a DKMS module.
+#
+# This rule is only needed when xpadneo is installed as a DKMS module. Without
+# it, hid-microsoft will claim devices it shares in its own device table before
+# xpadneo gets a chance to bind.
+#
+# When xpadneo is patched directly into the kernel, this rule is not needed:
+# those device IDs are removed from hid-microsoft at build time so the kernel
+# binds directly to hid-xpadneo at enumeration without any udev intervention.
 ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
-
-# Tag xpadneo devices for access in the user session
-ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", TAG+="uaccess"

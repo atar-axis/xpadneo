@@ -35,6 +35,19 @@ MODULE_SOFTDEP("pre: uhid");
 
 static DEFINE_IDA(xpadneo_core_device_id_allocator);
 
+static bool param_enable_pid_spoof = false;
+module_param_named(enable_pid_spoof, param_enable_pid_spoof, bool, 0444);
+MODULE_PARM_DESC(enable_pid_spoof,
+		 "(bool) Enable PID/version spoofing and Linux gamepad spec compliance mode (default: disabled). "
+		 "When enabled: pretends to be Xbox 360, applies HID descriptor mods, uses strict button mapping. "
+		 "When disabled (default): uses real PID, native firmware layout, works with Steam Input and Wine/Proton. "
+		 "Only enable for legacy SDL2 (<2.28) games that need Xbox 360 emulation.");
+
+bool xpadneo_param_enable_pid_spoof(void)
+{
+	return param_enable_pid_spoof;
+}
+
 #ifndef USB_VENDOR_ID_MICROSOFT
 #define USB_VENDOR_ID_MICROSOFT 0x045e
 #endif
@@ -49,11 +62,11 @@ static const struct hid_device_id core_devices[] = {
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST | XPADNEO_QUIRK_RAW_RUMBLE },
 
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST },
 
 	/* SENTINEL VALUE, indicates the end */
 	{ }
@@ -179,11 +192,12 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	}
 
 	/*
-	 * Pretend that we are in Windows pairing mode as we are actually
-	 * exposing the Windows mapping. This prevents SDL and other layers
-	 * (probably browser game controller APIs) from treating our driver
-	 * unnecessarily with button and axis mapping fixups, and it seems
-	 * this is actually a firmware mode meant for Android usage only:
+	 * Optionally pretend that we are in Windows pairing mode to work around
+	 * button and axis mapping issues in older SDL versions (<2.28).
+	 *
+	 * By default, spoofing is DISABLED to allow modern software (SDL2 2.28+,
+	 * Steam Input) to properly detect controller models and enable features
+	 * like Xbox Elite paddle support.
 	 *
 	 * Xbox One S:
 	 * 0x2E0 wireless Windows mode (non-Android mode)
@@ -200,27 +214,30 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 *
 	 * Xbox Controller BLE mode:
 	 * 0xB20 wireless BLE mode
-	 *
-	 * TODO: We should find a better way of doing this so SDL2 could
-	 * still detect our driver as the correct model. Currently this
-	 * maps all controllers to the same model.
 	 */
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
-	hdev->product = 0x028E;
-	hdev->version = 0x00001130;
 
-	if (hdev->product != xdata->original_product)
-		hid_info(hdev,
-			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x%04X)\n", xdata->original_product,
-			 hdev->product);
+	if (param_enable_pid_spoof) {
+		hdev->product = 0x028E;
+		hdev->version = 0x00001130;
 
-	if (hdev->version != xdata->original_version)
+		if (hdev->product != xdata->original_product)
+			hid_info(hdev,
+				 "pretending XB1S Windows wireless mode "
+				 "(changed PID from 0x%04X to 0x%04X)\n", xdata->original_product,
+				 hdev->product);
+
+		if (hdev->version != xdata->original_version)
+			hid_info(hdev,
+				 "working around wrong SDL2 mappings "
+				 "(changed version from 0x%08X to 0x%08X)\n", xdata->original_version,
+				 hdev->version);
+	} else {
 		hid_info(hdev,
-			 "working around wrong SDL2 mappings "
-			 "(changed version from 0x%08X to 0x%08X)\n", xdata->original_version,
-			 hdev->version);
+			 "using real controller PID 0x%04X for proper device detection "
+			 "(enable_pid_spoof=0)\n", hdev->product);
+	}
 
 	ret = hid_parse(hdev);
 	if (ret) {

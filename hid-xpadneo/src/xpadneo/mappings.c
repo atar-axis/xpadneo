@@ -101,11 +101,10 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 			   struct hid_field *field,
 			   struct hid_usage *usage, unsigned long **bit, int *max)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	int i = 0;
 
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
-		struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 		xdata->battery.report_id = field->report->id;
 		hid_info(hdev, "battery detected\n");
 

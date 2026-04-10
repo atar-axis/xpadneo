@@ -39,6 +39,10 @@
 #define XPADNEO_QUIRK_REVERSE_MASK      128
 #define XPADNEO_QUIRK_SWAPPED_MASK      256
 #define XPADNEO_QUIRK_NO_HEURISTICS     512
+#define XPADNEO_QUIRK_MENU_GHOST        1024
+#define XPADNEO_QUIRK_RAW_RUMBLE        2048
+#define XPADNEO_QUIRK_NO_GUIDE_BTN      4096
+#define XPADNEO_QUIRK_SWAP_XY           8192
 
 /* common quirk combinations */
 #define XPADNEO_QUIRK_NO_HAPTICS        (XPADNEO_QUIRK_NO_PULSE|XPADNEO_QUIRK_NO_MOTOR_MASK)
@@ -245,5 +249,8 @@ extern int xpadneo_mappings_input(struct hid_device *, struct hid_input *,
 extern int xpadneo_events_raw_event(struct hid_device *, struct hid_report *, u8 *, int);
 extern int xpadneo_events_event(struct hid_device *, struct hid_field *, struct hid_usage *, __s32);
 extern int xpadneo_events_input_configured(struct hid_device *, struct hid_input *);
+
+/* module parameters */
+extern bool xpadneo_param_enable_pid_spoof(void);
 
 #endif

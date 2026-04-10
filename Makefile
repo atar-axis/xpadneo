@@ -2,8 +2,7 @@ ETC_PREFIX ?= /etc
 DOC_PREFIX ?= /usr/share/doc/xpadneo
 META_PREFIX ?= /usr/share/metainfo
 
-MODPROBE_CONFS := xpadneo.conf
-UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
+UDEV_RULES := 60-xpadneo.rules
 DOC_SRCS := NEWS.md $(wildcard docs/[0-9A-Z]*.md)
 DOCS := $(notdir $(DOC_SRCS))
 
@@ -25,21 +24,21 @@ all: build
 
 help:
 	@echo "Targets:"
-	@echo "help              This help"
-	@echo "build             Prepare the package for DKMS deployment"
-	@echo "clangd-lsp        Generate compile_commands.json for clangd (requires bear)"
-	@echo "install           Install the package, documentation and DKMS source code"
-	@echo "uninstall         Uninstall the package, documentation and DKMS source code"
-	@echo "install-all       Install everything including optional targets"
+	@echo "help                    This help"
+	@echo "build                   Prepare the package for DKMS deployment"
+	@echo "clangd-lsp              Generate compile_commands.json for clangd (requires bear)"
+	@echo "install                 Install the package, documentation and DKMS source code"
+	@echo "uninstall               Uninstall the package, documentation and DKMS source code"
+	@echo "install-all             Install everything including optional targets"
 	@echo
 	@echo "Optional targets:"
-	@echo "install-metainfo  Install appstream metainfo"
+	@echo "install-metainfo        Install appstream metainfo"
 	@echo
 	@echo "Variables:"
-	@echo "PREFIX            Install files into this prefix"
-	@echo "DOC_PREFIX        Install doc files relative to the prefix (defaults to /usr/share/doc/xpadneo)"
-	@echo "ETC_PREFIX        Install etc files relative to the prefix (defaults to /etc)"
-	@echo "META_PREFIX       Install metainfo files relative to the prefix (defaults to /usr/share/metainfo)"
+	@echo "PREFIX                  Install files into this prefix"
+	@echo "DOC_PREFIX              Install doc files relative to the prefix (defaults to /usr/share/doc/xpadneo)"
+	@echo "ETC_PREFIX              Install etc files relative to the prefix (defaults to /etc)"
+	@echo "META_PREFIX             Install metainfo files relative to the prefix (defaults to /usr/share/metainfo)"
 	@echo
 	@echo "Using PREFIX requires handling dkms commands in your package script."
 
@@ -57,24 +56,22 @@ clangd-lsp: compile_commands.json
 install-all: install install-metainfo
 
 install: build
-	mkdir -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
-	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/modprobe.d $(MODPROBE_CONFS:%=hid-xpadneo/etc-modprobe.d/%)
+	mkdir -p $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
 	install -D -m 0644 -t $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(UDEV_RULES:%=hid-xpadneo/etc-udev-rules.d/%)
 	install -D -m 0644 -t $(PREFIX)$(DOC_PREFIX) $(DOC_SRCS)
 	$(UDEVADM) control --reload
 	$(DKMS) add hid-xpadneo
 
 install-metainfo:
-	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) io.github.atar_axis.xpadneo.metainfo.xml
+	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) xpadneo.metainfo.xml
 
 uninstall: VERSION
 	$(DKMS) remove "hid-xpadneo/$(shell cat VERSION)" --all || echo "dkms: remove failed: ignored"
 	rm -Rf "$(PREFIX)/usr/src/hid-xpadneo-$(shell cat VERSION)"
 	rm -f $(DOCS:%=$(PREFIX)$(DOC_PREFIX)/%)
 	rm -f $(UDEV_RULES:%=$(PREFIX)$(ETC_PREFIX)/udev/rules.d/%)
-	rm -f $(MODPROBE_CONFS:%=$(PREFIX)$(ETC_PREFIX)/modprobe.d/%)
 	rm -f $(PREFIX)$(META_PREFIX)/io.github.atar_axis.xpadneo.metainfo.xml
-	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/modprobe.d $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
+	rmdir --ignore-fail-on-non-empty -p $(PREFIX)$(ETC_PREFIX)/udev/rules.d $(PREFIX)$(DOC_PREFIX)
 	$(UDEVADM) control --reload
 
 compile_commands.json: build

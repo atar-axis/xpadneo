@@ -54,6 +54,30 @@ new method allows frequencies up to 100 hz which is the limit of the controller'
 
 ## Breaking Changes
 
+### v0.11: PID Spoofing Disabled by Default
+
+As of xpadneo v0.11, **PID spoofing is disabled by default**. Previous versions pretended all controllers were Xbox 360
+controllers (PID 0x028E) to work around SDL2 mapping bugs. With SDL2 2.28+ (released 2023) correctly handling Xbox
+controllers, we now expose real controller PIDs by default.
+
+**Impact:**
+- ✅ **Steam Input** can now properly detect Elite controllers and enable paddle remapping
+- ✅ **Series X|S controllers** are correctly identified in modern games
+- ✅ **Hidraw access** is now enabled for proper device detection
+- ⚠️ **Legacy SDL2 games** (<2.28) may have button mapping issues
+
+**For legacy SDL2 (<2.28) games only:**
+```bash
+echo "options hid_xpadneo enable_pid_spoof=1" | sudo tee /etc/modprobe.d/99-xpadneo-bluetooth.conf
+```
+
+**Steam Link users:** If you need the old hidraw blocking behavior, run:
+```bash
+sudo make install-steamlink-fix
+```
+
+See [SDL.md](SDL.md) and [CONFIGURATION.md](CONFIGURATION.md) for details.
+
 ### Kernel 4.18 or newer required
 
 As of xpadneo v0.10, we require kernel 4.18 or later to utilize `HID_QUIRK_INPUT_PER_APP` which splits the gamepad into
@@ -81,8 +105,6 @@ If you still see problems, ensure that you didn't create custom controllerdb ent
 
 Known issues:
 - The Share button will currently not be recognized by SDL2, scheduled to be fixed in xpadneo v0.11
-- If SDL2 uses hidraw, mappings will be wrong, export `SDL_JOYSTICK_HIDAPI=0` in your profile or find which software
-  enabled hidraw device access to all drivers
 
 
 ### Quirks by Design

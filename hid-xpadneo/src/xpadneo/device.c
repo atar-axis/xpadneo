@@ -13,6 +13,7 @@
 
 int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len, bool uses_hogp)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
 	xpadneo_debug_hid_report(hdev, r, len);
@@ -78,6 +79,23 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 	sync_device(&xdata->mouse);
 }
 
+/*
+ * Third-party controllers that connect in Xbox BT mode, spoofing as 045E:02E0
+ * (Xbox One S). Identified by device name since descriptor layout varies
+ * between models and cannot be used as a reliable fingerprint.
+ * The real Xbox One S reports "Xbox Wireless Controller" and is not listed.
+ */
+static const char * const xpadneo_02e0_spoof_names[] = {
+	"8BitDo Pro 2",
+	"8BitDo SN30 Pro+",
+	"8Bitdo SN30 Pro",
+	"8Bitdo SF30 Pro",
+	"8BitDo Zero 2 gamepad",
+	"8BitDo M30 gamepad",
+	"GuliKit Controller XW",
+	NULL,
+};
+
 const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -120,20 +138,151 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 
 	/* fixup reported button count for Xbox controllers in Linux mode */
 	if (*rsize >= 164) {
-		/*
-		 * 12 buttons instead of 10: properly remap the
-		 * Xbox button (button 11)
-		 * Share button (button 12)
-		 */
 		if (rdesc[140] == 0x05 && rdesc[141] == 0x09 &&
 		    rdesc[144] == 0x29 && rdesc[145] == 0x0F &&
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
-			hid_notice(hdev, "fixing up button mapping\n");
-			xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
-			rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
-			rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
-			rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
+			/*
+			 * Xbox Elite Series 2 BLE (0x0B22): Steam Input has no database
+			 * entry for this controller's BLE firmware layout, so it falls back
+			 * to generic sequential mapping which misreads the non-sequential
+			 * firmware button order. Enable LINUX_BUTTONS remapping so raw_event
+			 * reorders the button bits sequentially for both Steam Input and
+			 * native Linux.
+			 *
+			 * Do NOT modify the descriptor bytes here. The XBE2 has a larger
+			 * descriptor than the Series X|S (extra paddle/profile fields), so
+			 * the byte offsets 145/153/163 land in different places and would
+			 * corrupt the rumble output report definition. The 15-button
+			 * descriptor with 12 real sequential bits + 3 always-zero trailing
+			 * bits is harmless.
+			 */
+			if (hdev->product == 0x0B22) {
+				hid_notice(hdev, "fixing up XBE2 button mapping\n");
+				xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+			}
+
+			/*
+			 * All controllers: apply button remapping + descriptor fixup when
+			 * PID spoofing is enabled (enable_pid_spoof=1) for legacy SDL2
+			 * (<2.28) compatibility via the Xbox 360 protocol.
+			 */
+			if (xpadneo_param_enable_pid_spoof()) {
+				hid_notice(hdev, "fixing up button mapping (PID spoof mode)\n");
+				xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+				rdesc[145] = 0x0C;	/* 15 buttons -> 12 buttons */
+				rdesc[153] = 0x0C;	/* 15 bits -> 12 bits buttons */
+				rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
+			}
+		}
+	}
+
+	/*
+	 * Xbox Series X|S BLE (0x0B13): same button hole at HID usage 0x90003
+	 * (bit 2 of the raw report) as XBE2 BLE (0x0B22). The physical X button
+	 * sends usage 0x90004 and physical Y sends 0x90005, shifting all buttons
+	 * from X onward by one slot. Without LINUX_BUTTONS reordering, evdev
+	 * applications see X→BTN_Y, Y→BTN_TL, LB→BTN_TR, etc.
+	 *
+	 * Steam Input reads hidraw directly (before raw_event processing), so
+	 * enabling LINUX_BUTTONS fixes evdev without affecting Steam HIDAPI.
+	 * MENU_GHOST handling is automatically bypassed when LINUX_BUTTONS is set.
+	 *
+	 * This check is outside the descriptor byte-check block above because
+	 * Series X|S has 12 buttons (0x0C) and that block matches 15 (0x0F).
+	 */
+	if (hdev->product == 0x0B13) {
+		hid_notice(hdev, "fixing up Xbox Series X|S button mapping\n");
+		xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+	}
+
+	/*
+	 * 8BitDo controllers in Xbox BT mode (PID 0x02E0, shared with the real
+	 * Xbox One S): SDL3's HIDAPI Xbox One driver claims any 045E:02E0 device
+	 * via Bluetooth and applies a built-in mapping with guide:b10,leftstick:b8,
+	 * rightstick:b9 — designed for the real Xbox One S which exposes no Guide
+	 * on the gamepad device. These 8BitDo controllers' Guide button (0x10085,
+	 * inside the Gamepad Application Collection) maps naturally to BTN_MODE
+	 * (316), which sorts before BTN_THUMBL (317) and BTN_THUMBR (318), making
+	 * the real layout guide:b8,leftstick:b9,rightstick:b10. HIDAPI cannot be
+	 * tricked by descriptor changes since it reads hidraw directly.
+	 *
+	 * Spoof as Xbox One model 1697 (0x02DD): this was a USB-only controller
+	 * with no wireless capability, so SDL3 HIDAPI has no Xbox One BT driver
+	 * path that would claim 045E:02DD via Bluetooth. SDL3 falls back to evdev
+	 * and auto-detects by key code: BTN_MODE→guide, BTN_THUMBL→leftstick,
+	 * BTN_THUMBR→rightstick — correct for our layout. Steam and other apps
+	 * still identify it as an Xbox One controller.
+	 *
+	 * Detection is name- or OUI-based so the real Xbox One S
+	 * ("Xbox Wireless Controller", Microsoft OUI) is never affected.
+	 *
+	 * This spoof path is architecturally separate from enable_pid_spoof=1:
+	 * ┌────────────┬──────────────────────────┬───────────────────────────┐
+	 * │            │    enable_pid_spoof=1    │   3rd party 02E0 → 02DD   │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ PID target │ 028E (Xbox 360)          │ 02DD (Xbox One 1697)      │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Descriptor │ Modified (15→12 buttons) │ Native (untouched)        │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Goal       │ Legacy SDL2 <2.28 compat │ SDL3 HIDAPI bypass        │
+	 * ├────────────┼──────────────────────────┼───────────────────────────┤
+	 * │ Scope      │ All controllers          │ Named/OUI 3rd party only  │
+	 * └────────────┴──────────────────────────┴───────────────────────────┘
+	 */
+	if (hdev->product == 0x02E0) {
+		/*
+		 * GameSir controllers register themselves as "Xbox Wireless Controller"
+		 * with PID 02E0, making them indistinguishable from the real Xbox One S
+		 * by name. Use OUI to identify them and apply the 02DD spoof.
+		 */
+		if (strncasecmp("A0:5A:5D", hdev->uniq, 8) == 0) {
+			hid_notice(hdev, "GameSir (OUI A0:5A:5D) detected, spoofing as Xbox One 1697 (0x02DD)\n");
+			xdata->quirks |= XPADNEO_QUIRK_NO_HAPTICS;
+			hdev->product = 0x02DD;
+		} else if (strncasecmp("E4:17:D8", hdev->uniq, 8) == 0) {
+			hid_notice(hdev, "GameSir (OUI E4:17:D8) detected, spoofing as Xbox One 1697 (0x02DD)\n");
+			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+			hdev->product = 0x02DD;
+		}
+
+		/* The rest we can identify by name then fine-tune by device mac */
+		int i;
+		for (i = 0; xpadneo_02e0_spoof_names[i]; i++) {
+			if (!strcmp(hdev->name, xpadneo_02e0_spoof_names[i]))
+				break;
+		}
+		if (xpadneo_02e0_spoof_names[i]) {
+			hid_notice(hdev, "%s detected, spoofing as Xbox One 1697 (0x02DD) to bypass SDL3 HIDAPI\n",
+				   hdev->name);
+			xdata->quirks |= XPADNEO_QUIRK_NO_GUIDE_BTN;
+
+			/*
+			 * 8BitDo M30: X and Y face buttons are physically swapped
+			 * relative to the standard Xbox layout. Swap bits 2 and 3
+			 * of data[14] in raw_event to correct BTN_NORTH ↔ BTN_WEST.
+			 */
+			if (!strcmp(hdev->name, "8BitDo M30 gamepad"))
+				xdata->quirks |= XPADNEO_QUIRK_SWAP_XY;
+
+			/*
+			 * GuliKit Controller XW: all share the same device name but
+			 * have different hardware revisions requiring different quirks,
+			 * identified by MAC address OUI.
+			 */
+			if (!strcmp(hdev->name, "GuliKit Controller XW")) {
+				if (strncasecmp("98:B6:EA", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_NO_PULSE |
+							 XPADNEO_QUIRK_NO_TRIGGER_RUMBLE |
+							 XPADNEO_QUIRK_REVERSE_MASK;
+				else if (strncasecmp("98:B6:EC", hdev->uniq, 8) == 0)
+					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE |
+							 XPADNEO_QUIRK_SWAPPED_MASK;
+			}
+
+			/* Force all devices to be recognized as "Xbox Wireless Controller" */
+			strscpy(hdev->name, "Xbox Wireless Controller", sizeof(hdev->name));
+			hdev->product = 0x02DD;
 		}
 	}
 
