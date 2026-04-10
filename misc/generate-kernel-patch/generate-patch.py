@@ -27,6 +27,7 @@ Requirements:
 import argparse
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -65,16 +66,18 @@ def success(msg):
 
 
 def run_command(cmd, cwd=None, capture=True, check=True):
-    """Run shell command and return output"""
+    """Run a command and optionally return stripped stdout."""
+    args = shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
+    cmd_display = " ".join(shlex.quote(arg) for arg in args)
     try:
         if capture:
-            result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, check=check)
+            result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=check)
             return result.stdout.strip() if result.stdout else ""
         else:
-            subprocess.run(cmd, shell=True, cwd=cwd, check=check)
+            subprocess.run(args, cwd=cwd, check=check)
             return None
     except subprocess.CalledProcessError as e:
-        print(f"{Colors.RED}Command failed: {cmd}{Colors.NC}", file=sys.stderr)
+        print(f"{Colors.RED}Command failed: {cmd_display}{Colors.NC}", file=sys.stderr)
         if e.stdout:
             print(f"STDOUT: {e.stdout}", file=sys.stderr)
         if e.stderr:
@@ -125,6 +128,19 @@ def find_kconfig_insertion_point(kconfig_content):
     return None
 
 
+def filter_non_comment_lines(content, exclude_substring=None):
+    """Return non-empty non-comment lines, optionally excluding lines containing a substring."""
+    filtered = []
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if exclude_substring and exclude_substring in line:
+            continue
+        filtered.append(line)
+    return "\n".join(filtered) + ("\n" if filtered else "")
+
+
 def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_dir, script_dir):
     """Main patch generation function"""
     work_dir = out_dir / f"work-{os.getpid()}"
@@ -136,8 +152,16 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
     try:
         # 1. Setup worktrees
         info("Creating git worktrees...")
-        run_command(f"git worktree add --detach {kernel_worktree} {kernel_ref}", cwd=kernel_repo_path, capture=False)
-        run_command(f"git worktree add --detach {xpadneo_worktree} HEAD", cwd=xpadneo_repo_path, capture=False)
+        run_command(
+            ["git", "worktree", "add", "--detach", str(kernel_worktree), kernel_ref],
+            cwd=kernel_repo_path,
+            capture=False,
+        )
+        run_command(
+            ["git", "worktree", "add", "--detach", str(xpadneo_worktree), "HEAD"],
+            cwd=xpadneo_repo_path,
+            capture=False,
+        )
 
         kernel_version = get_kernel_version_from_makefile(kernel_worktree)
         if not kernel_version:
@@ -145,7 +169,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
 
         xpadneo_src = xpadneo_worktree / "hid-xpadneo" / "src" / "xpadneo"
 
-        # 3. Get xpadneo version
+        # Determine xpadneo version to build deterministic output paths and metadata.
         info("Detecting xpadneo version...")
         xpadneo_version = get_xpadneo_version(xpadneo_worktree)
         info(f"xpadneo version: {xpadneo_version}")
@@ -177,7 +201,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         info(f"  - Modprobe config: {modprobe_conf_file}")
         print()
 
-        # 4. Sanity checks
+        # Sanity checks before modifying the kernel worktree.
         if not xpadneo_src.exists():
             error(f"xpadneo source directory not found: {xpadneo_src}")
         if not (kernel_worktree / "Makefile").exists():
@@ -185,7 +209,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         if (kernel_worktree / "drivers" / "hid" / "xpadneo").exists():
             error("xpadneo directory already exists in kernel tree. Please use a clean kernel source.")
 
-        # 5. Patching logic (directly on worktree)
+        # Apply integration changes directly in the temporary kernel worktree.
         info("Applying modifications directly to kernel worktree...")
         xpadneo_dest = kernel_worktree / "drivers" / "hid" / "xpadneo"
         shutil.copytree(xpadneo_src, xpadneo_dest)
@@ -193,7 +217,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         info("Creating xpadneo Kconfig and Makefile...")
         (xpadneo_dest / "Kconfig").write_text((script_dir / "xpadneo.Kconfig").read_text())
 
-        # Read the template Makefile, adjust it for in-tree build, and write it
+        # Read the module Makefile and transform it for in-tree kernel build usage.
         src_makefile_content = (xpadneo_worktree / "hid-xpadneo" / "src" / "Makefile").read_text()
 
         # Replace version string
@@ -217,7 +241,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         if insertion_point is None:
             error("Could not find suitable insertion point in drivers/hid/Kconfig")
         lines = kconfig_content.split("\n")
-        lines.insert(insertion_point, 'source "drivers/hid/xpadneo/Kconfig"\n')
+        lines.insert(insertion_point, 'source "drivers/hid/xpadneo/Kconfig"')
         kconfig_file.write_text("\n".join(lines))
         success("Modified drivers/hid/Kconfig")
 
@@ -239,15 +263,18 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
             first_xpadneo_entry_start_idx = -1
             last_xpadneo_entry_end_idx = -1
 
-            # Find the start and end indices of the block of Xbox controller entries
+            # Find all Microsoft HID Bluetooth Xbox controller entries.
             for i, line in enumerate(lines):
                 if (
                     "USB_DEVICE_ID_MS_XBOX_CONTROLLER" in line or "USB_DEVICE_ID_8BITDO_SN30_PRO_PLUS" in line
                 ) and "HID_BLUETOOTH_DEVICE" in line:
                     if first_xpadneo_entry_start_idx == -1:
                         first_xpadneo_entry_start_idx = i
-                    # Assuming .driver_data line is immediately after the device entry line
-                    last_xpadneo_entry_end_idx = i + 1
+                    # Extend to the end of this table entry.
+                    entry_end = i
+                    while entry_end < len(lines) and "}," not in lines[entry_end]:
+                        entry_end += 1
+                    last_xpadneo_entry_end_idx = max(last_xpadneo_entry_end_idx, entry_end)
 
             if first_xpadneo_entry_start_idx != -1:
                 new_ms_lines = []
@@ -255,13 +282,13 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
                 new_ms_lines.extend(lines[:first_xpadneo_entry_start_idx])
 
                 # Insert the #if block
-                new_ms_lines.append("\n#ifndef CONFIG_HID_XPADNEO")
+                new_ms_lines.append("#ifndef CONFIG_HID_XPADNEO")
 
                 # Add the original lines of the block
                 new_ms_lines.extend(lines[first_xpadneo_entry_start_idx : last_xpadneo_entry_end_idx + 1])
 
                 # Insert the #endif
-                new_ms_lines.append("#endif\n")
+                new_ms_lines.append("#endif")
 
                 # Add lines after the block
                 new_ms_lines.extend(lines[last_xpadneo_entry_end_idx + 1 :])
@@ -284,43 +311,33 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         commit_msg_file.write_text(commit_msg)
 
         # Create commit and export patch
-        run_command(f"git commit --signoff -F {commit_msg_file}", cwd=kernel_worktree, capture=False)
+        run_command(["git", "commit", "--signoff", "-F", str(commit_msg_file)], cwd=kernel_worktree, capture=False)
         patch_content = run_command("git format-patch -1 HEAD --stdout", cwd=kernel_worktree)
         patch_file.write_text(patch_content)
 
         if not patch_content:
             error("Failed to generate patch with 'git format-patch'.")
 
-        # 7. Generate other files
+        # Generate additional runtime integration files.
         info("Generating udev rules and modprobe configuration...")
 
-        # Read and filter 60-xpadneo.rules
+        # Generate cleaned loader rules (without comments and bind action).
         rules60_content = (xpadneo_worktree / "hid-xpadneo" / "etc-udev-rules.d" / "60-xpadneo.rules").read_text()
-        # Filter out comments, empty lines, and the bind action
-        filtered_rules60 = [
-            line.strip()
-            for line in rules60_content.splitlines()
-            if line.strip() and not line.strip().startswith("#") and 'ACTION=="bind"' not in line
-        ]
-        udev_rules_file_loader.write_text("\n".join(filtered_rules60))
+        udev_rules_file_loader.write_text(filter_non_comment_lines(rules60_content, exclude_substring='ACTION=="bind"'))
 
-        # Read and write 70-xpadneo-disable-hidraw.rules
+        # Generate hidraw disable rules without comments.
         rules70_content = (
             xpadneo_worktree / "hid-xpadneo" / "etc-udev-rules.d" / "70-xpadneo-disable-hidraw.rules"
         ).read_text()
-        # Filter out comments and empty lines
-        filtered_rules70 = [
-            line.strip() for line in rules70_content.splitlines() if line.strip() and not line.strip().startswith("#")
-        ]
-        udev_rules_file_hidraw.write_text("\n".join(filtered_rules70))
+        udev_rules_file_hidraw.write_text(filter_non_comment_lines(rules70_content))
 
         modprobe_conf_file.write_text(
             (xpadneo_worktree / "hid-xpadneo" / "etc-modprobe.d" / "xpadneo.conf").read_text()
         )
 
-        # 8. Final summary and verification
+        # Final summary and a quick patch-apply check.
         patch_size = patch_file.stat().st_size
-        # Get file count from the patch content itself
+        # Extract file count from format-patch summary line.
         file_count_str = re.search(r"(\d+)\s+files? changed", patch_content)
         file_count = int(file_count_str.group(1)) if file_count_str else 0
 
@@ -344,7 +361,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         run_command("git reset --hard HEAD~1", cwd=kernel_worktree, capture=False)
         run_command("git clean -fdx", cwd=kernel_worktree, capture=False)
         result = subprocess.run(
-            f"git apply --check {patch_file.resolve()}", shell=True, cwd=kernel_worktree, capture_output=True, text=True
+            ["git", "apply", "--check", str(patch_file.resolve())], cwd=kernel_worktree, capture_output=True, text=True
         )
         if result.returncode == 0:
             success(f"Patch applies cleanly to Linux {kernel_version}!")
@@ -355,16 +372,22 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         print()
 
     finally:
-        # 9. Cleanup
+        # Cleanup temporary worktrees and files.
         info("Cleaning up temporary worktrees and files...")
         if kernel_worktree.exists():
             # The command must be run from the main git repo, not the worktree subdir
             run_command(
-                f"git worktree remove --force {kernel_worktree}", cwd=kernel_repo_path, capture=False, check=False
+                ["git", "worktree", "remove", "--force", str(kernel_worktree)],
+                cwd=kernel_repo_path,
+                capture=False,
+                check=False,
             )
         if xpadneo_worktree.exists():
             run_command(
-                f"git worktree remove --force {xpadneo_worktree}", cwd=xpadneo_repo_path, capture=False, check=False
+                ["git", "worktree", "remove", "--force", str(xpadneo_worktree)],
+                cwd=xpadneo_repo_path,
+                capture=False,
+                check=False,
             )
         if work_dir.exists():
             shutil.rmtree(work_dir)
@@ -390,9 +413,7 @@ def main():
     kernel_repo_path = Path(args.kernel_repo).resolve()
 
     def is_git_repo(path):
-        result = subprocess.run(
-            "git rev-parse --is-inside-work-tree", shell=True, cwd=path, capture_output=True, text=True
-        )
+        result = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=path, capture_output=True, text=True)
         return result.returncode == 0
 
     if not is_git_repo(kernel_repo_path):
