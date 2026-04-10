@@ -133,11 +133,6 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
     kernel_worktree = work_dir / "linux"
     xpadneo_worktree = work_dir / "xpadneo"
 
-    patch_file = out_dir / "xpadneo-kernel-integration.patch"
-    udev_rules_file_loader = out_dir / "60-xpadneo-kernel.rules"
-    udev_rules_file_hidraw = out_dir / "70-xpadneo-kernel-disable-hidraw.rules"
-    modprobe_conf_file = out_dir / "xpadneo-kernel.conf"
-
     try:
         # 1. Setup worktrees
         info("Creating git worktrees...")
@@ -149,6 +144,20 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
             error("Could not determine kernel version from Makefile. Cannot proceed.")
 
         xpadneo_src = xpadneo_worktree / "hid-xpadneo" / "src" / "xpadneo"
+
+        # 3. Get xpadneo version
+        info("Detecting xpadneo version...")
+        xpadneo_version = get_xpadneo_version(xpadneo_worktree)
+        info(f"xpadneo version: {xpadneo_version}")
+
+        # Define the final output directory structure AFTER versions are known
+        final_output_dir = out_dir / f"xpadneo-{xpadneo_version}" / f"linux-{kernel_version}"
+        final_output_dir.mkdir(parents=True)
+
+        patch_file = final_output_dir / "xpadneo-kernel-integration.patch"
+        udev_rules_file_loader = final_output_dir / "60-xpadneo-kernel.rules"
+        udev_rules_file_hidraw = final_output_dir / "70-xpadneo-kernel-disable-hidraw.rules"
+        modprobe_conf_file = final_output_dir / "xpadneo-kernel.conf"
 
         print("=" * 60)
         print("  xpadneo Kernel Integration Patch Generator")
@@ -166,7 +175,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         info(f"  - Modprobe config: {modprobe_conf_file}")
         print()
 
-        # 2. Sanity checks
+        # 4. Sanity checks
         if not xpadneo_src.exists():
             error(f"xpadneo source directory not found: {xpadneo_src}")
         if not (kernel_worktree / "Makefile").exists():
@@ -174,13 +183,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         if (kernel_worktree / "drivers" / "hid" / "xpadneo").exists():
             error("xpadneo directory already exists in kernel tree. Please use a clean kernel source.")
 
-        # 3. Get xpadneo version
-        info("Detecting xpadneo version...")
-        xpadneo_version = get_xpadneo_version(xpadneo_worktree)
-        info(f"xpadneo version: {xpadneo_version}")
-        print()
-
-        # 4. Patching logic (directly on worktree)
+        # 5. Patching logic (directly on worktree)
         info("Applying modifications directly to kernel worktree...")
         xpadneo_dest = kernel_worktree / "drivers" / "hid" / "xpadneo"
         shutil.copytree(xpadneo_src, xpadneo_dest)
@@ -191,7 +194,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         # Read the template Makefile, replace the version, and write it
         src_makefile_content = (xpadneo_worktree / "hid-xpadneo" / "src" / "Makefile").read_text()
         modified_makefile_content = src_makefile_content.replace(
-            "ccflags-y += -DVERSION=$(VERSION)", f'ccflags-y += -DVERSION=\\"{xpadneo_version}\\"'
+            "ccflags-y += -DVERSION=$(VERSION)", f'ccflags-y += -DVERSION="{xpadneo_version}"'
         )
         (xpadneo_dest / "Makefile").write_text(modified_makefile_content)
 
@@ -202,7 +205,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         if insertion_point is None:
             error("Could not find suitable insertion point in drivers/hid/Kconfig")
         lines = kconfig_content.split("\n")
-        lines.insert(insertion_point, '\nsource "drivers/hid/xpadneo/Kconfig"\n')
+        lines.insert(insertion_point, 'source "drivers/hid/xpadneo/Kconfig"\n')
         kconfig_file.write_text("\n".join(lines))
         success("Modified drivers/hid/Kconfig")
 
@@ -258,7 +261,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         else:
             warning("hid-microsoft.c not found, skipping modification.")
 
-        # 5. Generate patch from commit
+        # 6. Generate patch from commit
         info("Generating patch from git commit...")
         run_command("git add .", cwd=kernel_worktree, capture=False)
 
@@ -276,7 +279,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         if not patch_content:
             error("Failed to generate patch with 'git format-patch'.")
 
-        # 6. Generate other files
+        # 7. Generate other files
         info("Generating udev rules and modprobe configuration...")
 
         # Read and filter 60-xpadneo.rules
@@ -287,7 +290,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
             for line in rules60_content.splitlines()
             if line.strip() and not line.strip().startswith("#") and 'ACTION=="bind"' not in line
         ]
-        udev_rules_file_loader.write_text("\n".join(filtered_rules60))  # This is the 60-xpadneo-kernel.rules file
+        udev_rules_file_loader.write_text("\n".join(filtered_rules60))
 
         # Read and write 70-xpadneo-disable-hidraw.rules
         rules70_content = (
@@ -297,12 +300,13 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         filtered_rules70 = [
             line.strip() for line in rules70_content.splitlines() if line.strip() and not line.strip().startswith("#")
         ]
-        udev_rules_file_hidraw.write_text("\n".join(filtered_rules70))  # Filtered content
+        udev_rules_file_hidraw.write_text("\n".join(filtered_rules70))
 
         modprobe_conf_file.write_text(
             (xpadneo_worktree / "hid-xpadneo" / "etc-modprobe.d" / "xpadneo.conf").read_text()
         )
-        # 7. Final summary and verification
+
+        # 8. Final summary and verification
         patch_size = patch_file.stat().st_size
         # Get file count from the patch content itself
         file_count_str = re.search(r"(\d+)\s+files? changed", patch_content)
@@ -339,7 +343,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
         print()
 
     finally:
-        # 8. Cleanup
+        # 9. Cleanup
         info("Cleaning up temporary worktrees and files...")
         if kernel_worktree.exists():
             # The command must be run from the main git repo, not the worktree subdir
