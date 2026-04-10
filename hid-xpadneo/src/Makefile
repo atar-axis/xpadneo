@@ -1,6 +1,5 @@
-#
-# Makefile for the HID driver
-#
+# SPDX-License-Identifier: GPL-2.0-only
+
 ccflags-y += -DVERSION=$(VERSION)
 obj-m += hid-xpadneo.o
 
