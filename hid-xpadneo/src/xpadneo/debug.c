@@ -49,6 +49,9 @@ static int parse_oui(const char *uniq, u8 *b0, u8 *b1, u8 *b2)
 {
 	char tmp[3] = { };
 
+	if (!uniq)
+		return -EINVAL;
+
 	/* need at least "XX:XX:XX" (8 chars) with ':' separators */
 	if (strnlen(uniq, 9) < 8 || uniq[2] != ':' || uniq[5] != ':')
 		return -EINVAL;
