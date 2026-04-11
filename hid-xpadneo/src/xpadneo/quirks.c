@@ -64,15 +64,17 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 	for (int i = 0; i < ARRAY_SIZE(quirks); i++) {
 		const struct quirk *q = &quirks[i];
 
-		if (q->name_match && (strncmp(q->name_match, gamepad->name, q->name_len) == 0))
+		if (q->name_match && gamepad->name
+		    && (strncmp(q->name_match, gamepad->name, q->name_len) == 0))
 			xdata->quirks |= q->flags;
 
-		if (q->oui_match && (strncasecmp(q->oui_match, gamepad->uniq, 8) == 0))
+		if (q->oui_match && gamepad->uniq
+		    && (strncasecmp(q->oui_match, gamepad->uniq, 8) == 0))
 			xdata->quirks |= q->flags;
 	}
 
 	kernel_param_lock(THIS_MODULE);
-	for (int i = 0; i < param_quirks.nargs; i++) {
+	for (int i = 0; gamepad->uniq && (i < param_quirks.nargs); i++) {
 		const char *arg = param_quirks.args[i];
 		size_t uniq_len = strnlen(gamepad->uniq, 18);
 		size_t arg_len = strnlen(arg, 128);
