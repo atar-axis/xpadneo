@@ -45,6 +45,11 @@ static int get_psy_property(struct power_supply *psy,
 	};
 
 	u8 flags = xdata->battery.flags;
+
+	/*
+	 * Clamp to the known power_supply range until higher-capacity states are modeled
+	 * explicitly.
+	 */
 	u8 level = min(3, XPADNEO_BATTERY_CAPACITY_LEVEL(flags));
 	bool online = XPADNEO_PSY_ONLINE(flags);
 	bool charging = XPADNEO_BATTERY_CHARGING(flags);
