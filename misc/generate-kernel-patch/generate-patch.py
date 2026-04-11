@@ -282,7 +282,7 @@ def run_patch_generation(kernel_repo_path, xpadneo_repo_path, kernel_ref, out_di
                 new_ms_lines.extend(lines[:first_xpadneo_entry_start_idx])
 
                 # Insert the #if block
-                new_ms_lines.append("#ifndef CONFIG_HID_XPADNEO")
+                new_ms_lines.append("#if !defined(CONFIG_HID_XPADNEO) && !defined(CONFIG_HID_XPADNEO_MODULE)")
 
                 # Add the original lines of the block
                 new_ms_lines.extend(lines[first_xpadneo_entry_start_idx : last_xpadneo_entry_end_idx + 1])
