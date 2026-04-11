@@ -89,7 +89,7 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	xpadneo_debug_descriptor(hdev, rdesc, *rsize);
 
 	/* fixup trailing NUL byte */
-	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
+	if (*rsize >= 2 && rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
 		hid_notice(hdev, "fixing up report descriptor size\n");
 		*rsize -= 1;
 	}
