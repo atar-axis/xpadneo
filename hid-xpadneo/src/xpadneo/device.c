@@ -15,7 +15,7 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len,
 {
 	struct xpadneo_rumble_report *r = (struct xpadneo_rumble_report *)buf;
 
-	xpadneo_debug_hid_report(hdev, r, len);
+	xpadneo_debug_hid_report(hdev, buf, len);
 
 	/*
 	 * Some BLE controllers (e.g. XBE2 0x0B22) require a GATT Write Request
