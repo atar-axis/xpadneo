@@ -71,9 +71,10 @@ static int parse_oui(const char *uniq, u8 *b0, u8 *b1, u8 *b2)
 	return 0;
 }
 
-void xpadneo_debug_hid_report(struct hid_device *hdev, const struct xpadneo_rumble_report *r,
-			      const size_t len)
+void xpadneo_debug_hid_report(const struct hid_device *hdev, const void *buf, const size_t len)
 {
+	u8 report_id;
+
 	if (likely(!param_debug_hid))
 		return;
 
@@ -82,12 +83,13 @@ void xpadneo_debug_hid_report(struct hid_device *hdev, const struct xpadneo_rumb
 		return;
 	}
 
-	switch (r->report_id) {
+	report_id = ((const u8 *)buf)[0];
+	switch (report_id) {
 	case 0x03:
-		if (unlikely(len != sizeof(*r))) {
-			hid_info(hdev, "HID debug: len %zu malformed cmd 0x%02x\n", len,
-				 r->report_id);
+		if (unlikely(len != sizeof(struct xpadneo_rumble_report))) {
+			hid_info(hdev, "HID debug: len %zu malformed cmd 0x%02x\n", len, report_id);
 		} else {
+			const struct xpadneo_rumble_report *r = buf;
 			hid_info(hdev,
 				 "HID debug: rumble cmd 0x%02x "
 				 "motors left %d right %d strong %d weak %d "
@@ -102,11 +104,15 @@ void xpadneo_debug_hid_report(struct hid_device *hdev, const struct xpadneo_rumb
 				 r->data.magnitude_strong, r->data.magnitude_weak,
 				 r->data.pulse_sustain_10ms * 10,
 				 r->data.pulse_release_10ms * 10, r->data.loop_count);
+			return;
 		}
 		break;
 	default:
-		hid_info(hdev, "HID debug: unhandled cmd 0x%02x\n", r->report_id);
+		hid_info(hdev, "HID debug: unhandled cmd 0x%02x\n", report_id);
 	}
+
+	print_hex_dump(KERN_INFO, "xpadneo hid-report: ", DUMP_PREFIX_OFFSET, 32, 1, buf, len,
+		       false);
 }
 
 /*
@@ -127,7 +133,7 @@ void xpadneo_debug_hid_report(struct hid_device *hdev, const struct xpadneo_rumb
  *   - the module parameter debug_descriptor=1 is set, OR
  *   - the device's Bluetooth OUI is locally administered (LAA).
  */
-void xpadneo_debug_descriptor(struct hid_device *hdev, const __u8 *rdesc, unsigned int rsize)
+void xpadneo_debug_descriptor(const struct hid_device *hdev, const __u8 *rdesc, unsigned int rsize)
 {
 	u8 oui0 = 0, oui1 = 0, oui2 = 0;
 	u16 crc = crc16(0, rdesc, rsize);
@@ -165,7 +171,7 @@ void xpadneo_debug_descriptor(struct hid_device *hdev, const __u8 *rdesc, unsign
 		hid_info(hdev,
 			 "report descriptor: dumping %u unpatched bytes crc16 0x%04x%s\n", rsize,
 			 crc, param_debug_descriptor ? " [forced]" : " [LAA OUI]");
-		print_hex_dump(KERN_INFO, "xpadneo hid-desc: ", DUMP_PREFIX_OFFSET, 16, 1, rdesc,
+		print_hex_dump(KERN_INFO, "xpadneo hid-desc: ", DUMP_PREFIX_OFFSET, 32, 1, rdesc,
 			       rsize, false);
 	}
 }

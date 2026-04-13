@@ -84,6 +84,8 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		memcpy(&xdata->input_report_0x01, data, size);
 	}
 
+	xpadneo_debug_hid_report(hdev, data, reportsize);
+
 	/* we are taking care of the battery report ourselves */
 	if (xdata->battery.report_id && report->id == xdata->battery.report_id && reportsize == 2) {
 		xpadneo_power_update(xdata, data[1]);

@@ -191,9 +191,8 @@ extern void xpadneo_synthetic_remove(struct xpadneo_devdata *, const char *,
 				     struct xpadneo_subdevice *);
 
 /* xpadneo descriptor debug helpers */
-extern void xpadneo_debug_hid_report(struct hid_device *, const struct xpadneo_rumble_report *,
-				     const size_t);
-extern void xpadneo_debug_descriptor(struct hid_device *, const __u8 *, unsigned int);
+extern void xpadneo_debug_hid_report(const struct hid_device *, const void *, const size_t);
+extern void xpadneo_debug_descriptor(const struct hid_device *, const __u8 *, unsigned int);
 
 /* xpadneo core device functions */
 extern void xpadneo_device_report(struct hid_device *, struct hid_report *);
