@@ -110,6 +110,41 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	if (rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
 		hid_notice(hdev, "fixing up report descriptor size\n");
 		*rsize -= 1;
+	} else if (rdesc[*rsize - 2] == 0x00 && rdesc[*rsize - 1] == 0xC0) {
+		/*
+		 * The firmware wrote 0x00 where End Collection (0xC0) was needed,
+		 * then followed with a correct 0xC0.  Replace the 0x00 with 0xC0
+		 * so the descriptor ends with two End Collections.  Do NOT shrink
+		 * the descriptor: both bytes are valid End Collection items and are
+		 * needed to close the two open collections.
+		 */
+		hid_notice(hdev, "fixing up report descriptor NUL before end collection\n");
+		rdesc[*rsize - 2] = 0xC0;
+	}
+
+	/*
+	 * Xbox One S 1708 (PID 0x02FD, fw 0x0903): the firmware sends a
+	 * truncated 307-byte descriptor.  The rumble report (ID 3) definition
+	 * is cut off mid-item after "Usage(Loop Count) / Logical Minimum(0)";
+	 * the last three bytes are 15 00 00 instead of the expected output
+	 * item and two End Collections.  The HID parser hits the trailing 0x00,
+	 * treats it as an unknown Main item (tag 0x0), aborts, then reports
+	 * "unbalanced collection" because the two open collections (Application
+	 * and Logical) were never closed.
+	 *
+	 * Replace the dead "Logical Minimum(0)" item and trailing NUL with two
+	 * End Collections and shrink the descriptor by one byte.  The incomplete
+	 * Loop Count Output field is dropped, but xpadneo sends the rumble report
+	 * as a fixed raw struct so the HID descriptor definition of that field
+	 * is not required for correct operation.
+	 */
+	if (*rsize == 307 &&
+	    rdesc[302] == 0x09 && rdesc[303] == 0x7C &&
+	    rdesc[304] == 0x15 && rdesc[305] == 0x00 && rdesc[306] == 0x00) {
+		hid_notice(hdev, "fixing up truncated report descriptor\n");
+		rdesc[304] = 0xC0;	/* End Collection (closes Logical collection) */
+		rdesc[305] = 0xC0;	/* End Collection (closes Application collection) */
+		*rsize = 306;
 	}
 
 	/* fixup reported axes for Xbox One S */
@@ -143,19 +178,29 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 		    rdesc[152] == 0x95 && rdesc[153] == 0x0F &&
 		    rdesc[162] == 0x95 && rdesc[163] == 0x01) {
 			/*
-			 * Xbox Elite Series 2 BLE (0x0B22): Steam Input has no database
-			 * entry for this controller's BLE firmware layout, so it falls back
-			 * to generic sequential mapping which misreads the non-sequential
-			 * firmware button order. Enable LINUX_BUTTONS remapping so raw_event
-			 * reorders the button bits sequentially for both Steam Input and
-			 * native Linux.
+			 * Xbox controllers in Linux/Android BT mode expose a
+			 * non-sequential button layout: HID usage 0x90003 is an
+			 * empty hole (never asserted by the firmware); the physical
+			 * X button lives at usage 0x90004, Y at 0x90005, and so on.
+			 * This shifts every button from X onward by one slot relative
+			 * to what software expects from a sequential 1-N mapping.
 			 *
-			 * Do NOT modify the descriptor bytes here. The XBE2 has a larger
-			 * descriptor than the Series X|S (extra paddle/profile fields), so
-			 * the byte offsets 145/153/163 land in different places and would
-			 * corrupt the rumble output report definition. The 15-button
-			 * descriptor with 12 real sequential bits + 3 always-zero trailing
-			 * bits is harmless.
+			 * Enable LINUX_BUTTONS so raw_event reorders the bits into a
+			 * clean sequential layout for both Steam Input (which reads
+			 * hidraw directly) and native Linux evdev consumers.
+			 *
+			 * 0x0B05 also sets LINUX_BUTTONS unconditionally via driver_data
+			 * in case its classic-BT descriptor does not hit this byte
+			 * pattern (the BT and BLE descriptors have different layouts).
+			 *
+			 * 0x0B22 (Elite Series 2 BLE) sets LINUX_BUTTONS here when its
+			 * 15-button descriptor pattern is detected. It also carries
+			 * SHARE_BUTTON in driver_data so raw_event reads Back from the
+			 * correct byte position alongside the Share button.
+			 *
+			 * 0x02FD (Xbox One S 1708) does NOT need LINUX_BUTTONS: its HID
+			 * descriptor already describes the correct sequential mapping and
+			 * the kernel processes it without raw_event intervention.
 			 */
 			if (hdev->product == 0x0B22) {
 				hid_notice(hdev, "fixing up XBE2 button mapping\n");
@@ -178,21 +223,20 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	}
 
 	/*
-	 * Xbox Series X|S BLE (0x0B13): same button hole at HID usage 0x90003
-	 * (bit 2 of the raw report) as XBE2 BLE (0x0B22). The physical X button
-	 * sends usage 0x90004 and physical Y sends 0x90005, shifting all buttons
-	 * from X onward by one slot. Without LINUX_BUTTONS reordering, evdev
-	 * applications see X→BTN_Y, Y→BTN_TL, LB→BTN_TR, etc.
+	 * Xbox Series X|S BLE (0x0B13) uses a 12-button descriptor that does
+	 * not match the 15-button byte pattern checked above, so it needs an
+	 * unconditional check here.  Like other Xbox Linux-mode controllers it
+	 * has the non-sequential button layout with holes at usages 0x90003,
+	 * 0x90006, 0x90009, 0x9000A.
 	 *
-	 * Steam Input reads hidraw directly (before raw_event processing), so
-	 * enabling LINUX_BUTTONS fixes evdev without affecting Steam HIDAPI.
-	 * MENU_GHOST handling is automatically bypassed when LINUX_BUTTONS is set.
-	 *
-	 * This check is outside the descriptor byte-check block above because
-	 * Series X|S has 12 buttons (0x0C) and that block matches 15 (0x0F).
+	 * 0x0B22 (Elite Series 2 BLE) is handled above by the 15-button
+	 * byte-pattern check.  0x02FD (Xbox One S 1708) does not need
+	 * LINUX_BUTTONS: its descriptor already describes a sequential
+	 * button layout that the kernel maps correctly without raw_event
+	 * intervention.
 	 */
 	if (hdev->product == 0x0B13) {
-		hid_notice(hdev, "fixing up Xbox Series X|S button mapping\n");
+		hid_notice(hdev, "fixing up button mapping\n");
 		xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
 	}
 
@@ -278,6 +322,18 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 				else if (strncasecmp("98:B6:EC", hdev->uniq, 8) == 0)
 					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE |
 							 XPADNEO_QUIRK_SWAPPED_MASK;
+				else
+					/*
+					 * Unknown GuliKit hardware revision: apply a safe
+					 * default.  Without NO_PULSE the welcome sequence
+					 * sends pulse timing params the controller ignores,
+					 * leaving all motors running indefinitely.
+					 * SIMPLE_CLONE (NO_PULSE + NO_MOTOR_MASK +
+					 * NO_TRIGGER_RUMBLE) sends a zero-magnitude stop
+					 * packet and avoids trigger-motor commands that
+					 * clone hardware typically does not support.
+					 */
+					xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 			}
 
 			/* Force all devices to be recognized as "Xbox Wireless Controller" */

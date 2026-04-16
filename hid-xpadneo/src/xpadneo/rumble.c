@@ -276,17 +276,22 @@ static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 	/*
 	 * XPADNEO_QUIRK_NO_PULSE:
 	 * The controller doesn't support timing parameters of the rumble command, so we manually
-	 * stop the motors.
+	 * stop the motors by sending a zero-magnitude report.
+	 *
+	 * Zero ALL magnitudes, not just the ones for the motor(s) under test.  The
+	 * pck struct retains the full set of magnitudes initialised in rumble_welcome
+	 * (weak=40, strong=20, right=10, left=10); if only the tested motor's field
+	 * is zeroed the others remain non-zero in the packet.  Controllers that do
+	 * not honour the enable mask (many clone devices) treat every non-zero
+	 * magnitude field as active and keep rumbling.  Zeroing everything is safe
+	 * for controllers that do honour the mask: they only update the motor(s)
+	 * indicated by pck.data.enable and ignore the rest.
 	 */
 	if (xdata->quirks & XPADNEO_QUIRK_NO_PULSE) {
-		if (enabled & XBOX_RUMBLE_WEAK)
-			pck.data.magnitude_weak = 0;
-		if (enabled & XBOX_RUMBLE_STRONG)
-			pck.data.magnitude_strong = 0;
-		if (enabled & XBOX_RUMBLE_RIGHT)
-			pck.data.magnitude_right = 0;
-		if (enabled & XBOX_RUMBLE_LEFT)
-			pck.data.magnitude_left = 0;
+		pck.data.magnitude_weak = 0;
+		pck.data.magnitude_strong = 0;
+		pck.data.magnitude_right = 0;
+		pck.data.magnitude_left = 0;
 		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck),
 					     xdata->uses_hogp);
 	}
