@@ -198,9 +198,12 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			 * SHARE_BUTTON in driver_data so raw_event reads Back from the
 			 * correct byte position alongside the Share button.
 			 *
-			 * 0x02FD (Xbox One S 1708) does NOT need LINUX_BUTTONS: its HID
-			 * descriptor already describes the correct sequential mapping and
-			 * the kernel processes it without raw_event intervention.
+			 * 0x02FD and 0x0B20 are handled explicitly via driver_data in
+			 * core.c because they both use the sparse Linux/Android button
+			 * bitmap, but they differ in where the extra buttons live.
+			 * 0x02FD keeps Back at data[16] bit 0 and Guide on report 0x02,
+			 * while 0x0B20 carries Back in the remapped button byte and
+			 * exposes Share separately.
 			 */
 			if (hdev->product == 0x0B22) {
 				hid_notice(hdev, "fixing up XBE2 button mapping\n");
@@ -230,10 +233,8 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	 * 0x90006, 0x90009, 0x9000A.
 	 *
 	 * 0x0B22 (Elite Series 2 BLE) is handled above by the 15-button
-	 * byte-pattern check.  0x02FD (Xbox One S 1708) does not need
-	 * LINUX_BUTTONS: its descriptor already describes a sequential
-	 * button layout that the kernel maps correctly without raw_event
-	 * intervention.
+	 * byte-pattern check.  0x02FD and 0x0B20 instead opt into the shared
+	 * raw_event remapper through explicit driver_data quirks in core.c.
 	 */
 	if (hdev->product == 0x0B13) {
 		hid_notice(hdev, "fixing up button mapping\n");
@@ -340,6 +341,18 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			strscpy(hdev->name, "Xbox Wireless Controller", sizeof(hdev->name));
 			hdev->product = 0x02DD;
 		}
+	}
+
+	/*
+	 * Treat all real Xbox One S 1708 Bluetooth variants like the 02E0
+	 * third-party SDL3 bypass path by spoofing them as Xbox One 1697
+	 * (0x02DD) after the descriptor-specific fixups above have already run.
+	 * This keeps higher-level controller consumers on the same identity
+	 * across 02E0, 02FD, and 0B20.
+	 */
+	if ((hdev->product == 0x02E0) || (hdev->product == 0x02FD) || (hdev->product == 0x0B20)) {
+		hid_notice(hdev, "spoofing Xbox One S variant as Xbox One 1697 (0x02DD)\n");
+		hdev->product = 0x02DD;
 	}
 
 	return rdesc;

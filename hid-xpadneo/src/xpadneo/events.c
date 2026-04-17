@@ -90,9 +90,9 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		return -1;
 	}
 
-
 	/* correct button mapping of Xbox controllers in Linux mode */
-	if ((xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) && report->id == 1 && reportsize >= 17) {
+	if ((xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) &&
+	    report->id == 1 && reportsize >= 17) {
 		u16 bits = 0;
 
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */

@@ -53,17 +53,21 @@ bool xpadneo_param_enable_pid_spoof(void)
 #endif
 
 static const struct hid_device_id core_devices[] = {
-	/* XBOX ONE S / X */
+	/* XBOX ONE S (1708) gen 1: Windows BT mode; also used by third-party controllers */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
+	/* XBOX ONE S (1708) gen 2: Linux/Android BT mode */
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD),
+	 .driver_data = XPADNEO_QUIRK_LINUX_BUTTONS },
+	/* XBOX ONE S (1708) gen 3: BLE mode */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B20),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON },
+	 .driver_data = XPADNEO_QUIRK_LINUX_BUTTONS | XPADNEO_QUIRK_SHARE_BUTTON },
 
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05),
 	 .driver_data = XPADNEO_QUIRK_LINUX_BUTTONS },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
-	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST | XPADNEO_QUIRK_RAW_RUMBLE },
+	 .driver_data = XPADNEO_QUIRK_SHARE_BUTTON | XPADNEO_QUIRK_MENU_GHOST |
+			XPADNEO_QUIRK_RAW_RUMBLE },
 
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
@@ -200,10 +204,11 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 * Steam Input) to properly detect controller models and enable features
 	 * like Xbox Elite paddle support.
 	 *
-	 * Xbox One S:
-	 * 0x2E0 wireless Windows mode (non-Android mode)
+	 * Xbox One S (1708):
+	 * 0x2E0 gen 1: wireless Windows mode (also used by third-party controllers)
 	 * 0x2EA USB Windows and Linux mode
-	 * 0x2FD wireless Linux mode (Android mode)
+	 * 0x2FD gen 2: wireless Linux/Android mode
+	 * 0xB20 gen 3: wireless BLE mode
 	 *
 	 * Xbox Elite 2:
 	 * 0xB00 USB Windows and Linux mode
@@ -213,8 +218,6 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 * 0xB12 Dongle, USB Windows and USB Linux mode
 	 * 0xB13 wireless Linux mode (Android mode)
 	 *
-	 * Xbox Controller BLE mode:
-	 * 0xB20 wireless BLE mode
 	 */
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
@@ -246,7 +249,14 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 		goto err_release_id;
 	}
 
-	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
+	/*
+	 * Expose Xbox controllers through the translated input devices only.
+	 * This suppresses /dev/hidraw nodes so user space is forced onto the
+	 * evdev path instead of bypassing xpadneo via HIDAPI/raw HID.
+	 */
+	ret = hid_hw_start(hdev, HID_CONNECT_HIDINPUT |
+				HID_CONNECT_HIDDEV |
+				HID_CONNECT_FF);
 	if (ret) {
 		hid_err(hdev, "hw start failed\n");
 		goto err_release_id;
