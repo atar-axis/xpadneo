@@ -35,6 +35,10 @@ module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
 MODULE_PARM_DESC(ff_connect_notify,
 		 "(bool) Connection notification using force feedback. 1: enable, 0: disable.");
 
+static bool param_force_disable_hogp;
+module_param_named(force_disable_hogp, param_force_disable_hogp, bool, 0644);
+MODULE_PARM_DESC(force_disable_hogp,
+		 "(bool) Forcefully disables the HOGP rumble path for testing. 1: disable, 0: enable.");
 static struct workqueue_struct *rumble_wq;
 
 inline void xpadneo_rumble_streaming_set(struct xpadneo_devdata *xdata, const bool enabled)
@@ -124,7 +128,9 @@ reschedule:
 			r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 	}
 
-	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r), xdata->uses_hogp);
+	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r),
+					   xdata->uses_hogp && !param_force_disable_hogp);
+
 	if (ret < 0)
 		hid_warn(hdev, "failed to send rumble report: %d\n", ret);
 
@@ -270,7 +276,8 @@ static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 	if (xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK)
 		pck.data.enable = SWAP_BITS(SWAP_BITS(pck.data.enable, 0, 2), 1, 3);
 
-	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp);
+	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp
+				     && !param_force_disable_hogp);
 	msleep(300);
 
 	/*
@@ -287,8 +294,8 @@ static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 			pck.data.magnitude_right = 0;
 		if (enabled & XBOX_RUMBLE_LEFT)
 			pck.data.magnitude_left = 0;
-		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck),
-					     xdata->uses_hogp);
+		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp
+					     && !param_force_disable_hogp);
 	}
 	msleep(30);
 }
@@ -391,6 +398,40 @@ static int ff_upload_effect(struct input_dev *dev, struct ff_effect *effect, str
 	hid_info(hdev, "ff: effect upload requested (id %d, type %s), rejecting.\n",
 		 effect->id, type_name);
 
+	// FIXME debug only
+	switch (effect->type) {
+	case FF_PERIODIC:
+		hid_info(hdev,
+			 "ff: periodic details: waveform %u, period %u, magnitude %d, offset %d\n",
+			 effect->u.periodic.waveform, effect->u.periodic.period,
+			 effect->u.periodic.magnitude, effect->u.periodic.offset);
+		break;
+	case FF_CONSTANT:
+		hid_info(hdev, "ff: constant details: level %d\n", effect->u.constant.level);
+		break;
+	case FF_SPRING:
+	case FF_DAMPER:
+		hid_info(hdev,
+			 "ff: condition details (axis 0): r_sat %u, l_sat %u, r_coeff %d, l_coeff %d, deadband %u, center %d\n",
+			 effect->u.condition[0].right_saturation,
+			 effect->u.condition[0].left_saturation, effect->u.condition[0].right_coeff,
+			 effect->u.condition[0].left_coeff, effect->u.condition[0].deadband,
+			 effect->u.condition[0].center);
+		hid_info(hdev,
+			 "ff: condition details (axis 1): r_sat %u, l_sat %u, r_coeff %d, l_coeff %d, deadband %u, center %d\n",
+			 effect->u.condition[1].right_saturation,
+			 effect->u.condition[1].left_saturation, effect->u.condition[1].right_coeff,
+			 effect->u.condition[1].left_coeff, effect->u.condition[1].deadband,
+			 effect->u.condition[1].center);
+		break;
+	}
+
+	/* FIXME debug only: log common parameters */
+	hid_info(hdev,
+		 "ff: common details: direction %u, trigger [button %u, interval %u], replay [length %u, delay %u]\n",
+		 effect->direction, effect->trigger.button, effect->trigger.interval,
+		 effect->replay.length, effect->replay.delay);
+
 	return -EOPNOTSUPP;
 }
 
@@ -426,6 +467,20 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	if (param_trigger_rumble_mode == PARAM_TRIGGER_RUMBLE_DISABLE)
 		xdata->quirks |= XPADNEO_QUIRK_NO_TRIGGER_RUMBLE;
 
+	/* FIXME debug only:if haptics are supported, we can support FF_PERIODIC */
+	if (!(xdata->quirks & XPADNEO_QUIRK_NO_HAPTICS)) {
+		input_set_capability(gamepad, EV_FF, FF_PERIODIC);
+
+		input_set_capability(gamepad, EV_FF, FF_SAW_DOWN);
+		input_set_capability(gamepad, EV_FF, FF_SAW_UP);
+		input_set_capability(gamepad, EV_FF, FF_SINE);
+		input_set_capability(gamepad, EV_FF, FF_SQUARE);
+		input_set_capability(gamepad, EV_FF, FF_TRIANGLE);
+		input_set_capability(gamepad, EV_FF, FF_CUSTOM);
+
+		hid_info(hdev, "haptic events supported and enabled\n");
+	}
+
 	/* set capabilities */
 	input_set_capability(gamepad, EV_FF, FF_RUMBLE);
 	ret = input_ff_create(gamepad, FF_MAX_EFFECTS);
@@ -436,6 +491,9 @@ int xpadneo_rumble_init(struct hid_device *hdev)
 	gamepad->ff->upload = ff_upload_effect;
 	gamepad->ff->erase = ff_erase_effect;
 	gamepad->ff->playback = rumble_playback;
+
+	hid_info(hdev, "gamepad->ff->ffbit: %*pbl\n", FF_CNT, gamepad->ff->ffbit);	//FIXME debug only
+	hid_info(hdev, "gamepad->ffbit: %*pbl\n", FF_CNT, gamepad->ffbit);	//FIXME debug only
 
 	if (param_ff_connect_notify)
 		queue_work(rumble_wq, &xdata->rumble.init_worker);

@@ -179,6 +179,7 @@ struct xpadneo_devdata {
 		struct xpadneo_rumble_data data;
 		struct xpadneo_rumble_data shadow;
 		void *output_report_dmabuf;
+		ktime_t last_run_ktime;	//FIXME debug only
 	} rumble;
 };
 
