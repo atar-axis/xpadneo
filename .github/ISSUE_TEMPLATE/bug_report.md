@@ -39,6 +39,7 @@ about: Report a bug
 - [ ] xboxdrv (user-space gamepad driver, not used for Bluetooth)
 - [ ] xone (kernel-space gamepad driver for using USB or the Xbox Dongle)
 - [ ] xow (obsolete user-space driver for using the wireless Xbox Dongle)
+- [ ] Nobara Linux (you will most likely have to report your bug there because it uses a custom version of xpadneo)
 
 ## Protocol Information
 <!-- This helps us identifying the problematic software layer and running
