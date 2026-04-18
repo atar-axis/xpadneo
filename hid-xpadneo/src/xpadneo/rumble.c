@@ -35,6 +35,10 @@ module_param_named(ff_connect_notify, param_ff_connect_notify, bool, 0644);
 MODULE_PARM_DESC(ff_connect_notify,
 		 "(bool) Connection notification using force feedback. 1: enable, 0: disable.");
 
+static bool param_force_disable_hogp;
+module_param_named(force_disable_hogp, param_force_disable_hogp, bool, 0644);
+MODULE_PARM_DESC(force_disable_hogp,
+		 "(bool) Forcefully disables the HOGP rumble path for testing. 1: disable, 0: enable.");
 static struct workqueue_struct *rumble_wq;
 
 inline void xpadneo_rumble_streaming_set(struct xpadneo_devdata *xdata, const bool enabled)
@@ -124,7 +128,9 @@ reschedule:
 			r->data.enable = SWAP_BITS(SWAP_BITS(r->data.enable, 0, 2), 1, 3);
 	}
 
-	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r), xdata->uses_hogp);
+	ret = xpadneo_device_output_report(hdev, (__u8 *) r, sizeof(*r),
+					   xdata->uses_hogp && !param_force_disable_hogp);
+
 	if (ret < 0)
 		hid_warn(hdev, "failed to send rumble report: %d\n", ret);
 
@@ -270,7 +276,8 @@ static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 	if (xdata->quirks & XPADNEO_QUIRK_SWAPPED_MASK)
 		pck.data.enable = SWAP_BITS(SWAP_BITS(pck.data.enable, 0, 2), 1, 3);
 
-	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp);
+	xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp
+				     && !param_force_disable_hogp);
 	msleep(300);
 
 	/*
@@ -287,8 +294,8 @@ static void rumble_test(char *which, const struct xpadneo_devdata *xdata,
 			pck.data.magnitude_right = 0;
 		if (enabled & XBOX_RUMBLE_LEFT)
 			pck.data.magnitude_left = 0;
-		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck),
-					     xdata->uses_hogp);
+		xpadneo_device_output_report(xdata->hdev, (u8 *)&pck, sizeof(pck), xdata->uses_hogp
+					     && !param_force_disable_hogp);
 	}
 	msleep(30);
 }
