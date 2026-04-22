@@ -38,10 +38,10 @@ files in `/sys/module/hid_xpadneo/parameters`:
     - `128` if your controller uses motor-enable bits in reverse
     - `256` if your controller uses motor-enable bits with trigger and main motors swapped
     - `512` to avoid having your controller misdetected by heuristics (please report a bug)
-- `disable_shift_mode` (default 0)
+- `disable_shift_mode` (default 1)
   - Let's you disable Xbox logo button shift behavior
   - '0' Xbox logo button will be used as shift
-  - '1' will pass through the Xbox logo button as is
+  - '1' (default) will pass through the Xbox logo button as is
 - `disable_mouse` (default 0)
   - Let's you disable initialization of a mouse device through xpadneo, thus disabling mouse mode.
   - '0' mouse device will be available

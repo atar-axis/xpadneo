@@ -30,11 +30,11 @@ MODULE_PARM_DESC(disable_deadzones,
 		 "(bool) Disable dead zone handling for raw processing by Wine/Proton, confuses joydev. "
 		 "0: disable, 1: enable.");
 
-static bool param_disable_shift_mode;
+static bool param_disable_shift_mode = true;
 module_param_named(disable_shift_mode, param_disable_shift_mode, bool, 0644);
 MODULE_PARM_DESC(disable_shift_mode,
 		 "(bool) Disable use Xbox logo button as shift. Will prohibit profile switching when enabled. "
-		 "0: disable, 1: enable.");
+		 "0: disable, 1: enable (default).");
 
 static void switch_profile(struct xpadneo_devdata *xdata, const u8 profile, const bool emulated)
 {
