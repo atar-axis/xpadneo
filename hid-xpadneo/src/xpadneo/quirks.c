@@ -23,7 +23,6 @@ MODULE_PARM_DESC(quirks,
 		 ", no motor masking = " __stringify(XPADNEO_QUIRK_NO_MOTOR_MASK)
 		 ", use Linux button mappings = " __stringify(XPADNEO_QUIRK_LINUX_BUTTONS)
 		 ", use Nintendo mappings = " __stringify(XPADNEO_QUIRK_NINTENDO)
-		 ", use Share button mappings = " __stringify(XPADNEO_QUIRK_SHARE_BUTTON)
 		 ", reversed motor masking = " __stringify(XPADNEO_QUIRK_REVERSE_MASK)
 		 ", swapped motor masking = " __stringify(XPADNEO_QUIRK_SWAPPED_MASK)
 		 ", apply no heuristics = " __stringify(XPADNEO_QUIRK_NO_HEURISTICS));
@@ -159,10 +158,10 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 		xdata->quirks &= ~quirks_unset;
 	}
 
-	if (xdata->quirks & XPADNEO_QUIRK_RESERVED_8) {
-		hid_warn(hdev, "quirks flag 0x%08x is reserved and ignored\n",
-			 XPADNEO_QUIRK_RESERVED_8);
-		xdata->quirks &= ~XPADNEO_QUIRK_RESERVED_8;
+	if (xdata->quirks & XPADNEO_QUIRK_RESERVED) {
+		hid_warn(hdev, "reserved quirks flags 0x%08x ignored\n",
+			 xdata->quirks & XPADNEO_QUIRK_RESERVED);
+		xdata->quirks &= ~XPADNEO_QUIRK_RESERVED;
 	}
 
 	if (xdata->quirks > 0)

@@ -34,7 +34,7 @@ files in `/sys/module/hid_xpadneo/parameters`:
     - `8` reserved, ignored (previously used for auto-detected hardware profiles)
     - `16` if your controller boots in Linux mode (auto-detected, do not change manually)
     - `32` if you prefer to use Nintendo button mappings (i.e., 8BitDo controllers, defaults to off)
-    - `64` if your controller has a awkwardly mapped Share button (auto-detected, do not set manually)
+    - `64` reserved, ignored (previously used for auto-detected Share button mappings)
     - `128` if your controller uses motor-enable bits in reverse
     - `256` if your controller uses motor-enable bits with trigger and main motors swapped
     - `512` to avoid having your controller misdetected by heuristics (please report a bug)

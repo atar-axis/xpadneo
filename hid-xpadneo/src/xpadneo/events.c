@@ -106,7 +106,7 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[14] & (BIT(0) | BIT(1))) >> 0;	/* A, B */
 		bits |= (data[14] & (BIT(3) | BIT(4))) >> 1;	/* X, Y */
 		bits |= (data[14] & (BIT(6) | BIT(7))) >> 2;	/* LB, RB */
-		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+		if (xdata->capabilities.share_button)
 			bits |= (data[15] & BIT(2)) << 4;	/* Back */
 		else
 			bits |= (data[16] & BIT(0)) << 6;	/* Back */
@@ -114,7 +114,7 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		bits |= (data[15] & BIT(5)) << 3;	/* LS */
 		bits |= (data[15] & BIT(6)) << 3;	/* RS */
 		bits |= (data[15] & BIT(4)) << 6;	/* Xbox */
-		if (xdata->quirks & XPADNEO_QUIRK_SHARE_BUTTON)
+		if (xdata->capabilities.share_button)
 			bits |= (data[16] & BIT(0)) << 11;	/* Share */
 		data[14] = (u8)((bits >> 0) & 0xFF);
 		data[15] = (u8)((bits >> 8) & 0xFF);

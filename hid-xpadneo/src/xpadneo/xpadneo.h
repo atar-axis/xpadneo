@@ -35,10 +35,13 @@
 #define XPADNEO_QUIRK_RESERVED_8        8
 #define XPADNEO_QUIRK_LINUX_BUTTONS     16
 #define XPADNEO_QUIRK_NINTENDO          32
-#define XPADNEO_QUIRK_SHARE_BUTTON      64
+#define XPADNEO_QUIRK_RESERVED_64       64
 #define XPADNEO_QUIRK_REVERSE_MASK      128
 #define XPADNEO_QUIRK_SWAPPED_MASK      256
 #define XPADNEO_QUIRK_NO_HEURISTICS     512
+
+/* reserved quirk bits */
+#define XPADNEO_QUIRK_RESERVED (XPADNEO_QUIRK_RESERVED_8|XPADNEO_QUIRK_RESERVED_64)
 
 /* common quirk combinations */
 #define XPADNEO_QUIRK_NO_HAPTICS        (XPADNEO_QUIRK_NO_PULSE|XPADNEO_QUIRK_NO_MOTOR_MASK)
@@ -46,6 +49,9 @@
 
 /* report number for rumble commands */
 #define XPADNEO_XBOX_RUMBLE_REPORT 0x03
+
+/* HID device capabilities stored in hid_device_id.driver_data */
+#define XPADNEO_DEVICE_CAP_SHARE_BUTTON BIT(0)
 
 /* maximum length of report 0x01 for duplicate packet filtering */
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)
@@ -137,6 +143,7 @@ struct xpadneo_devdata {
 	struct {
 		bool hw_profiles;
 		bool paddles;
+		bool share_button;
 	} capabilities;
 
 	/* HOGP protocol */
