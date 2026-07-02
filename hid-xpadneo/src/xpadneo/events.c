@@ -227,7 +227,7 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 	} else if (xdata->shift_mode && (usage->type == EV_KEY)) {
 		hid_notice_once(hdev,
 				"shift mode active: operation of the Xbox button may be limited in Steam Input\n");
-		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
+		if (!xdata->capabilities.hw_profiles) {
 			switch (usage->code) {
 			case BTN_A:
 				if (value == 1)
@@ -312,9 +312,9 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		return 0;
 	case 0xFF000005:
 		/* FIXME: this is no longer in the current firmware */
-		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES))
+		if (!xdata->capabilities.hw_profiles)
 			hid_info(hdev, "mapping profiles detected\n");
-		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
+		xdata->capabilities.hw_profiles = true;
 		return 0;
 	default:
 		hid_warn(hdev, "unhandled input application 0x%x\n", hi->application);

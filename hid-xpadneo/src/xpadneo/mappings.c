@@ -118,9 +118,9 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 		xdata->capabilities.paddles = true;
 		break;
 	case 0xC0085:
-		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES))
+		if (!xdata->capabilities.hw_profiles)
 			hid_info(hdev, "mapping profiles detected\n");
-		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
+		xdata->capabilities.hw_profiles = true;
 		break;
 	}
 

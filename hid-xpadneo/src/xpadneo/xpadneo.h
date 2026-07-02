@@ -32,7 +32,7 @@
 #define XPADNEO_QUIRK_NO_PULSE          1
 #define XPADNEO_QUIRK_NO_TRIGGER_RUMBLE 2
 #define XPADNEO_QUIRK_NO_MOTOR_MASK     4
-#define XPADNEO_QUIRK_USE_HW_PROFILES   8
+#define XPADNEO_QUIRK_RESERVED_8        8
 #define XPADNEO_QUIRK_LINUX_BUTTONS     16
 #define XPADNEO_QUIRK_NINTENDO          32
 #define XPADNEO_QUIRK_SHARE_BUTTON      64
@@ -135,6 +135,7 @@ struct xpadneo_devdata {
 
 	/* detected device capabilities */
 	struct {
+		bool hw_profiles;
 		bool paddles;
 	} capabilities;
 

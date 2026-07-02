@@ -159,6 +159,12 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 		xdata->quirks &= ~quirks_unset;
 	}
 
+	if (xdata->quirks & XPADNEO_QUIRK_RESERVED_8) {
+		hid_warn(hdev, "quirks flag 0x%08x is reserved and ignored\n",
+			 XPADNEO_QUIRK_RESERVED_8);
+		xdata->quirks &= ~XPADNEO_QUIRK_RESERVED_8;
+	}
+
 	if (xdata->quirks > 0)
 		hid_info(hdev, "controller quirks: 0x%08x\n", xdata->quirks);
 
