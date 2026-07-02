@@ -133,6 +133,11 @@ struct xpadneo_devdata {
 	bool shift_mode, profile_switched;
 	u8 last_profile, profile;
 
+	/* detected device capabilities */
+	struct {
+		bool paddles;
+	} capabilities;
+
 	/* HOGP protocol */
 	bool uses_hogp;
 

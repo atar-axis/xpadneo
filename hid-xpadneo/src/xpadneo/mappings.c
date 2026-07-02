@@ -101,15 +101,27 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 			   struct hid_field *field,
 			   struct hid_usage *usage, unsigned long **bit, int *max)
 {
+	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
 	int i = 0;
 
 	if (usage->hid == HID_DC_BATTERYSTRENGTH) {
-		struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
-
 		xdata->battery.report_id = field->report->id;
 		hid_info(hdev, "battery detected\n");
 
 		return MAP_IGNORE;
+	}
+
+	switch (usage->hid) {
+	case 0xC0081:
+		if (!xdata->capabilities.paddles)
+			hid_info(hdev, "paddles detected\n");
+		xdata->capabilities.paddles = true;
+		break;
+	case 0xC0085:
+		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES))
+			hid_info(hdev, "mapping profiles detected\n");
+		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
+		break;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(usage_maps); i++) {

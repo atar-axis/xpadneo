@@ -129,10 +129,6 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 
 	/* XBE2: track the current controller settings */
 	if (report->id == 1 && reportsize >= 20) {
-		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES)) {
-			hid_info(hdev, "mapping profiles detected\n");
-			xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
-		}
 		if (reportsize == 55) {
 			hid_notice_once(hdev,
 					"detected broken XBE2 v1 packet format, please update the firmware\n");
@@ -316,7 +312,8 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		return 0;
 	case 0xFF000005:
 		/* FIXME: this is no longer in the current firmware */
-		hid_info(hdev, "mapping profiles detected\n");
+		if (!(xdata->quirks & XPADNEO_QUIRK_USE_HW_PROFILES))
+			hid_info(hdev, "mapping profiles detected\n");
 		xdata->quirks |= XPADNEO_QUIRK_USE_HW_PROFILES;
 		return 0;
 	default:
@@ -360,8 +357,8 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		__clear_bit(KEY_RECORD, gamepad->keybit);
 		__clear_bit(KEY_UNKNOWN, gamepad->keybit);
 
-		/* ensure all four paddles exist as part of the gamepad */
-		if (test_bit(BTN_GRIPL, gamepad->keybit)) {
+		/* BTN_GRIPL is already set by mapping the combined paddle usage */
+		if (xdata->capabilities.paddles) {
 			__set_bit(BTN_GRIPR, gamepad->keybit);
 			__set_bit(BTN_GRIPL2, gamepad->keybit);
 			__set_bit(BTN_GRIPR2, gamepad->keybit);
