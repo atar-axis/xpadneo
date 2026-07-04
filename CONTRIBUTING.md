@@ -22,6 +22,33 @@ If you add a new file, you must add an SPDX license identifier at the top of tha
 appropriate for its scope.
 
 
+## Release and staging workflow
+
+The `master` branch is semi-stable. It may receive new features, but changes
+should avoid breaking existing behavior, changing defaults, or introducing broad
+architecture rewrites without a staged migration path.
+
+Stable release branches are versioned, for example `release/v0.10`. They receive
+bug fixes and low-risk feature updates that have little conflict potential and
+are suitable for regular stable tags.
+
+Larger or more experimental changes should be prepared as focused pull requests
+or long-lived pull requests assigned to a later milestone. This is especially
+important for changes that alter default behavior, remove compatibility
+work-arounds, or restructure driver internals. Such changes can be reviewed and
+tested early without forcing them into the current release cycle.
+
+When a new stable release is tagged, a matching stable branch is split from that
+tag. Behavior-changing default flips and similar compatibility breaks should
+normally wait until after that split, so the previous release branch can keep
+receiving conservative fixes.
+
+Prefer small, separable commits. If a larger pull request contains both safe
+fixes and risky redesign work, split the safe parts into independent commits or
+pull requests so they can be merged or backported without carrying the whole
+series.
+
+
 ## Signed-off-by requirement
 
 This project encourages the use of `Signed-off-by` lines in commits to certify that you, as a contributor, adhere to
