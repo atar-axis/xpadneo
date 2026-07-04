@@ -4,7 +4,7 @@ META_PREFIX ?= /usr/share/metainfo
 
 MODPROBE_CONFS := xpadneo.conf
 UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
-DOC_SRCS := NEWS.md $(wildcard docs/[0-9A-Z]*.md)
+DOC_SRCS := NEWS.md $(filter-out docs/AGENTS.md,$(wildcard docs/[0-9A-Z]*.md))
 DOCS := $(notdir $(DOC_SRCS))
 
 ifeq ($(PREFIX),)
