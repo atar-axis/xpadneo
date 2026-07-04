@@ -52,6 +52,7 @@
 
 /* HID device flags stored in hid_device_id.driver_data */
 #define XPADNEO_DEVFLAG_CAP_SHARE_BUTTON BIT(0)
+#define XPADNEO_DEVFLAG_SKIP_HEURISTICS  BIT(1)
 
 /* maximum length of report 0x01 for duplicate packet filtering */
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)

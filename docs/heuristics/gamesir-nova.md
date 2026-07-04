@@ -8,6 +8,11 @@ working heuristic matcher.
 We also collect OUIs here which should not match the heuristics because we
 are seeing conflicts with some official vendors.
 
+Some non-GameSir devices can also use a randomized Bluetooth MAC address which
+matches the heuristic. The ASUS ROG Raikiri Pro (`0B05:1ABD`) reports the same
+283-byte descriptor as the Xbox Series X|S controller but may use an LAA and
+multicast OUI, so it is excluded by device ID instead of by OUI.
+
 The best indicators we currently have are the LLA or multicast bits in the MAC
 address, one of which is always set. While the LLA bit is quite weak because
 it is technically allowed, the multicast bit is much stronger because it should
