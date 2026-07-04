@@ -39,22 +39,22 @@ static DEFINE_IDA(xpadneo_core_device_id_allocator);
 #define USB_VENDOR_ID_MICROSOFT 0x045e
 #endif
 
-/* driver_data exclusively stores XPADNEO_DEVICE_CAP_* flags */
+/* driver_data stores XPADNEO_DEVFLAG_* flags */
 static const struct hid_device_id core_devices[] = {
 	/* XBOX ONE S / X */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02E0) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x02FD) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B20),
-	 .driver_data = XPADNEO_DEVICE_CAP_SHARE_BUTTON },
+	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
 
 	/* XBOX ONE Elite Series 2 */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B05) },
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B22),
-	 .driver_data = XPADNEO_DEVICE_CAP_SHARE_BUTTON },
+	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
 
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
-	 .driver_data = XPADNEO_DEVICE_CAP_SHARE_BUTTON },
+	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
 
 	/* SENTINEL VALUE, indicates the end */
 	{ }
@@ -137,7 +137,6 @@ static void core_remove(struct hid_device *hdev)
 static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	int ret, index;
-	unsigned long device_caps = id->driver_data;
 	struct xpadneo_devdata *xdata;
 
 	xdata = devm_kzalloc(&hdev->dev, sizeof(*xdata), GFP_KERNEL);
@@ -150,6 +149,7 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	xdata->id = index;
 
 	xdata->quirks = 0;
+	xdata->device_flags = id->driver_data;
 
 	xdata->hdev = hdev;
 	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
@@ -180,7 +180,7 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 			 "expecting HOGP protocol, this will cause rumble issues if the controller does not use BLE\n");
 	}
 
-	if (device_caps & XPADNEO_DEVICE_CAP_SHARE_BUTTON) {
+	if (xdata->device_flags & XPADNEO_DEVFLAG_CAP_SHARE_BUTTON) {
 		hid_info(hdev, "share button detected\n");
 		xdata->capabilities.share_button = true;
 	}
