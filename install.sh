@@ -8,7 +8,11 @@ set -e
 
 if [[ ! -d /sys/devices/virtual/misc/uhid ]]; then
 
-    >&2 echo "WARNING: kernel uhid module not found, controller firmware 5.x will not be supported"
+    >&2 echo 'WARNING: Kernel uhid module not found, controller firmware 5.x may not be supported.'
+    >&2 echo 'WARNING: This does not prevent xpadneo from being installed. If your kernel supports'
+    >&2 echo 'WARNING: uhid, loading hid_xpadneo during boot should also load uhid; see'
+    >&2 echo 'WARNING: `docs/TROUBLESHOOTING.md` for the `/etc/modules-load.d/xpadneo.conf`'
+    >&2 echo 'WARNING: example.'
 
 fi
 
