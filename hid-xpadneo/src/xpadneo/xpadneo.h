@@ -50,8 +50,8 @@
 /* report number for rumble commands */
 #define XPADNEO_XBOX_RUMBLE_REPORT 0x03
 
-/* HID device capabilities stored in hid_device_id.driver_data */
-#define XPADNEO_DEVICE_CAP_SHARE_BUTTON BIT(0)
+/* HID device flags stored in hid_device_id.driver_data */
+#define XPADNEO_DEVFLAG_CAP_SHARE_BUTTON BIT(0)
 
 /* maximum length of report 0x01 for duplicate packet filtering */
 #define XPADNEO_REPORT_0x01_LENGTH (55+1)
@@ -134,6 +134,7 @@ struct xpadneo_devdata {
 	/* quirk flags */
 	unsigned int original_rsize;
 	u32 quirks;
+	u32 device_flags;
 
 	/* profile switching */
 	bool shift_mode, profile_switched;
