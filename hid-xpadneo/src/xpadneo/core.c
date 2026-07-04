@@ -39,6 +39,10 @@ static DEFINE_IDA(xpadneo_core_device_id_allocator);
 #define USB_VENDOR_ID_MICROSOFT 0x045e
 #endif
 
+#ifndef USB_VENDOR_ID_ASUSTEK
+#define USB_VENDOR_ID_ASUSTEK 0x0b05
+#endif
+
 /* driver_data stores XPADNEO_DEVFLAG_* flags */
 static const struct hid_device_id core_devices[] = {
 	/* XBOX ONE S / X */
@@ -55,6 +59,10 @@ static const struct hid_device_id core_devices[] = {
 	/* XBOX Series X|S / Xbox Wireless Controller (BLE) */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
 	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
+
+	/* ASUS ROG Raikiri Pro */
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK, 0x1ABD),
+	 .driver_data = XPADNEO_DEVFLAG_SKIP_HEURISTICS },
 
 	/* SENTINEL VALUE, indicates the end */
 	{ }
@@ -150,6 +158,9 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 
 	xdata->quirks = 0;
 	xdata->device_flags = id->driver_data;
+
+	if (xdata->device_flags & XPADNEO_DEVFLAG_SKIP_HEURISTICS)
+		xdata->quirks |= XPADNEO_QUIRK_NO_HEURISTICS;
 
 	xdata->hdev = hdev;
 	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;

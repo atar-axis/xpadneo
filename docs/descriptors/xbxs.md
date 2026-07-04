@@ -2,6 +2,9 @@
 
 # USB Descriptor for Xbox Series X|S Wireless
 
+The ASUS ROG Raikiri Pro in Bluetooth mode (`0B05:1ABD`) uses the same
+283-byte descriptor with CRC16 `0x931d`.
+
 Hex dump of the controller descriptor:
 ```
 # xxd -c20 -g1 /sys/module/hid_xpadneo/drivers/hid:xpadneo/0005:045E:0B13.000A/report_descriptor
