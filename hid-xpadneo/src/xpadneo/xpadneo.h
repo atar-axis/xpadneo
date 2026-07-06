@@ -129,6 +129,7 @@ struct xpadneo_devdata {
 	short int missing_reported;
 
 	/* revert fixups on removal */
+	u16 original_vendor;
 	u16 original_product;
 	u32 original_version;
 
