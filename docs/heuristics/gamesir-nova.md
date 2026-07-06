@@ -28,6 +28,7 @@ never be used for controllers, and all other vendors follow that.
 | 3E:42:6C  L  | GameSir   |   `0011 1110 : 0100 0010 : 0110 1100`   | 283
 | ED:BC:9A  M  | GameSir   |   `1110 1101 : 1011 1100 : 1001 1010`   | 283
 | 6A:07:14  L  | GameSir   |   `0110 1010 : 0000 0111 : 0001 0100`   | 283
+| E2:82:69  L  | GameSir   |   `1110 0010 : 1000 0010 : 0110 1001`   | 283
 | **OR Mask**  |           | **`0000 0011 : 0000 0000 : 0000 0000`   | **mask 0x03**
 | 3C:FA:06  +  | Microsoft |   `0011 1100 : 1111 1010 : 0000 0110`   | 283 inval match
 | 44:16:22  +  | Microsoft |   `0100 0100 : 0001 0110 : 0010 0010`   |
