@@ -54,9 +54,15 @@ cat_dkms_make_log() {
 }
 
 maybe_already_installed() {
-    local last_error=$?
-    >&2 echo "HINT: Try uninstalling xpadneo first"
-    exit $last_error
+	local last_error=$?
+
+	>&2 echo "HINT: If this is a retry after a failed install, DKMS may already contain"
+	>&2 echo "HINT: hid-xpadneo/${VERSION} without a built or installed module."
+	>&2 echo "HINT: Fix the original build error, then remove the DKMS entry before retrying:"
+	>&2 echo "HINT:   sudo dkms remove hid-xpadneo/${VERSION} --all"
+	>&2 echo "HINT: or run:"
+	>&2 echo "HINT:   sudo ./uninstall.sh"
+	exit "${last_error}"
 }
 
 # shellcheck disable=SC2034
