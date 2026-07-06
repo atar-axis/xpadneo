@@ -20,6 +20,11 @@ This subtree owns the xpadneo driver implementation.
 - Keep device IDs, flags, descriptors, and heuristics traceable to issue
   reports, hardware data, or existing driver behavior.
 - Do not broaden a quirk beyond the hardware evidence that supports it.
+- Descriptor patches must guard on the minimal bytes needed to identify the
+  broken descriptor shape and the patched field, with size checks that prevent
+  out-of-bounds access.
+- Avoid product, vendor, or transport guards in descriptor fixups unless the
+  descriptor bytes alone cannot identify the faulty descriptor safely.
 - Prefer explicit device flags for known hardware capabilities and narrow skip
   paths for known false-positive heuristics.
 - Preserve existing controller behavior unless the change is explicitly scoped
