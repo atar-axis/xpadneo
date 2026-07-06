@@ -129,6 +129,9 @@ Default section order:
   architecture change before choosing its target branch or milestone.
 - Document hardware-specific findings when they rely on descriptors, OUIs,
   firmware versions, or controller-specific quirks.
+- Bug reports do not need to complete every optional checklist item, but they
+  must provide the template logs and system facts needed to support the claimed
+  failure.
 
 
 ## Verification

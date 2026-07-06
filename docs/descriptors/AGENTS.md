@@ -21,6 +21,13 @@ This subtree owns HID descriptor dumps and descriptor-derived reference notes.
   report source when that information is available.
 - Treat descriptor facts as hardware evidence, not as proof of broad vendor
   behavior unless other sources support that conclusion.
+- Do not reconstruct original descriptors by manually reverting xpadneo
+  descriptor patches from already-patched dumps. That process is not reliable
+  evidence if one patch is missed.
+- Prefer original descriptor evidence from current driver logs: known
+  descriptors normally log checksum, MAC parameters, size, and IDs; unknown or
+  requested descriptors can be dumped through dmesg, including by enabling the
+  descriptor debug module parameter when needed.
 
 
 ## Work Guidance
@@ -28,6 +35,8 @@ This subtree owns HID descriptor dumps and descriptor-derived reference notes.
 - Prefer adding concise metadata around a dump over rewriting the dump itself.
 - Link descriptor facts back to driver quirks or heuristics when they explain a
   code change.
+- Ask reporters to reproduce descriptor-sensitive issues on current `master`
+  when existing logs predate descriptor checksum and dump support.
 
 
 ## Verification
