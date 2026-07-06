@@ -119,11 +119,14 @@ static void core_remove(struct hid_device *hdev)
 		hdev->version = xdata->original_version;
 	}
 
-	if (hdev->product != xdata->original_product) {
+	if ((hdev->vendor != xdata->original_vendor) ||
+	    (hdev->product != xdata->original_product)) {
 		hid_info(hdev,
-			 "reverting to original product "
-			 "(changed PID from 0x%04X to 0x%04X)\n",
+			 "reverting to original vendor/product "
+			 "(changed VID from 0x%04X to 0x%04X, PID from 0x%04X to 0x%04X)\n",
+			 hdev->vendor, xdata->original_vendor,
 			 hdev->product, xdata->original_product);
+		hdev->vendor = xdata->original_vendor;
 		hdev->product = xdata->original_product;
 	}
 
@@ -223,22 +226,19 @@ static int core_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 * still detect our driver as the correct model. Currently this
 	 * maps all controllers to the same model.
 	 */
+	xdata->original_vendor = hdev->vendor;
 	xdata->original_product = hdev->product;
 	xdata->original_version = hdev->version;
+	hdev->vendor = USB_VENDOR_ID_MICROSOFT;
 	hdev->product = 0x028E;
 	hdev->version = 0x00001130;
 
-	if (hdev->product != xdata->original_product)
+	if ((hdev->vendor != xdata->original_vendor) || (hdev->product != xdata->original_product))
 		hid_info(hdev,
 			 "pretending XB1S Windows wireless mode "
-			 "(changed PID from 0x%04X to 0x%04X)\n", xdata->original_product,
+			 "(changed VID from 0x%04X to 0x%04X, PID from 0x%04X to 0x%04X)\n",
+			 xdata->original_vendor, hdev->vendor, xdata->original_product,
 			 hdev->product);
-
-	if (hdev->version != xdata->original_version)
-		hid_info(hdev,
-			 "working around wrong SDL2 mappings "
-			 "(changed version from 0x%08X to 0x%08X)\n", xdata->original_version,
-			 hdev->version);
 
 	ret = hid_parse(hdev);
 	if (ret) {
@@ -295,6 +295,7 @@ err_stop_hw:
 
 err_release_id:
 	/* restore the original device IDs first */
+	hdev->vendor = xdata->original_vendor;
 	hdev->product = xdata->original_product;
 	hdev->version = xdata->original_version;
 
