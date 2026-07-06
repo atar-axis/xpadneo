@@ -183,5 +183,20 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 		}
 	}
 
+	/*
+	 * Some 334-byte Linux-mode descriptors declare a Consumer AC Back
+	 * field and 7 bits of padding at the end of report ID 1. Issue 624
+	 * reports firmware that still transmits only the older 15-byte input
+	 * report, causing hid-core to drop every input report as too short.
+	 */
+	if (*rsize >= 190 &&
+	    rdesc[166] == 0x05 && rdesc[167] == 0x0C &&
+	    rdesc[168] == 0x0A && rdesc[169] == 0x24 && rdesc[170] == 0x02 &&
+	    rdesc[175] == 0x95 && rdesc[176] == 0x01 && rdesc[187] == 0x95 && rdesc[188] == 0x01) {
+		hid_notice(hdev, "fixing up spurious AC Back field\n");
+		rdesc[176] = 0x00;	/* AC Back: Report Count 1 -> 0 */
+		rdesc[188] = 0x00;	/* padding: Report Count 1 -> 0 */
+	}
+
 	return rdesc;
 }
