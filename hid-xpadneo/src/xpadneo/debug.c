@@ -37,6 +37,7 @@ struct crc_name {
 const struct crc_name known_checksums[] = {
 	{ .crc16 = 0x534B, .name = "GuliKit ES PRO E-Sports Controller" },
 	{ .crc16 = 0x6500, .name = "Xbox One Elite Series 2" },
+	{ .crc16 = 0x6BA1, .name = "Xbox One S 1708 9.03 (truncated rumble descriptor)" },
 	{ .crc16 = 0x8BC5, .name = "Xbox Wireless Controller (legacy)" },
 	{ .crc16 = 0x931D, .name = "Xbox Wireless Controller (modern)" },
 };

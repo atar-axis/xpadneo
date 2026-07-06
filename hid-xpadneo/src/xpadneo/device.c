@@ -94,6 +94,52 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 		*rsize -= 1;
 	}
 
+	/*
+	 * Xbox One S 1708 (PID 0x02FD, fw 0x0903): the firmware sends a
+	 * truncated 307-byte descriptor. The rumble report (ID 3) definition
+	 * is cut off mid-item after "Usage(Loop Count) / Logical Minimum(0)"
+	 * (rdesc[302..305] = 09 7C 15 00); the last byte is a stray 0x00
+	 * instead of the "Logical Maximum(255) / Report Size(8) /
+	 * Report Count(1) / Output(Data,Var,Abs)" item and the two End
+	 * Collections that close the report. The HID parser hits the
+	 * trailing 0x00, treats it as an unknown Main item (tag 0x0),
+	 * aborts, then reports "unbalanced collection" because the two
+	 * open collections (Application and Logical) were never closed.
+	 *
+	 * Grow the descriptor instead of dropping the field: keep the
+	 * already-present "Usage(Loop Count) / Logical Minimum(0)" and
+	 * append the missing bytes to complete it, taken byte-for-byte
+	 * from the equivalent, correctly terminated descriptor of the same
+	 * family (crc16 0x931D). This way hidraw consumers that parse the
+	 * descriptor themselves, instead of relying on our fixed rumble
+	 * report struct, still see a complete and accurate definition of
+	 * report ID 3.
+	 */
+	if (*rsize == 307 &&
+	    rdesc[302] == 0x09 && rdesc[303] == 0x7C &&
+	    rdesc[304] == 0x15 && rdesc[305] == 0x00 && rdesc[306] == 0x00) {
+		static const __u8 loop_count_tail[] = {
+			0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+			0x75, 0x08,	/* Report Size(8) */
+			0x95, 0x01,	/* Report Count(1) */
+			0x91, 0x02,	/* Output(Data,Var,Abs) */
+			0xC0,	/* End Collection (Logical) */
+			0xC0,	/* End Collection (Application) */
+		};
+		unsigned int new_rsize = 306 + sizeof(loop_count_tail);
+		__u8 *new_rdesc = devm_kzalloc(&hdev->dev, new_rsize, GFP_KERNEL);
+
+		if (new_rdesc) {
+			hid_notice(hdev, "fixing up truncated report descriptor\n");
+			memcpy(new_rdesc, rdesc, 306);
+			memcpy(new_rdesc + 306, loop_count_tail, sizeof(loop_count_tail));
+			rdesc = new_rdesc;
+			*rsize = new_rsize;
+		} else {
+			hid_warn(hdev, "failed to grow truncated report descriptor\n");
+		}
+	}
+
 	/* fixup reported axes for Xbox One S */
 	if (*rsize >= 81) {
 		if (rdesc[34] == 0x09 && rdesc[35] == 0x32) {
