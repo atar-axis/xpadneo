@@ -142,7 +142,8 @@ void xpadneo_debug_descriptor(const struct hid_device *hdev, const __u8 *rdesc, 
 	bool is_multicast = !!(oui0 & XPADNEO_OUI_IS_MULTICAST);
 	bool do_dump;
 
-	hid_info(hdev, "report descriptor: length %u crc16 0x%04x\n", rsize, crc);
+	hid_info(hdev, "report descriptor: length %u crc16 0x%04x version 0x%08x\n",
+		 rsize, crc, hdev->version);
 
 	if (oui_valid) {
 		hid_info(hdev,
