@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+MOK_CN_NAME={MOK_CA_NAME:-"$USER@$HOST"}
+
+if [[ -e MOK.priv ]]; then
+    echo key already exists
+    exit 2
+fi
+
+openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -days 36500 -subj "/CN=$MOK_CN_NAME (SecureBoot Mok)/" && \
+chmod 600 MOK.priv

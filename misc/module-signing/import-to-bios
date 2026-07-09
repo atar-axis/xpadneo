@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+mokutil --import MOK.der
