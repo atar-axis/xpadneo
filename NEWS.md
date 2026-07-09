@@ -1,5 +1,65 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.10.2 up to v0.10.3
+
+This maintenance release for the v0.10 series focuses on conservative hardware support, safer diagnostics, and clearer
+recovery guidance while keeping the existing release-branch behavior stable.
+
+The main compatibility addition is support for the ASUS ROG Raikiri Pro in Bluetooth mode. This controller exposes the
+same modern Xbox-compatible descriptor family as genuine Xbox Wireless Controllers, so xpadneo can now bind it directly
+and present a consistent Xbox-style identity to userspace after applying the usual descriptor fixups.
+
+Elite Series 2 and other profile-capable controllers also benefit from more reliable descriptor-based capability
+detection. Hardware profile and paddle support are now tracked during descriptor mapping, avoiding races where profile
+reports arrive too late during initial device registration.
+
+Several changes improve diagnostics for future hardware reports. Descriptor logs now include the firmware version next
+to the descriptor size and checksum, and xpadneo warns when profile reports appear without a matching detected usage.
+This should make it easier to turn user-provided dmesg logs into safe, narrowly-scoped follow-up fixes.
+
+The installer and documentation received smaller recovery improvements as well. The DKMS retry hint now points at the
+exact cleanup command after failed installs, and the missing-`uhid` warning explains that installation can still
+continue while recommending early module loading for systems that need it.
+
+Finally, the branch includes a force-disable switch for the HOGP rumble path as a diagnostic escape hatch, plus
+clarified GameSir Nova rumble quirk documentation for users who need to configure clone-specific motor quirks manually.
+
+
+## Headlines:
+
+- installer: Clarify DKMS retry recovery
+- xpadneo, core: Add ASUS ROG Raikiri Pro support
+- xpadneo, core: Spoof vendor with controller IDs
+- xpadneo, installer: Add ASUS ROG Raikiri Pro bindings
+- xpadneo, installer: Clarify missing uhid warning
+- xpadneo, mappings: Detect paddle capabilities from descriptors
+
+```
+Kai Krakow (20):
+      xpadneo, rumble: Move welcome_rumble to async worker
+      xpadneo, meta: Add license to Makefile
+      xpadneo, udev: Add filters and ignore flag to rules
+      xpadneo, debug: Harden OUI parser against NULL dereference
+      xpadneo, device: Prevent OOB if rdesc is too small
+      xpadneo, quirks: Check for NULL before comparing gamepad name and uniq
+      xpadneo, docs: Document early module loading
+      xpadneo, installer: Clarify missing uhid warning
+      installer: Clarify DKMS retry recovery
+      xpadneo, rumble: Allow forcefully disabling HOGP usage
+      xpadneo, mappings: Detect paddle capabilities from descriptors
+      xpadneo, profiles: Track hardware profiles as capability
+      xpadneo, core: Track Share button as capability
+      xpadneo, core: Generalize HID driver data flags
+      xpadneo, profiles: Warn if profile reports appear without detected usage
+      xpadneo, core: Add ASUS ROG Raikiri Pro support
+      xpadneo, core: Spoof vendor with controller IDs
+      xpadneo, debug: Log firmware version with descriptors
+      xpadneo, docs: Adjust wording of GameSir rumble quirks
+      xpadneo, docs: Fix GameSir Nova quirk workaround
+      xpadneo, installer: Add ASUS ROG Raikiri Pro bindings
+```
+
+
 # Changes since v0.10.1 up to v0.10.2
 
 This maintenance release for the v0.10 series focuses on improving rumble performance for modern controllers and
