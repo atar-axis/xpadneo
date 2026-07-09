@@ -25,6 +25,14 @@ c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
 85 04 15 00 26 ff 00 75 08 95 01 81 02 c0 00
 ```
 
+Known firmware mismatch:
+
+Issue 624 reports Xbox One S 1708 firmware 0x0903 exposing the 334-byte
+descriptor above while sending only 15-byte input reports for report ID 1. The
+declared Consumer AC Back field and its padding add one byte that this hardware
+does not transmit, causing hid-core to reject every input report as too short
+unless the field is removed during report fixup.
+
 Parsed descriptor:
 (via https://eleccelerator.com/usbdescreqparser/)
 ```
