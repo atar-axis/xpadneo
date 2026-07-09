@@ -92,6 +92,17 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	if (*rsize >= 2 && rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
 		hid_notice(hdev, "fixing up report descriptor size\n");
 		*rsize -= 1;
+	} else if (*rsize >= 2 && rdesc[*rsize - 2] == 0x00 && rdesc[*rsize - 1] == 0xC0) {
+		/*
+		 * Some firmwares write 0x00 where a second End Collection
+		 * (0xC0) was needed, followed by a correct final 0xC0.
+		 * Replace the 0x00 with 0xC0 so the descriptor ends with two
+		 * End Collections. Do NOT shrink the descriptor: both bytes
+		 * are valid End Collection items and are needed to close the
+		 * two open collections.
+		 */
+		hid_notice(hdev, "fixing up report descriptor NUL before end collection\n");
+		rdesc[*rsize - 2] = 0xC0;
 	}
 
 	/* fixup reported axes for Xbox One S */
