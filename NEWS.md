@@ -1,5 +1,27 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.10.3.1 up to v0.10.4
+
+This maintenance release corrects the release metadata for the v0.10 series.
+
+The v0.10.3.1 source archive still contained `VERSION` set to `v0.10.3`. This caused generated DKMS metadata to use
+`PACKAGE_VERSION="v0.10.3"` while package managers and users installed the `v0.10.3.1` release archive, so DKMS tried
+to build from the wrong source directory and failed before compiling the module.
+
+v0.10.4 keeps the same driver content as v0.10.3.1 and only restores consistent release metadata so DKMS builds from
+the expected package path again.
+
+
+## Headlines:
+
+- xpadneo: Correct release version metadata
+
+```
+Kai Krakow (1):
+      xpadneo: Release v0.10.4
+```
+
+
 # Changes since v0.10.2 up to v0.10.3
 
 This maintenance release for the v0.10 series focuses on conservative hardware support, safer diagnostics, and clearer
