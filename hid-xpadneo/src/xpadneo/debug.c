@@ -35,8 +35,11 @@ struct crc_name {
 };
 
 const struct crc_name known_checksums[] = {
+	{ .crc16 = 0x219A, .name = "Xbox One S 1708 (cached truncated Linux descriptor)" },
+	{ .crc16 = 0x4154, .name = "Xbox One S 1708 (Linux mode)" },
 	{ .crc16 = 0x534B, .name = "GuliKit ES PRO E-Sports Controller" },
 	{ .crc16 = 0x6500, .name = "Xbox One Elite Series 2" },
+	{ .crc16 = 0x6BA1, .name = "Xbox One S 1708 (cached truncated descriptor + NUL)" },
 	{ .crc16 = 0x8BC5, .name = "Xbox Wireless Controller (legacy)" },
 	{ .crc16 = 0x931D, .name = "Xbox Wireless Controller (modern)" },
 };

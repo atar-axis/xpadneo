@@ -25,6 +25,22 @@ c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00 75 06 95 01
 85 04 15 00 26 ff 00 75 08 95 01 81 02 c0 00
 ```
 
+Known cached descriptor mismatch:
+
+Issue 624 reports an Xbox One S 1708 exposing a cached, truncated descriptor
+with crc16 `0x219a`. That 306-byte descriptor is byte-identical to the reported
+334-byte Linux-mode descriptor with crc16 `0x4154` until it ends after the
+rumble Report ID 3 bytes `09 7c 15 00` (`Usage(Loop Count)`,
+`Logical Minimum(0)`). The same truncated prefix plus one trailing NUL byte
+matches the older pending crc16 `0x6ba1` checksum. The complete descriptor
+continues with the missing loop count output field tail, closes the rumble
+collection, and then declares Report ID 4.
+
+The observed failure is therefore treated as descriptor truncation, not as a
+spurious Consumer AC Back field in Report ID 1. The report fixup completes
+both truncated variants by appending the missing tail from the matching
+334-byte descriptor while leaving the AC Back field intact.
+
 Parsed descriptor:
 (via https://eleccelerator.com/usbdescreqparser/)
 ```
