@@ -94,6 +94,63 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 		*rsize -= 1;
 	}
 
+	/*
+	 * Some cached Xbox One S 1708 Linux-mode descriptors are truncated to
+	 * 306 bytes, sometimes followed by a trailing NUL byte. The rumble
+	 * report (ID 3) definition is cut off mid-item after "Usage(Loop
+	 * Count) / Logical Minimum(0)" (rdesc[302..305] = 09 7C 15 00). The
+	 * HID parser aborts because the preceding Logical collection and the
+	 * outer Application collection are never closed.
+	 *
+	 * Grow the descriptor instead of dropping the field: keep the already
+	 * present "Usage(Loop Count) / Logical Minimum(0)" and append the
+	 * missing bytes from the equivalent, correctly terminated 334-byte
+	 * descriptor of the same controller mode (crc16 0x4154). This also
+	 * preserves the following report ID 4 definition that is present in
+	 * the complete descriptor.
+	 */
+	if ((*rsize == 306 || (*rsize == 307 && rdesc[306] == 0x00)) &&
+	    rdesc[224] == 0xC0 &&
+	    rdesc[225] == 0x05 && rdesc[226] == 0x0F &&
+	    rdesc[227] == 0x09 && rdesc[228] == 0x21 &&
+	    rdesc[229] == 0x85 && rdesc[230] == 0x03 &&
+	    rdesc[231] == 0xA1 && rdesc[232] == 0x02 &&
+	    rdesc[298] == 0x65 && rdesc[299] == 0x00 &&
+	    rdesc[300] == 0x55 && rdesc[301] == 0x00 &&
+	    rdesc[302] == 0x09 && rdesc[303] == 0x7C &&
+	    rdesc[304] == 0x15 && rdesc[305] == 0x00) {
+		static const __u8 loop_count_tail[] = {
+			0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+			0x75, 0x08,	/* Report Size(8) */
+			0x95, 0x01,	/* Report Count(1) */
+			0x91, 0x02,	/* Output(Data,Var,Abs) */
+			0xC0,	/* End Collection (Logical) */
+			0x85, 0x04,	/* Report ID(4) */
+			0x05, 0x06,	/* Usage Page(Generic Dev Ctrls) */
+			0x09, 0x20,	/* Usage(Battery Strength) */
+			0x15, 0x00,	/* Logical Minimum(0) */
+			0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+			0x75, 0x08,	/* Report Size(8) */
+			0x95, 0x01,	/* Report Count(1) */
+			0x81, 0x02,	/* Input(Data,Var,Abs) */
+			0xC0,	/* End Collection (Application) */
+		};
+		unsigned int truncated_rsize = 306;
+		unsigned int new_rsize = truncated_rsize + sizeof(loop_count_tail);
+		__u8 *new_rdesc = devm_kzalloc(&hdev->dev, new_rsize, GFP_KERNEL);
+
+		if (new_rdesc) {
+			hid_notice(hdev, "fixing up truncated report descriptor\n");
+			memcpy(new_rdesc, rdesc, truncated_rsize);
+			memcpy(new_rdesc + truncated_rsize, loop_count_tail,
+			       sizeof(loop_count_tail));
+			rdesc = new_rdesc;
+			*rsize = new_rsize;
+		} else {
+			hid_warn(hdev, "failed to grow truncated report descriptor\n");
+		}
+	}
+
 	/* fixup reported axes for Xbox One S */
 	if (*rsize >= 81) {
 		if (rdesc[34] == 0x09 && rdesc[35] == 0x32) {
