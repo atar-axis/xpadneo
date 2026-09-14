@@ -21,6 +21,9 @@ This subtree owns repository automation and GitHub-facing project metadata.
   AI-assisted pull requests.
 - Treat workflow edits as repository behavior changes because they can affect
   labels, checks, notifications, and issue or pull request state.
+- The HTML comment anchors in `pull_request_template.md` (what agents may
+  fill, what must stay verbatim, and that agents must not open the pull
+  request themselves) are binding instructions, not suggestions.
 
 
 ## Work Guidance

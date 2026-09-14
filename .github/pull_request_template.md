@@ -1,6 +1,15 @@
+<!-- Agents: read AGENTS.md and CONTRIBUTING.md (AI section) before drafting this.
+     Never open this PR yourself; hand the filled text to the human to paste and submit.
+     Never tick or reword the checkboxes below -- copy them verbatim, the human ticks them. -->
+
 <!-- By submitting a contribution, you agree that it is accepted under the project's existing license terms.
      Contributions to the module source code are accepted under GPL-2.0-only. -->
 
+<!-- fill: why/how, concise -- no commit-message repetition, no walls of text -->
+## Summary
+
+
+<!-- do not edit or tick -- checkboxes are ticked by the human contributor -->
 - [ ] I agree that my contribution is accepted under the project's existing license terms, and that contributions to
       the module source code are accepted under GPL-2.0-only.
 - [ ] My contribution has been created with the help of AI, including prior research with AI chatbots or AI-assisted
