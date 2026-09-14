@@ -1,0 +1,14 @@
+# Single definition of the controller IDs xpadneo supports. Set here rather
+# than in 60-xpadneo.rules so it is available to the vendor 60-*.rules that
+# sort in between.
+ACTION!="remove", SUBSYSTEM=="hid",    KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+ACTION!="remove", SUBSYSTEM=="hid",    KERNEL=="0005:0B05:1ABD.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+ACTION!="remove", SUBSYSTEM=="hidraw", KERNELS=="0005:045E:02E0.*|0005:045E:02FD.*|0005:045E:0B05.*|0005:045E:0B13.*|0005:045E:0B20.*|0005:045E:0B22.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+ACTION!="remove", SUBSYSTEM=="hidraw", KERNELS=="0005:0B05:1ABD.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+
+# 60-steam-input.rules and other vendor 60-*.rules tag this hidraw node
+# uaccess by hardware id, regardless of which driver is bound. Stripping the
+# tag later does not help: 73-seat-late.rules matched TAG=="uaccess" as added
+# earlier in the same event, runs the uaccess builtin, and logind writes the
+# ACL even though the tag ends up removed. Skip past those rules instead.
+ACTION!="remove", SUBSYSTEM=="hidraw", ENV{ID_XPADNEO_SUPPORTED}=="1", GOTO="xpadneo_hidraw_lockdown"

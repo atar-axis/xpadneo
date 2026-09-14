@@ -3,7 +3,7 @@ DOC_PREFIX ?= /usr/share/doc/xpadneo
 META_PREFIX ?= /usr/share/metainfo
 
 MODPROBE_CONFS := xpadneo.conf
-UDEV_RULES := 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
+UDEV_RULES := 59-xpadneo-hidraw-preempt.rules 60-xpadneo.rules 70-xpadneo-disable-hidraw.rules
 DOC_SRCS := NEWS.md $(filter-out docs/AGENTS.md,$(wildcard docs/[0-9A-Z]*.md))
 DOCS := $(notdir $(DOC_SRCS))
 

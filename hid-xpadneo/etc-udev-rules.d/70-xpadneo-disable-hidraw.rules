@@ -1,3 +1,11 @@
+LABEL="xpadneo_hidraw_lockdown"
+
 #FIXME(issue-291) Work around Steamlink not properly detecting the mappings
 #FIXME(issue-457) Word around QMK overriding our hidraw rules
 ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="hidraw", MODE:="0000", TAG-="uaccess"
+
+# Fallback for a device that reaches this file without taking the GOTO in
+# 59-xpadneo-hidraw-preempt.rules. ID_XPADNEO_SUPPORTED is stable across the
+# hid-generic -> xpadneo rebind, unlike DRIVERS=="xpadneo" above.
+ACTION!="remove", SUBSYSTEM=="hidraw", ENV{ID_XPADNEO_SUPPORTED}=="1", \
+  TAG-="uaccess", OWNER="root", GROUP="root", MODE:="0000"
