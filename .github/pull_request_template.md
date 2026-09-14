@@ -10,6 +10,8 @@
 
 
 <!-- do not edit or tick -- checkboxes are ticked by the human contributor -->
+## Contributor Declaration
+
 - [ ] I agree that my contribution is accepted under the project's existing license terms, and that contributions to
       the module source code are accepted under GPL-2.0-only.
 - [ ] My contribution has been created with the help of AI, including prior research with AI chatbots or AI-assisted
