@@ -43,7 +43,10 @@ tag. Behavior-changing default flips and similar compatibility breaks should
 normally wait until after that split, so the previous release branch can keep
 receiving conservative fixes.
 
-Prefer small, separable commits. If a larger pull request contains both safe
+Prefer small, separable commits. Each commit should address a single concern and remain bisectable — it must build
+and behave correctly on its own, without depending on a later commit in the same series to be correct.
+
+If a larger pull request contains both safe
 fixes and risky redesign work, split the safe parts into independent commits or
 pull requests so they can be merged or backported without carrying the whole
 series.
@@ -83,6 +86,22 @@ We consider 'help from AI' to be any form of assistance, including, but not limi
 
 Since you, as the human, take responsibility, commits must **not** contain a `Co-authored-by` signature of an AI agent.
 The use of AI must be declared accordingly in the pull request.
+
+
+### AI-generated pull request content
+
+If an AI agent helps prepare a pull request, the following applies in addition to the rules above:
+
+- The agent must not open the pull request itself. It prepares the branch and the pull request text; the human
+  contributor opens the pull request and ticks the checkboxes in the template themselves.
+- The agent must not tick or reword the checkboxes in the pull request template. They must be copied verbatim.
+- The pull request description must not repeat commit message content. It should briefly explain why and how,
+  without walls of text.
+- Commit messages must stand on their own and use `Fixes:`, `Closes:`, or `Link:` trailers with the full issue or
+  pull request URL, not the short `#123` form, to avoid unwanted cross-repository references if the commit is later
+  carried into a fork or another tree.
+- If the pull request description references its own commits, it should do so only as a bullet list of commit
+  titles, not a narrative retelling of what each commit does.
 
 
 ## Reference

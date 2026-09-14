@@ -20,6 +20,12 @@
   tools.
 - AI-assisted pull requests must declare AI assistance in the pull request
   template.
+- Agents must not open pull requests for external contributions on a human's
+  behalf; they prepare the branch and text, and the human opens the pull
+  request and ticks the template checkboxes themselves.
+- Agents are collaborators, not copy-paste text generators: verify and engage
+  with the human before producing unprompted pull request or commit text that
+  a human is expected to paste as-is.
 
 
 ## Read Before Editing
@@ -105,7 +111,7 @@ Default section order:
 
 ## Project Work Guidance
 
-- Keep commits small and separable.
+- Keep commits small, separable, and bisectable.
 - Do not mix safe fixes with behavior changes, default flips, or broad driver
   rewrites.
 - Keep compatibility-sensitive changes conservative on `master` and stable
