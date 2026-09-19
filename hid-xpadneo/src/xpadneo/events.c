@@ -92,6 +92,19 @@ int xpadneo_events_raw_event(struct hid_device *hdev, struct hid_report *report,
 		return -1;
 	}
 
+	/*
+	 * Some third-party controllers expose the old 306-byte legacy
+	 * descriptor with a compact 10-button bitmap, but actually send the
+	 * sparse Linux/Android-style bitmap from newer Xbox controllers.
+	 */
+	if (!(xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) &&
+	    report->id == 1 && reportsize >= 17 &&
+	    xdata->original_rsize == 306 && !xdata->capabilities.share_button &&
+	    ((data[15] & (BIT(3) | BIT(4) | BIT(5) | BIT(6))) || (data[16] & BIT(0)))) {
+		hid_info(hdev, "detected sparse Linux button report with legacy descriptor\n");
+		xdata->quirks |= XPADNEO_QUIRK_LINUX_BUTTONS;
+	}
+
 	/* correct button mapping of Xbox controllers in Linux mode */
 	if ((xdata->quirks & XPADNEO_QUIRK_LINUX_BUTTONS) && report->id == 1 && reportsize >= 17) {
 		u16 bits = 0;
