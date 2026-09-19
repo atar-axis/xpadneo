@@ -14,5 +14,6 @@ Measured facts:
 - Report ID 1 is 17 bytes and sends the sparse Linux/Android-style button bits.
 - Manual quirk `+16` fixes the regular gamepad buttons and the digital trigger axes for both reported units.
 
-The driver therefore detects sparse-only button bits in 17-byte Report ID 1 packets with the 306-byte legacy descriptor
-and enables `XPADNEO_QUIRK_LINUX_BUTTONS` dynamically.
+The driver therefore enables `XPADNEO_QUIRK_LINUX_BUTTONS` for the observed `A0:5A:54` prefix. It also detects
+sparse-only button bits in 17-byte Report ID 1 packets with the 306-byte legacy descriptor and enables the same quirk
+dynamically for similar devices with other address prefixes.
