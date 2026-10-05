@@ -131,6 +131,15 @@ Default section order:
 ## Bug Fixing Guidance
 
 - Start from the observed failure, linked reports, and relevant logs.
+- Before writing a fix, search open and closed issues and pull requests for the
+  symptom, controller model, and log messages. Earlier discussions may already
+  explain why an obvious fix is wrong.
+- Check commits on `master` and the queue branches since the last release tag
+  for changes to the same area. The problem may already be fixed or
+  superseded.
+- If an existing issue covers the problem, add findings there instead of
+  opening a new pull request. Do not open a pull request in place of a bug
+  report.
 - Identify whether the fix is a bug fix, safe feature, behavior change, or
   architecture change before choosing its target branch or milestone.
 - Document hardware-specific findings when they rely on descriptors, OUIs,
