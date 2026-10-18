@@ -61,6 +61,7 @@ old firmware. `XPADNEO_QUIRK_NO_HEURISTICS` (`512`) disables this rule, too.
 
 | Model        | PID    | Firmware         | Reported OUIs                  | Source
 | ------------ | ------ | ---------------- | ------------------------------ | ---------------
+| Nova 2 Lite  | `02E0` | `1.1b` (classic) | 1F:45:F3, 0B:BE:1E             | #594, #608
 | T4 Nova Lite | `0B13` | `0.23` (classic) | 6A:07:14, AC:20:06, E2:82:69   | #484, #518, #623
 
 Genuine controllers with PID `0B13` (Xbox Series X|S) report BLE firmware
@@ -71,3 +72,13 @@ Not every unit has a logged firmware version: the T4 Nova Lite with OUI
 `64:6F:9B` (#484) needs the GameSir quirks but did not report its version.
 The quirks are confirmed for `6A:07:14` (#484), while `E2:82:69` (#623) does
 not rumble at all even with them, and `AC:20:06` (#518) never confirmed a fix.
+
+As far as we know, genuine Microsoft controllers never use firmware version
+`1.1b`. The Nova 2 Lite reports this version in both its Xbox mode and its
+DInput mode (`3537:100E`, #608).
+
+The 306-byte descriptor (crc16 `0x8BC5`) of the Nova 2 Lite is byte-identical
+to the genuine Xbox One S Windows-mode descriptor (307 bytes) without its
+trailing NUL byte (measured from the dumps in `docs/descriptors/`). The Mobapad
+Chitu 2 reports the same 306-byte descriptor, so the descriptor indicates a
+clone but not GameSir specifically.

@@ -63,6 +63,7 @@ static const struct {
 	u16 product;
 	u32 version;
 } gamesir_firmwares[] = {
+	{ 0x045E, 0x02E0, 0x0000011B },	/* Nova 2 Lite, classic firmware 1.1b */
 	{ 0x045E, 0x0B13, 0x00000023 },	/* T4 Nova Lite, classic firmware 0.23 */
 };
 
