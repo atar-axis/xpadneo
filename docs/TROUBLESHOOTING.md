@@ -196,7 +196,14 @@ affected.
 If you observe this problem with `jstest`, `systemsettings joystick` (KDE) or `jstest-gtk`, there's usually nothing
 to do as these test programs use the old `joydev` API while most (modern) games use the `evdev` API. Some emulators,
 tho, use the `joydev` API and do not respect the axes naming from `evdev`. In this case, please run the following
-command to correct the axes mapping for the js interface:
+command to correct the axes mapping for the js interface.
+
+Older native Linux games, especially most native Unity games, are known to use a broken internal mapping on top of
+the `joydev` API. Before trying `jscal`, run the Windows version of the game via Proton instead: In Steam, open the
+game properties, enable "Force the use of a specific Steam Play compatibility tool" and select a Proton version.
+Users reported that this fixes the mapping, and Proton often performs better than old native builds anyway.
+
+If you still need to fix the `joydev` mapping, run the following command:
 
 ```bash
 jscal -u 8,0,1,3,4,2,5,16,17,10,304,305,307,308,310,311,314,315,317,318 /dev/input/js0
