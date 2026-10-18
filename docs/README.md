@@ -390,6 +390,12 @@ Please feel free to add other distributions as well!
 - `[bluetooth]# connect <MAC>` (should usually not be needed but there are [open bugs](https://github.com/atar-axis/xpadneo/issues/198))
 - The `<MAC>` parameter is optional if the command line already shows the controller name
 
+If the gamepad is already paired but does not work, you do not need to remove it first: Turn the gamepad off, turn it
+on again in pairing mode (hold the connect button until the light flashes fast), then select "Connect" in your desktop
+Bluetooth manager, or use `connect <MAC>` in `bluetoothctl`. If connecting fails the first time, start a new search
+(scan) in the Bluetooth manager while the light is still flashing fast, then try to connect again. This also works for
+third-party gamepads which offer a mode to be recognized as an Xbox controller.
+
 You know that everything works fine when you feel the gamepad rumble ;)
 
 If it doesn't, please check our documentation in [Troubleshooting](https://atar-axis.github.io/xpadneo/#troubleshooting).
