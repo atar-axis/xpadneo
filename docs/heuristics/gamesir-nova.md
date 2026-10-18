@@ -48,3 +48,26 @@ never be used for controllers, and all other vendors follow that.
 | **AND mask** |           | **`0000 0110 : 0111 0001 : 0001 0000`** | **mask 0x06 61 10**
 | E4:17:D8  +  | 8BitDo    |   `1110 0100 : 0001 0111 : 1101 1000`   |
 | **AND mask** |           | **`1110 0100 : 0001 0111 : 1101 1000`** | **mask 0xE4 17 D8**
+
+
+## Firmware versions
+
+Some GameSir devices use MAC addresses with neither the LAA nor the multicast
+bit set, so the OUI heuristic misses them. These devices claim a genuine PID
+but report a firmware version that genuine controllers with this PID never use,
+so the driver also enables the GameSir quirks for an exact match of vendor ID,
+PID and firmware version. Exact matches avoid catching genuine controllers on
+old firmware. `XPADNEO_QUIRK_NO_HEURISTICS` (`512`) disables this rule, too.
+
+| Model        | PID    | Firmware         | Reported OUIs                  | Source
+| ------------ | ------ | ---------------- | ------------------------------ | ---------------
+| T4 Nova Lite | `0B13` | `0.23` (classic) | 6A:07:14, AC:20:06, E2:82:69   | #484, #518, #623
+
+Genuine controllers with PID `0B13` (Xbox Series X|S) report BLE firmware
+versions from `5.05` to `5.23` in all known reports, and they do not support
+classic Bluetooth (BR/EDR) at all.
+
+Not every unit has a logged firmware version: the T4 Nova Lite with OUI
+`64:6F:9B` (#484) needs the GameSir quirks but did not report its version.
+The quirks are confirmed for `6A:07:14` (#484), while `E2:82:69` (#623) does
+not rumble at all even with them, and `AC:20:06` (#518) never confirmed a fix.
