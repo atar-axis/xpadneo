@@ -3,7 +3,10 @@ ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E
 ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0005:0B05:1ABD.*", ENV{ID_XPADNEO_SUPPORTED}="1"
 
 # Rebind driver to xpadneo
-ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", ENV{ID_XPADNEO_SUPPORTED}=="1", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
+# DRIVER is taken from the queued event, and the kernel may already have
+# rebound the device to xpadneo when the module was loaded, so check the
+# current binding in sysfs to avoid initializing the device twice
+ACTION=="bind", SUBSYSTEM=="hid", DRIVER!="xpadneo", ENV{ID_XPADNEO_SUPPORTED}=="1", TEST!="/sys/bus/hid/drivers/xpadneo/%k", ATTR{driver/unbind}="%k", ATTR{[drivers/hid:xpadneo]bind}="%k"
 
 # Tag xpadneo devices for access in the user session
 ACTION!="remove", DRIVERS=="xpadneo", SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="uaccess", MODE="0664", ENV{LIBINPUT_IGNORE_DEVICE}="1"
