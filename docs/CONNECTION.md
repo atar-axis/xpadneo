@@ -23,7 +23,7 @@ desktop.
 
 ### Using a Desktop Bluetooth Manager
 
-- Start a search for new devices in your Bluetooth manager
+- start a search for new devices in your Bluetooth manager
 - put the gamepad into pairing mode as described above
 - once the gamepad shows up in the list, right-click it and select "Pair"
 - then right-click it again and select "Connect", or double-click it
