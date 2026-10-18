@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="15">
+  <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+  <rect width="640" height="300" fill="#f4f5f7"/>
+  <text x="320" y="40" fill="#333" text-anchor="middle">Top edge of the gamepad, between the bumpers</text>
+  <path d="M70 150c0-30 30-50 80-50h340c50 0 80 20 80 50v30c0 25-25 40-60 40H130c-35 0-60-15-60-40z" fill="#3a3f46" stroke="#22262b" stroke-width="2"/>
+  <path d="M80 160c0-25 25-45 70-45h90v30H130c-25 0-40 10-50 15z" fill="#22262b"/>
+  <path d="M560 160c0-25-25-45-70-45h-90v30h110c25 0 40 10 50 15z" fill="#22262b"/>
+  <text x="150" y="138" fill="#aab1b8" font-size="13">LB</text>
+  <text x="470" y="138" fill="#aab1b8" font-size="13">RB</text>
+  <rect x="302" y="150" width="36" height="14" rx="3" fill="#15181b" stroke="#6b737c"/>
+  <text x="320" y="190" fill="#aab1b8" font-size="11" text-anchor="middle">USB</text>
+  <circle cx="268" cy="168" r="10" fill="#22262b" stroke="#6b737c" stroke-width="2"/>
+  <g fill="none" stroke="#aab1b8" stroke-width="1.6" stroke-linecap="round">
+    <path d="M244 162a8 8 0 0 0 0 12"/><path d="M238 158a14 14 0 0 0 0 20"/>
+  </g>
+  <circle cx="268" cy="168" r="18" fill="none" stroke="#e8590c" stroke-width="3"/>
+  <line x1="256" y1="184" x2="210" y2="248" stroke="#e8590c" stroke-width="3"/>
+  <text x="60" y="262" fill="#333" font-weight="bold">Pairing button</text>
+  <text x="60" y="282" fill="#555" font-size="13">hold until the light flashes fast</text>
+</svg>
