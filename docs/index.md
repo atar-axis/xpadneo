@@ -1,4 +1,5 @@
 {% include_relative README.md %}
+{% include_relative CONNECTION.md %}
 {% include_relative BT_DONGLES.md %}
 {% include_relative CONFIGURATION.md %}
 {% include_relative TROUBLESHOOTING.md %}
