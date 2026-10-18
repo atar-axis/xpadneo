@@ -240,7 +240,7 @@ support for GameSir devices in the future: Base functionality should work out of
 features may show erratic behavior. There's nothing we can do about that and you should instead complain at the
 manufacturer: either properly implement the full rumble protocol, or just stick to officially registered OUIs.
 
-If you've come here because your kernel logged `enabling heuristic GameSir Nova quirks` but you don't have a GameSir
+If you've come here because your kernel logged `enabling heuristic GameSir quirks` but you don't have a GameSir
 device, try the following module option and report the incident on our issue tracker:
 
 ```
