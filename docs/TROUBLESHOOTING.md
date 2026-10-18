@@ -203,15 +203,26 @@ the `joydev` API. Before trying `jscal`, run the Windows version of the game via
 game properties, enable "Force the use of a specific Steam Play compatibility tool" and select a Proton version.
 Users reported that this fixes the mapping, and Proton often performs better than old native builds anyway.
 
-If you still need to fix the `joydev` mapping, run the following command:
+If you still need to fix the `joydev` mapping, first query the current mapping:
 
 ```bash
-jscal -u 8,0,1,3,4,2,5,16,17,10,304,305,307,308,310,311,314,315,317,318 /dev/input/js0
+jscal -q /dev/input/js0
 ```
 
-Explanation: `-u` set the mapping for `8` axes to axes code `0,1,3,4,...` and for `10` buttons to button codes
-`304,305,307,308,...`. This only remaps the `joydev` API, **not** the `evdev` API. Making this change may have
-unexpected consequences for applications using both APIs.
+This prints the current mapping as a `-u` argument in the format
+`-u <number of axes>,<axis codes>,<number of buttons>,<button codes>`. The number of axes and buttons depends on the
+controller model and the xpadneo version, e.g., current versions expose 9 axes including the profile axis (code `33`).
+`jscal` refuses a mapping with a different number of axes or buttons, so keep both counts and the button codes exactly
+as printed, and only move axes codes `3,4` (right stick) in front of code `2` (left trigger). With 9 axes, the result
+looks like this:
+
+```bash
+jscal -u 9,0,1,3,4,2,5,16,17,33,<buttons from jscal -q> /dev/input/js0
+```
+
+Explanation: `-u` sets the mapping for `9` axes to axes codes `0,1,3,4,...`, followed by the number of buttons and
+their button codes. This only remaps the `joydev` API, **not** the `evdev` API. Making this change may have unexpected
+consequences for applications using both APIs.
 
 **IMPORTANT:** Now test all your axes to collect calibration data. You can then use the following command to store the
 settings permanently:
