@@ -6,6 +6,10 @@ First, put the gamepad into pairing mode: Push the connect button on the upper s
 until the light starts flashing fast. Then pair it either with the command line or with the Bluetooth manager of your
 desktop.
 
+![The pairing button on the top edge of the gamepad](img/connection/gamepad-pairing-button.svg)
+
+![The light flashes fast in pairing mode and stays on when connected](img/connection/gamepad-light.svg)
+
 
 ### Using bluetoothctl
 
@@ -26,7 +30,12 @@ desktop.
 - start a search for new devices in your Bluetooth manager
 - put the gamepad into pairing mode as described above
 - once the gamepad shows up in the list, right-click it and select "Pair"
+
+  ![Search for the gamepad, then right-click it and select Pair](img/connection/bt-manager-pair.svg)
+
 - then right-click it again and select "Connect", or double-click it
+
+  ![Right-click the paired gamepad and select Connect](img/connection/bt-manager-connect.svg)
 
 The exact names of the menu entries depend on your desktop environment.
 
