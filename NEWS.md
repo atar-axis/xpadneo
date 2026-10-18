@@ -1,5 +1,96 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
+# Changes since v0.10.4 up to v0.10.5
+
+This maintenance release for the v0.10 series picks up bug and compatibility fixes from the development branch, together
+with documentation updates which also apply to v0.10.
+
+Two udev fixes improve the first connection after boot. The hidraw nodes of supported controllers are now hidden as
+early as possible, so Steam no longer gets user access to them while the controller is still bound to hid-generic.
+Controllers which xpadneo already took over after loading the module are no longer unbound and bound a second time,
+which initialized the controller twice and made it rumble twice.
+
+Xbox One S controllers with a cached, truncated Linux-mode descriptor are repaired during the descriptor fixup, so the
+rumble report definition is complete again.
+
+Third-party controllers are detected more reliably. The Mobapad Chitu 2 exposes the legacy descriptor but sends a sparse
+button layout; xpadneo now detects it by its address prefix and at runtime, so its buttons map correctly. The GameSir T4
+Nova Lite and Nova 2 Lite are additionally detected by their firmware version, so the GameSir quirks also apply to units
+whose MAC address does not reveal them as clones. `XPADNEO_QUIRK_NO_HEURISTICS` disables these detections.
+
+For diagnostics, the `debug_hid` module parameter now logs any HID report as a hex dump, not only rumble commands.
+
+The documentation now has its own illustrated page for connecting the gamepad, including how to reconnect an already
+paired one. Troubleshooting adds running old native games via Proton, a corrected `jscal` example, the Bluetooth LE
+limit of three controllers on some adapters, and a third-party Arch Linux DKMS hook bug. The Intel Wireless AC 9260 was
+added to the adapter list.
+
+The release branch also picks up the contribution guidelines, pull request template, agent guides, and CI updates from
+the development branch, so future backports apply with fewer conflicts.
+
+A big thank you to everyone in the community for your bug reports, logs, and testing.
+
+Special thanks go to @RossH121 for the detailed analysis and patch of the truncated Xbox One S descriptor, @Hyphaed for
+tracking down the race between Steam and the hidraw rebind, @hidrot and @rethyria for testing the Steam reconnection
+issue, @jawche for analyzing the double initialization after a cold boot, @jn64 for the logs and testing of the Mobapad
+Chitu 2, and @bserem for the analysis and work-around of the Bluetooth LE controller limit. Thanks also to everyone who
+provided firmware versions and logs of GameSir controllers.
+
+
+## Headlines:
+
+- docs: Move the connection steps to their own page
+- xpadneo, debug: Add debugging of any HID report
+- xpadneo, device: Fix up cached truncated XB1S descriptor
+- xpadneo, events: Detect sparse buttons with legacy descriptors
+- xpadneo, quirks: Detect GameSir Nova 2 Lite by firmware version
+- xpadneo, quirks: Detect GameSir T4 Nova Lite by firmware version
+- xpadneo, quirks: Detect Mobapad Chitu 2 early
+- xpadneo, udev: Do not rebind devices already bound to xpadneo
+- xpadneo, udev: Hide supported hidraw nodes early
+
+```
+Kai Krakow (37):
+      xpadneo, device: Fix up cached truncated XB1S descriptor
+      xpadneo, udev: Hide supported hidraw nodes early
+      xpadneo, udev: Do not rebind devices already bound to xpadneo
+      xpadneo, events: Detect sparse buttons with legacy descriptors
+      xpadneo, quirks: Detect Mobapad Chitu 2 early
+      xpadneo, quirks: Detect GameSir T4 Nova Lite by firmware version
+      xpadneo, quirks: Detect GameSir Nova 2 Lite by firmware version
+      xpadneo, power: Explain review nit
+      xpadneo, debug: Add debugging of any HID report
+      xpadneo, meta: Adjust Github PR template to new licensing
+      xpadneo, meta: Add AI transparency to the pull request template
+      xpadneo, docs: Document release staging workflow
+      xpadneo, docs: Add DOX agent guide hierarchy
+      xpadneo, docs: Clarify descriptor evidence rules
+      docs: Tighten AI-agent PR workflow rules
+      docs: Add a heading before the PR template's declaration checkboxes
+      docs: Require searching prior issues and commits before fixing
+      xpadneo, meta: Add Nobara Linux to the bug reporting template
+      ci: Update GitHub Actions for Node 24
+      xpadneo, ci: Ignore links in Fixes tags
+      xpadneo, ci: Improve yaml indention and syntax
+      xpadneo, meta: Cleanup obsolete git ignores
+      xpadneo, docs: Fix LAA typo in the GameSir heuristic notes
+      xpadneo, docs: Match the GameSir heuristic log message
+      docs: Suggest Proton for native games with broken joydev mappings
+      docs: Fix jscal example for the current number of axes
+      docs: Add Intel Wireless AC 9260 to the Bluetooth adapter list
+      docs: Document the Arch Linux DKMS hook version parsing bug
+      docs: Document the Bluetooth LE connection interval limit
+      docs: Explain reconnecting an already paired gamepad
+      docs: Move the connection steps to their own page
+      docs: Use lowercase items in the bluetoothctl connection steps
+      docs: Split the connection page into sections
+      docs: Use lowercase items in the desktop Bluetooth manager steps
+      docs: Illustrate the connection steps
+      xpadneo, docs: Add descriptors of yet unsupported GameDir G7 SE
+      xpadneo: Release v0.10.5
+```
+
+
 # Changes since v0.10.3.1 up to v0.10.4
 
 This maintenance release corrects the release metadata for the v0.10 series.
