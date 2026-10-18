@@ -138,6 +138,23 @@ If `btmgmt` command is not available, try `bluetoothctl mgmt.info` instead.
   * Tested on:
     * Ubuntu 25.04
   * Reported by @teeedubb [here](https://github.com/atar-axis/xpadneo/issues/541)
+* Intel Wireless AC 9260 (NGFF / PCIe)
+  * Chip set: Intel 9260
+  * Performance:
+    * Pairing works out of the box with the GNOME Bluetooth manager after the settings below
+  * Required configuration:
+    * Controller firmware updated via the Xbox Accessories app
+    * Settings in `/etc/bluetooth/main.conf`:
+      ```
+      [General]
+      Privacy = device
+      JustWorksRepairing = always
+      Class = 0x000100
+      FastConnectable = true
+      ```
+  * Tested on:
+    * Ubuntu 21.10, kernel 5.15, Bluez 5.60
+  * Reported by @KarlK90 [here](https://github.com/atar-axis/xpadneo/issues/93#issuecomment-985735995)
 * Status: incompatible (<https://github.com/atar-axis/xpadneo/issues/270>)
   * OUI: DC:1B:A1 (Intel)
   * Used as on-board chip set: Gigabyte B450 AORUS Pro WiFi 1.0 with integrated Bluetooth
