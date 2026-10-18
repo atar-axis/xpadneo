@@ -11,7 +11,7 @@
 - `[bluetooth]# pair <MAC>`
 - `[bluetooth]# trust <MAC>`
 - `[bluetooth]# connect <MAC>` (should usually not be needed but there are [open bugs](https://github.com/atar-axis/xpadneo/issues/198))
-- The `<MAC>` parameter is optional if the command line already shows the controller name
+- the `<MAC>` parameter is optional if the command line already shows the controller name
 
 If the gamepad is already paired but does not work, you do not need to remove it first: Turn the gamepad off, turn it
 on again in pairing mode (hold the connect button until the light flashes fast), then select "Connect" in your desktop
