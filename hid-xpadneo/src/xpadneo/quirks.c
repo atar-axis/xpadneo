@@ -53,6 +53,19 @@ static const struct quirk quirks[] = {
 	DEVICE_OUI_QUIRK("E4:17:D8", XPADNEO_QUIRK_SIMPLE_CLONE),
 };
 
+/*
+ * Clones which claim a genuine PID but report a firmware version that
+ * genuine controllers with this PID never use. Match versions exactly so
+ * genuine controllers on old firmware cannot be caught by accident.
+ */
+static const struct {
+	u16 vendor;
+	u16 product;
+	u32 version;
+} gamesir_firmwares[] = {
+	{ 0x045E, 0x0B13, 0x00000023 },	/* T4 Nova Lite, classic firmware 0.23 */
+};
+
 int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 {
 	struct hid_device *hdev = xdata->hdev;
@@ -149,6 +162,23 @@ int xpadneo_quirks_init(struct xpadneo_devdata *xdata)
 		if (((xdata->original_rsize == 283) || (xdata->original_rsize == 306))
 		    && ((oui_byte & XPADNEO_OUI_MASK_LAA_MULTICAST) > 0)) {
 			hid_info(hdev, "enabling heuristic GameSir quirks\n");
+			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
+		}
+	}
+
+	/*
+	 * Some GameSir devices use MAC addresses with neither the LAA nor
+	 * the multicast bit set, so also detect them by their firmware
+	 * version.
+	 */
+	for (int i = 0; i < ARRAY_SIZE(gamesir_firmwares); i++) {
+		if (((xdata->quirks & XPADNEO_QUIRK_NO_HEURISTICS) == 0)
+		    && ((xdata->quirks & XPADNEO_QUIRK_SIMPLE_CLONE) == 0)
+		    && (xdata->original_vendor == gamesir_firmwares[i].vendor)
+		    && (xdata->original_product == gamesir_firmwares[i].product)
+		    && (xdata->original_version == gamesir_firmwares[i].version)) {
+			hid_info(hdev, "enabling heuristic GameSir quirks (firmware %x.%02x)\n",
+				 xdata->original_version >> 8, (u8)xdata->original_version);
 			xdata->quirks |= XPADNEO_QUIRK_SIMPLE_CLONE;
 		}
 	}
