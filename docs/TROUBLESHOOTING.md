@@ -40,6 +40,27 @@ References:
 * https://wiki.archlinux.org/title/Bluetooth_mouse#Mouse_lag
 
 
+#### Only Three Bluetooth LE Controllers Connect at the Same Time
+
+Xbox Wireless Controllers using Bluetooth LE request the shortest possible connection interval of 7.5 ms. With three
+such controllers connected, some adapters (e.g., Intel AX211) have no air time left for scanning: The fourth controller
+is never discovered, and no other Bluetooth device can be discovered either. As soon as one controller disconnects, the
+waiting controller connects.
+
+As a work-around, you can raise the connection interval of the already connected controllers at runtime. Units are
+1.25 ms, so `16` to `24` means 20 to 30 ms which was reported as the best balance between latency and scanning:
+
+```bash
+# list connections and their handles
+hcitool con
+# raise the interval for each LE connection handle
+sudo hcitool lecup --handle <handle> --min 16 --max 24 --latency 0 --timeout 500
+```
+
+This setting is lost when the controller reconnects, and longer intervals add input latency. xpadneo does not change
+Bluetooth connection parameters itself. See <https://github.com/atar-axis/xpadneo/issues/634> for the full analysis.
+
+
 #### Incompatible Bluetooth Chip Set
 
 Some chip sets, e.g. the CSR 85xx or Intel AX200 (and variants like 3xxx), do have problems when you try to reconnect
