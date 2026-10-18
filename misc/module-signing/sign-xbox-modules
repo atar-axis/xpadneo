@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# LICENSE  GPL-2.0
+# AUTHOR   Jan Christoph Uhde - jan@uhde.io
+set -uo pipefail
+
+MOK_KEY_DIR="${MOK_KEY_DIR:-'.'}"
+
+ferr() { echo "$*"; exit 1; }
+
+hash_algo='sha256'
+key="$MOK_KEY_DIR/MOK.priv"
+x509="MOK_KEY_DIR/MOK.der"
+
+# TODO - maybe this could be done better without exporting the key to the env
+#        the key is only for a short time present in the process but it is still
+#        not optimal
+test -v KBUILD_SIGN_PIN  || read -p "passphrase for ${key}: " KBUILD_SIGN_PIN
+export KBUILD_SIGN_PIN
+echo
+
+# The exact location of `sign-file` might vary depending on your platform.
+# TODO - test with different distributions
+for module_dir in /usr/lib/linux-kbuild*; do
+    echo
+    echo "working on $module_dir"
+    sign_file="$module_dir/scripts/sign-file"
+    test -x $sign_file || ferr "can not execute $sign_file"
+
+    version=${module_dir#/usr/lib/linux-kbuild-}
+    # TODO - other platforms?!
+    module_dir="/lib/modules/$version-amd64/updates/dkms"
+    echo "version: $version"
+    echo "module dir: $module_dir"
+
+    if ! [[ -d $module_dir ]] ; then
+        echo "no such directory: $module_dir"
+        continue
+    fi
+
+    echo
+    for module_path in "$module_dir"/hid-xpadneo* ; do
+        echo -n "module: $module_path ... "
+        if ! [[ -e "$module_path" ]] ; then
+            echo "skipped"
+            continue
+        fi
+
+        case "$module_path" in
+            *xz)
+                unxz --keep "$module_path" || ferr "failed to unpack"
+                $sign_file "${hash_algo}" "${key}" "${x509}" "${module_path%%.xz}" || ferr "failed to sign"
+                rm "$module_path"
+                xz --check=crc32 --lzma2=dict=512KiB "${module_path%%.xz}"
+            ;;
+            *ko)
+                $sign_file "${hash_algo}" "${key}" "${x509}" "${module_path}" || ferr "failed to sign"
+            ;;
+        esac
+        echo "signed"
+    done
+    echo "$module_dir signed"
+    echo
+done
