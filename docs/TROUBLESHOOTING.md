@@ -124,7 +124,8 @@ gamepad.
 
 If another in-kernel driver binds the gamepad before xpadneo is loaded, the udev rules installed by xpadneo will rebind
 the device to the correct driver. This is expected, but can make the first connection less deterministic because the
-device is initialized twice. Loading xpadneo early during boot avoids the rebind path for already paired controllers:
+device is briefly bound to the other driver first. Loading xpadneo early during boot avoids the rebind path for already
+paired controllers:
 
 ```bash
 # /etc/modules-load.d/xpadneo.conf
