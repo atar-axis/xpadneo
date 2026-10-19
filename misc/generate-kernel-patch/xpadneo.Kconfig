@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config HID_XPADNEO
+	tristate "Xbox Wireless Controller Bluetooth support (xpadneo)"
+	depends on HID && BT_HIDP
+	help
+	  Support for Xbox One S/X, Xbox Series X|S, and Xbox Elite Series 2
+	  controllers connected via Bluetooth.
+
+	  This driver provides advanced features including:
+	  - Force feedback (rumble) support for main and trigger motors
+	  - Battery level reporting
+	  - Profile switching (Elite controllers)
+	  - Mouse mode emulation
+	  - Improved button mappings
+
+	  This driver will be preferred over the generic HID driver for
+	  Xbox controllers connected via Bluetooth.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called hid-xpadneo.
