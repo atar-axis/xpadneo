@@ -44,6 +44,12 @@ maintainer. If you run `make install` without a `PREFIX` or use an empty
 prefix, `make install` will run `dkms add` to add the source code to the
 DKMS source tree. No other DKMS action will be taken.
 
+If you want to build and install the module via DKMS in the same step, for
+example when installing from a source checkout, use `make dkms-install`
+instead. It runs `make install` first, then `dkms build` and `dkms install`.
+DKMS signs the module during the build if the kernel supports module signing.
+This target does not support `PREFIX`.
+
 **Examples:**
 ```bash
 # Install package files to `/` and deploy the DKMS sources
