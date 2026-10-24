@@ -172,13 +172,21 @@ int xpadneo_events_event(struct hid_device *hdev, struct hid_field *field,
 	if (xpadneo_mouse_event(xdata, usage, value))
 		goto stop_processing;
 
-	if ((usage->type == EV_KEY) && (usage->code == BTN_GRIPL)) {
+	if (usage->hid == 0xC0081) {
 		if (gamepad && xdata->profile == 0) {
 			/* report the paddles individually */
 			input_report_key(gamepad, BTN_GRIPR, (value & 1) ? 1 : 0);
 			input_report_key(gamepad, BTN_GRIPR2, (value & 2) ? 1 : 0);
 			input_report_key(gamepad, BTN_GRIPL, (value & 4) ? 1 : 0);
 			input_report_key(gamepad, BTN_GRIPL2, (value & 8) ? 1 : 0);
+			xdata->gamepad.sync = true;
+		}
+		goto stop_processing;
+	} else if ((usage->type == EV_KEY)
+		   && (usage->code >= BTN_GRIPL) && (usage->code <= BTN_GRIPR2)) {
+		/* paddles split by HID-BPF, see mappings */
+		if (gamepad && xdata->profile == 0) {
+			input_report_key(gamepad, usage->code, value);
 			xdata->gamepad.sync = true;
 		}
 		goto stop_processing;
@@ -352,7 +360,7 @@ int xpadneo_events_input_configured(struct hid_device *hdev, struct hid_input *h
 		__clear_bit(KEY_RECORD, gamepad->keybit);
 		__clear_bit(KEY_UNKNOWN, gamepad->keybit);
 
-		/* BTN_GRIPL is already set by mapping the combined paddle usage */
+		/* BTN_GRIPL is already set by mapping the paddle usages */
 		if (xdata->capabilities.paddles) {
 			__set_bit(BTN_GRIPR, gamepad->keybit);
 			__set_bit(BTN_GRIPL2, gamepad->keybit);

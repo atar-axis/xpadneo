@@ -95,6 +95,32 @@ static const struct usage_map usage_maps[] = {
 	USAGE_IGN(0xC00B9),	/* KEY_SHUFFLE button */
 };
 
+/* same bit order as the combined paddle usage, see the event handler */
+static const u16 split_paddle_codes[] = { BTN_GRIPR, BTN_GRIPR2, BTN_GRIPL, BTN_GRIPL2 };
+
+/*
+ * XBE2: The mainline HID-BPF program "Microsoft__Xbox-Elite-2" rewrites the
+ * combined paddle usage into its own gamepad collection with four single-bit
+ * buttons 0x15..0x18, and the kernel then probes the device again with that
+ * descriptor. These usages collide with the ignored copies of the broken v1
+ * packet format, so only accept them in the exact layout of the program.
+ */
+static bool is_split_paddles(const struct hid_field *field)
+{
+	int i;
+
+	if (field->application != HID_GD_GAMEPAD || field->report_size != 1 ||
+	    field->report_count != ARRAY_SIZE(split_paddle_codes) ||
+	    field->maxusage != ARRAY_SIZE(split_paddle_codes))
+		return false;
+
+	for (i = 0; i < ARRAY_SIZE(split_paddle_codes); i++)
+		if (field->usage[i].hid != 0x90015 + i)
+			return false;
+
+	return true;
+}
+
 #define map_usage_clear(ev) \
 	hid_map_usage_clear(hi, usage, bit, max, (ev).event_type, (ev).input_code)
 int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
@@ -109,6 +135,15 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 		hid_info(hdev, "battery detected\n");
 
 		return MAP_IGNORE;
+	}
+
+	if (is_split_paddles(field)) {
+		if (!xdata->capabilities.paddles)
+			hid_info(hdev, "paddles detected (split by HID-BPF)\n");
+		xdata->capabilities.paddles = true;
+		hid_map_usage_clear(hi, usage, bit, max, EV_KEY,
+				    split_paddle_codes[usage->hid - 0x90015]);
+		return MAP_STATIC;
 	}
 
 	switch (usage->hid) {
