@@ -139,7 +139,7 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 
 	if (is_split_paddles(field)) {
 		if (!xdata->capabilities.paddles)
-			hid_info(hdev, "paddles detected (split by HID-BPF)\n");
+			hid_info(hdev, "paddles detected\n");
 		xdata->capabilities.paddles = true;
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY,
 				    split_paddle_codes[usage->hid - 0x90015]);

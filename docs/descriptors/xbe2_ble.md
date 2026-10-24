@@ -40,6 +40,10 @@ Selection, `0x0C0081`) with four single-bit buttons `0x15..0x18` in a new
 Gamepad collection. The length stays at 464 bytes, the crc16 changes to
 `0xabaf`. The kernel probes the device again with this descriptor.
 
+xpadneo applies the same rewrite in its report fixup if it sees the original
+bytes, so both cases end up with the same layout. Applying that rewrite to the
+`0x28fa` dump above yields exactly the bytes below.
+
 Unpatched descriptor as dumped by xpadneo with the program attached, from the
 same controller (identical to the second dump in [issue 620]):
 ```
