@@ -78,6 +78,68 @@ void xpadneo_device_report(struct hid_device *hdev, struct hid_report *report)
 	sync_device(&xdata->mouse);
 }
 
+/*
+ * XBE2: Split the combined paddle usage (Assign Selection) into four single-bit
+ * buttons 0x15..0x18 in their own gamepad collection, exactly like the mainline
+ * HID-BPF program "Microsoft__Xbox-Elite-2" does. This way, we always see the
+ * same layout, no matter if the program is attached or not. The report layout
+ * itself does not change.
+ */
+#define XBE2_RSIZE 464
+#define XBE2_PADDLES_OFFSET 211
+
+static void fixup_xbe2_paddles(struct hid_device *hdev, __u8 *rdesc, unsigned int rsize)
+{
+	static const __u8 combined[] = {
+		0x0A, 0x99, 0x00,	/* Usage(Media Select Security) */
+		0x15, 0x00,	/* Logical Minimum(0) */
+		0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+		0x95, 0x01,	/* Report Count(1) */
+		0x75, 0x04,	/* Report Size(4) */
+		0x81, 0x02,	/* Input(Data,Var,Abs) */
+		0x15, 0x00,	/* Logical Minimum(0) */
+		0x25, 0x00,	/* Logical Maximum(0) */
+		0x95, 0x01,	/* Report Count(1) */
+		0x75, 0x04,	/* Report Size(4) */
+		0x81, 0x03,	/* Input(Cnst,Var,Abs) */
+		0x0A, 0x81, 0x00,	/* Usage(Assign Selection) */
+		0x15, 0x00,	/* Logical Minimum(0) */
+		0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+		0x95, 0x01,	/* Report Count(1) */
+		0x75, 0x04,	/* Report Size(4) */
+		0x81, 0x02,	/* Input(Data,Var,Abs) */
+	};
+	static const __u8 split[] = {
+		0x0A, 0x99, 0x00,	/* Usage(Media Select Security) */
+		0x15, 0x00,	/* Logical Minimum(0) */
+		0x26, 0xFF, 0x00,	/* Logical Maximum(255) */
+		0x95, 0x01,	/* Report Count(1) */
+		0x75, 0x04,	/* Report Size(4) */
+		0x81, 0x02,	/* Input(Data,Var,Abs) */
+		0x25, 0x01,	/* Logical Maximum(1) */
+		0x95, 0x04,	/* Report Count(4) */
+		0x75, 0x01,	/* Report Size(1) */
+		0x81, 0x03,	/* Input(Cnst,Var,Abs) */
+		0xC0,	/* End Collection (Consumer Control) */
+		0x05, 0x01,	/* Usage Page(Generic Desktop) */
+		0x0A, 0x05, 0x00,	/* Usage(Game Pad) */
+		0xA1, 0x01,	/* Collection(Application) */
+		0x05, 0x09,	/* Usage Page(Button) */
+		0x19, 0x15,	/* Usage Minimum(0x15) */
+		0x29, 0x18,	/* Usage Maximum(0x18) */
+		0x81, 0x02,	/* Input(Data,Var,Abs) */
+	};
+
+	BUILD_BUG_ON(sizeof(combined) != sizeof(split));
+
+	if (rsize != XBE2_RSIZE ||
+	    memcmp(rdesc + XBE2_PADDLES_OFFSET, combined, sizeof(combined)))
+		return;
+
+	hid_notice(hdev, "fixing up paddle buttons\n");
+	memcpy(rdesc + XBE2_PADDLES_OFFSET, split, sizeof(split));
+}
+
 const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int *rsize)
 {
 	struct xpadneo_devdata *xdata = hid_get_drvdata(hdev);
@@ -193,6 +255,8 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			rdesc[163] = 0x04;	/* 1 bit -> 4 bits constants */
 		}
 	}
+
+	fixup_xbe2_paddles(hdev, rdesc, *rsize);
 
 	return rdesc;
 }

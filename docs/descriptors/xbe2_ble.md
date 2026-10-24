@@ -1,0 +1,67 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
+# HID Descriptor for Xbox Elite Series 2 Wireless (Bluetooth LE)
+
+Measured on an Xbox Elite Series 2 (model 1797) connected via Bluetooth LE:
+
+- VID/PID `045E:0B22`, HID version `0x0523`, BLE firmware 5.23
+- OUI `98:7A:14` (globally-assigned, unicast)
+- 464 bytes, crc16 `0x28fa`
+
+The same bytes were reported in [issue 620] from another controller with BLE
+firmware 5.23.
+
+Unpatched descriptor as dumped by xpadneo with `debug_descriptor=1`:
+```
+00000000: 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+00000020: a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
+00000040: 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+00000060: 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+00000080: 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+000000a0: 75 01 95 01 81 03 05 0c 0a b2 00 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
+000000c0: 0c 09 01 a1 01 0a 85 00 15 00 26 ff 00 95 01 75 08 81 02 0a 99 00 15 00 26 ff 00 95 01 75 04 81
+000000e0: 02 15 00 25 00 95 01 75 04 81 03 0a 81 00 15 00 26 ff 00 95 01 75 04 81 02 15 00 25 00 95 01 75
+00000100: 04 81 03 c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01
+00000120: 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02
+00000140: 09 a7 15 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 05
+00000160: 0c 09 01 85 0c a1 01 0a 9e 00 15 00 26 ff 00 95 01 75 08 81 02 0a a1 00 15 00 26 ff 00 95 01 75
+00000180: 08 81 02 0a a2 00 15 00 26 ff 00 95 01 75 08 81 02 0a a3 00 15 00 26 ff 00 95 01 75 08 81 02 c0
+000001a0: c0 05 01 09 06 a1 01 85 05 05 07 19 e0 29 e7 15 00 25 01 75 01 95 08 81 02 95 01 75 08 81 03 95
+000001c0: 06 75 08 15 00 25 65 05 07 19 00 29 65 81 00 c0
+```
+
+## Variant after HID-BPF
+
+The mainline HID-BPF program `Microsoft__Xbox-Elite-2`
+(`drivers/hid/bpf/progs/`, loaded by `udev-hid-bpf`) matches this device on
+Bluetooth and rewrites the 38 bytes at offset 211. It closes the Consumer
+Control collection early and replaces the combined paddle nibble (Assign
+Selection, `0x0C0081`) with four single-bit buttons `0x15..0x18` in a new
+Gamepad collection. The length stays at 464 bytes, the crc16 changes to
+`0xabaf`. The kernel probes the device again with this descriptor.
+
+xpadneo applies the same rewrite in its report fixup if it sees the original
+bytes, so both cases end up with the same layout. Applying that rewrite to the
+`0x28fa` dump above yields exactly the bytes below.
+
+Unpatched descriptor as dumped by xpadneo with the program attached, from the
+same controller (identical to the second dump in [issue 620]):
+```
+00000000: 05 01 09 05 a1 01 85 01 09 01 a1 00 09 30 09 31 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 09 01
+00000020: a1 00 09 32 09 35 15 00 27 ff ff 00 00 95 02 75 10 81 02 c0 05 02 09 c5 15 00 26 ff 03 95 01 75
+00000040: 0a 81 02 15 00 25 00 75 06 95 01 81 03 05 02 09 c4 15 00 26 ff 03 95 01 75 0a 81 02 15 00 25 00
+00000060: 75 06 95 01 81 03 05 01 09 39 15 01 25 08 35 00 46 3b 01 66 14 00 75 04 95 01 81 42 75 04 95 01
+00000080: 15 00 25 00 35 00 45 00 65 00 81 03 05 09 19 01 29 0f 15 00 25 01 75 01 95 0f 81 02 15 00 25 00
+000000a0: 75 01 95 01 81 03 05 0c 0a b2 00 15 00 25 01 95 01 75 01 81 02 15 00 25 00 75 07 95 01 81 03 05
+000000c0: 0c 09 01 a1 01 0a 85 00 15 00 26 ff 00 95 01 75 08 81 02 0a 99 00 15 00 26 ff 00 95 01 75 04 81
+000000e0: 02 25 01 95 04 75 01 81 03 c0 05 01 0a 05 00 a1 01 05 09 19 15 29 18 81 02 15 00 25 00 95 01 75
+00000100: 04 81 03 c0 05 0f 09 21 85 03 a1 02 09 97 15 00 25 01 75 04 95 01 91 02 15 00 25 00 75 04 95 01
+00000120: 91 03 09 70 15 00 25 64 75 08 95 04 91 02 09 50 66 01 10 55 0e 15 00 26 ff 00 75 08 95 01 91 02
+00000140: 09 a7 15 00 26 ff 00 75 08 95 01 91 02 65 00 55 00 09 7c 15 00 26 ff 00 75 08 95 01 91 02 c0 05
+00000160: 0c 09 01 85 0c a1 01 0a 9e 00 15 00 26 ff 00 95 01 75 08 81 02 0a a1 00 15 00 26 ff 00 95 01 75
+00000180: 08 81 02 0a a2 00 15 00 26 ff 00 95 01 75 08 81 02 0a a3 00 15 00 26 ff 00 95 01 75 08 81 02 c0
+000001a0: c0 05 01 09 06 a1 01 85 05 05 07 19 e0 29 e7 15 00 25 01 75 01 95 08 81 02 95 01 75 08 81 03 95
+000001c0: 06 75 08 15 00 25 65 05 07 19 00 29 65 81 00 c0
+```
+
+[issue 620]: https://github.com/atar-axis/xpadneo/issues/620#issuecomment-6379030741

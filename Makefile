@@ -21,6 +21,12 @@ else
   UDEVADM ?= : SKIPPING udevadm
 endif
 
+ifneq ($(PREFIX),)
+  ifneq ($(filter dkms-install,$(MAKECMDGOALS)),)
+    $(error Installing to prefix, dkms-install is not supported!)
+  endif
+endif
+
 all: build
 
 help:
@@ -29,6 +35,7 @@ help:
 	@echo "build             Prepare the package for DKMS deployment"
 	@echo "clangd-lsp        Generate compile_commands.json for clangd (requires bear)"
 	@echo "install           Install the package, documentation and DKMS source code"
+	@echo "dkms-install      Run install, then build and install the module via DKMS"
 	@echo "uninstall         Uninstall the package, documentation and DKMS source code"
 	@echo "install-all       Install everything including optional targets"
 	@echo
@@ -43,7 +50,7 @@ help:
 	@echo
 	@echo "Using PREFIX requires handling dkms commands in your package script."
 
-.PHONY: build clangd-lsp install uninstall install-all install-metainfo help
+.PHONY: build clangd-lsp install dkms-install uninstall install-all install-metainfo help
 
 .INTERMEDIATE: VERSION
 
@@ -63,6 +70,10 @@ install: build
 	install -D -m 0644 -t $(PREFIX)$(DOC_PREFIX) $(DOC_SRCS)
 	$(UDEVADM) control --reload
 	$(DKMS) add hid-xpadneo
+
+dkms-install: install
+	$(DKMS) build "hid-xpadneo/$(shell cat VERSION)"
+	$(DKMS) install "hid-xpadneo/$(shell cat VERSION)"
 
 install-metainfo:
 	install -D -m 0644 -t $(PREFIX)$(META_PREFIX) io.github.atar_axis.xpadneo.metainfo.xml
