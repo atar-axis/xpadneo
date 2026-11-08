@@ -35,6 +35,10 @@ This subtree owns HID descriptor dumps and descriptor-derived reference notes.
 - Prefer adding concise metadata around a dump over rewriting the dump itself.
 - Link descriptor facts back to driver quirks or heuristics when they explain a
   code change.
+- Before claiming that a descriptor needs no new quirk, check it against the
+  fixed-offset fixups in `hid-xpadneo/src/xpadneo/device.c`. A descriptor with
+  the same report layout can use a more compact item encoding, which shifts the
+  offsets so that only some fixups match.
 - Ask reporters to reproduce descriptor-sensitive issues on current `master`
   when existing logs predate descriptor checksum and dump support.
 
