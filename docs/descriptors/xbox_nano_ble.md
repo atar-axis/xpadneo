@@ -45,3 +45,28 @@ Unpatched descriptor as dumped by xpadneo with `debug_descriptor=1`:
 
 The model has no vibration motors, so rumble output cannot be exercised on it,
 even though the driver enables rumble streaming for BLE devices.
+
+Buttons are numbered non-standard on this model, and the shift is not uniform:
+A and B arrive as buttons 1 and 2, but X and Y are 4 and 5, LB and RB are 7 and
+8, View and Menu are 11 and 12, Guide is 13 and LS/RS are 14 and 15. Because
+hid-input decodes those usages through the global table, every one of them comes
+out as the neighbouring button: X reports as Y, Y as LB, LB as View, RB as Menu,
+and View/Menu land on unrelated codes while Guide comes out as Share. They are
+remapped through the per-device table in `mappings.c` rather than by extending
+the global table, because other controllers pad those bits out.
+
+Guide is worth calling out because it moves two usages, from 11 to 13, and lands
+in the global table's Share slot: five presses of the Xbox logo produced 57
+`KEY_F12` events on the keyboard sub-device, which is how the usage was finally
+identified. The configurable action button below the logo sent nothing at all in
+repeated presses, and an earlier capture that seemed to attribute usage 13 to it
+was in fact the logo; the action button presumably needs an assignment in the
+Xbox Accessories app before it reports anything.
+
+What that means for testing the shift mode: the `0x9000B` events seen before the
+remap came from the View button, not from the logo, so the driver appeared to
+have a Guide source when it did not. With `disable_shift_mode=1` a sustained
+press of View is a single clean press/release pair in separate `SYN_REPORT`
+frames (4.03 s and 4.09 s holds measured), so there is no contact-bounce problem;
+with shift mode enabled the driver caches and replays the event, which is what
+made a held button look like rapid toggling.

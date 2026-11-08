@@ -99,6 +99,39 @@ static const struct usage_map usage_maps[] = {
 static const u16 split_paddle_codes[] = { BTN_GRIPR, BTN_GRIPR2, BTN_GRIPL, BTN_GRIPL2 };
 
 /*
+ * Some controllers report their buttons at non-standard usages: the XBOX Nano
+ * Controller (045E:0B4F) uses 1 and 2 for A and B, then shifts everything
+ * after that, so X/Y, LB/RB, View/Menu, Guide and L3/R3 all arrive at higher
+ * usages than the global table expects and each button comes out as its
+ * neighbour or as a different control entirely. Guide moves from usage 11 to
+ * 13; the configurable action button below the logo sends nothing on the
+ * tested unit and needs an assignment in the Xbox Accessories app first.
+ *
+ * Map them per device instead of changing the meaning of those usages for
+ * every controller. The product ID is compared against original_product
+ * because hdev->product has already been spoofed to the XB1S Windows PID when
+ * input is mapped.
+ */
+struct device_usage_map {
+	u16 product;
+	u32 usage;
+	u8 event_type;
+	u16 input_code;
+};
+
+static const struct device_usage_map device_usage_maps[] = {
+	{ 0x0B4F, 0x90004, EV_KEY, BTN_X },		/* left face */
+	{ 0x0B4F, 0x90005, EV_KEY, BTN_Y },		/* top face */
+	{ 0x0B4F, 0x90007, EV_KEY, BTN_TL },		/* left shoulder */
+	{ 0x0B4F, 0x90008, EV_KEY, BTN_TR },		/* right shoulder */
+	{ 0x0B4F, 0x9000B, EV_KEY, BTN_SELECT },	/* View */
+	{ 0x0B4F, 0x9000C, EV_KEY, BTN_START },		/* Menu */
+	{ 0x0B4F, 0x9000D, EV_KEY, BTN_XBOX },		/* Xbox logo / Guide */
+	{ 0x0B4F, 0x9000E, EV_KEY, BTN_THUMBL },	/* LS */
+	{ 0x0B4F, 0x9000F, EV_KEY, BTN_THUMBR },	/* RS */
+};
+
+/*
  * XBE2: The mainline HID-BPF program "Microsoft__Xbox-Elite-2" rewrites the
  * combined paddle usage into its own gamepad collection with four single-bit
  * buttons 0x15..0x18, and the kernel then probes the device again with that
@@ -157,6 +190,18 @@ int xpadneo_mappings_input(struct hid_device *hdev, struct hid_input *hi,
 			hid_info(hdev, "mapping profiles detected\n");
 		xdata->capabilities.hw_profiles = true;
 		break;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(device_usage_maps); i++) {
+		const struct device_usage_map *entry = &device_usage_maps[i];
+
+		if (entry->product != xdata->original_product ||
+		    entry->usage != usage->hid)
+			continue;
+
+		hid_map_usage_clear(hi, usage, bit, max,
+				    entry->event_type, entry->input_code);
+		return MAP_STATIC;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(usage_maps); i++) {
