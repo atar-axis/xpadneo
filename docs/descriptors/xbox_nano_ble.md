@@ -8,12 +8,27 @@ Measured on an XBOX Nano Controller connected via Bluetooth LE:
 - OUI field `CC:C1:09` (globally-assigned, unicast)
 - 285 bytes, crc16 `0xa56e`
 
-The descriptor uses the same report layout as the Xbox Wireless Controller (BLE,
-`045E:0B13`): input report `0x01` carries the sticks and triggers, report `0x05`
-carries the keyboard application, and the vendor collections `0x0C` and
-`0xff450063` remain unhandled by xpadneo. The `Rx`/`Ry` axis fixups therefore
-match this descriptor through the generic descriptor heuristics, and no new
-quirk is needed for the Nano to report input correctly.
+Input report `0x01` carries the sticks and both triggers, report `0x05` carries
+the keyboard application. There is a single vendor collection (usage page
+`0xFF45`, usage `0x63`, report ID `0x0C`) which xpadneo leaves unhandled.
+
+One detail differs from the older Xbox Wireless Controller (BLE, `045E:0B13`)
+descriptor of the same family: the Simulation Controls page is declared **once**
+and then shared by both trigger usages, instead of being repeated for each. The
+existing fixups look for one page declaration per usage, so they do not match
+this shape. The generic `Rx`/`Ry` fixups still apply at offsets 34/36 (the
+second stick's `Z`/`Rz`), but `Brake`/`Accelerator` stay on the Simulation page
+and are reported as `ABS_BRAKE`/`ABS_GAS`, leaving the `ABS_Z`/`ABS_RZ` axes
+that xpadneo always advertises unfilled.
+
+For that fixup the shared page declaration sits at offset 41 (`05 02`), `Brake`
+at 44 (`09 C5`) and `Accelerator` at 59 (`09 C4`). No other usage lies between
+them, so remapping the page declaration to Generic Desktop and renaming the two
+usages affects only the triggers.
+
+Verified with `evtest` on real hardware after the fixup: `ABS_X`/`ABS_Y` and
+`ABS_RX`/`ABS_RY` span the full ±32768 range, `ABS_Z`/`ABS_RZ` span 0..1023 for
+both triggers, and neither `ABS_GAS` nor `ABS_BRAKE` is advertised any more.
 
 Unpatched descriptor as dumped by xpadneo with `debug_descriptor=1`:
 ```
@@ -28,7 +43,5 @@ Unpatched descriptor as dumped by xpadneo with `debug_descriptor=1`:
 00000100: c0 c0 06 45 ff 09 63 a1 01 85 0c 09 63 15 00 26 ff 00 95 3f 82 02 01 09 63 92 02 01 c0
 ```
 
-Verified on real hardware: xpadneo binds, reports "gamepad detected" and "share
-button detected", and exposes the expected gamepad, keyboard, mouse and consumer
-control devices. The driver also enables rumble streaming (`uses_hogp 1`), but
-this model ships without vibration motors, so no rumble output is exercised.
+The model has no vibration motors, so rumble output cannot be exercised on it,
+even though the driver enables rumble streaming for BLE devices.

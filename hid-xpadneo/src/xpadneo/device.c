@@ -237,6 +237,30 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 		}
 	}
 
+	/*
+	 * Some newer BLE descriptors (e.g. the XBOX Nano Controller) declare the
+	 * Simulation Controls page once and then describe both triggers under it,
+	 * instead of repeating the page for each trigger. The fixups above look
+	 * for one page declaration per usage and therefore miss this shape, which
+	 * leaves the triggers reported as ABS_BRAKE/ABS_GAS and never fills the
+	 * ABS_Z/ABS_RZ axes that xpadneo always advertises.
+	 *
+	 * Remap the single page declaration to Generic Desktop so both usages
+	 * resolve there, and rename Brake/Accelerator to Z/Rz. No other usage sits
+	 * between the page declaration and the Accelerator usage, so the page
+	 * change only affects the two triggers.
+	 */
+	if (*rsize >= 60 &&
+	    rdesc[41] == 0x05 && rdesc[42] == 0x02 &&
+	    rdesc[43] == 0x09 && rdesc[44] == 0xC5 &&
+	    rdesc[58] == 0x09 && rdesc[59] == 0xC4) {
+		hid_notice(hdev, "fixing up Z axis\n");
+		rdesc[42] = 0x01;	/* Simulation -> Gendesk */
+		rdesc[44] = 0x32;	/* Brake -> Z */
+		hid_notice(hdev, "fixing up Rz axis\n");
+		rdesc[59] = 0x35;	/* Accelerator -> Rz */
+	}
+
 	/* fixup reported button count for Xbox controllers in Linux mode */
 	if (*rsize >= 164) {
 		/*
