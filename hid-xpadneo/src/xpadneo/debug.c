@@ -122,7 +122,7 @@ void xpadneo_debug_hid_report(const struct hid_device *hdev, const void *buf, co
 
 /*
  * xpadneo_debug_descriptor - log descriptor metadata and optionally hex-dump
- * @hdev:   HID device whose descriptor is being examined
+ * @xdata:  xpadneo device data of the HID device being examined
  * @rdesc:  pointer to the *unpatched* report descriptor bytes
  * @rsize:  length of the descriptor in bytes
  *
@@ -138,8 +138,10 @@ void xpadneo_debug_hid_report(const struct hid_device *hdev, const void *buf, co
  *   - the module parameter debug_descriptor=1 is set, OR
  *   - the device's Bluetooth OUI is locally administered (LAA).
  */
-void xpadneo_debug_descriptor(const struct hid_device *hdev, const __u8 *rdesc, unsigned int rsize)
+void xpadneo_debug_descriptor(const struct xpadneo_devdata *xdata, const __u8 *rdesc,
+			      unsigned int rsize)
 {
+	struct hid_device *hdev = xdata->hdev;
 	u8 oui0 = 0, oui1 = 0, oui2 = 0;
 	u16 crc = crc16(0, rdesc, rsize);
 	bool oui_valid = (parse_oui(hdev->uniq, &oui0, &oui1, &oui2) == 0);
@@ -148,7 +150,7 @@ void xpadneo_debug_descriptor(const struct hid_device *hdev, const __u8 *rdesc, 
 	bool do_dump;
 
 	hid_info(hdev, "report descriptor: length %u crc16 0x%04x version 0x%08x\n",
-		 rsize, crc, hdev->version);
+		 rsize, crc, xdata->original_version);
 
 	if (oui_valid) {
 		hid_info(hdev,

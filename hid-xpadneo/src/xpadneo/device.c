@@ -148,7 +148,7 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 	xdata->original_rsize = *rsize;
 
 	/* log size/CRC and optionally hex-dump before any in-place patches */
-	xpadneo_debug_descriptor(hdev, rdesc, *rsize);
+	xpadneo_debug_descriptor(xdata, rdesc, *rsize);
 
 	/* fixup trailing NUL byte */
 	if (*rsize >= 2 && rdesc[*rsize - 2] == 0xC0 && rdesc[*rsize - 1] == 0x00) {
