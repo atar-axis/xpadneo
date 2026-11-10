@@ -58,10 +58,15 @@ the global table, because other controllers pad those bits out.
 Guide is worth calling out because it moves two usages, from 11 to 13, and lands
 in the global table's Share slot: five presses of the Xbox logo produced 57
 `KEY_F12` events on the keyboard sub-device, which is how the usage was finally
-identified. The configurable action button below the logo sent nothing at all in
-repeated presses, and an earlier capture that seemed to attribute usage 13 to it
-was in fact the logo; the action button presumably needs an assignment in the
-Xbox Accessories app before it reports anything.
+identified. The configurable action button below the logo reports nothing at any
+layer: pressing it three times inside a 54-report capture produced two button
+transitions, both of them the A presses on either side of it, and `btmon` saw 54
+ATT notifications on the HID input characteristic (`0x0025`) and none on any
+other handle. It is absent from the report, from the undeclared report IDs and
+from the vendor GATT traffic, so it is left unmapped here and documented as
+firmware-only until someone can test whether an assignment in the Xbox
+Accessories app changes that on Windows or an Xbox. An earlier capture that
+seemed to attribute usage 13 to it was in fact the logo.
 
 What that means for testing the shift mode: the `0x9000B` events seen before the
 remap came from the View button, not from the logo, so the driver appeared to
