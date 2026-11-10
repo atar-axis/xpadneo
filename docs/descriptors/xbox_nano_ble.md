@@ -68,6 +68,24 @@ firmware-only until someone can test whether an assignment in the Xbox
 Accessories app changes that on Windows or an Xbox. An earlier capture that
 seemed to attribute usage 13 to it was in fact the logo.
 
+## Wired (USB) mode
+
+Over USB the same controller identifies as `045E:0B4E` with `bcdDevice` 6.10, and
+it exposes a **single** interface, HID (`bInterfaceClass 0x03`) - no vendor or GIP
+interface, unlike the `045E:0B12`/`0B13` pads which present one. `hid-generic`
+binds it, because `core_devices[]` lists Bluetooth devices only.
+
+Its report descriptor is 281 bytes, and it differs from the 285-byte BLE one in
+exactly one place: the Consumer-page Mute usage (`05 0C 09 B2 95 01 81 02`, 8
+bytes) is replaced by a 4-byte constant padding item (`95 01 81 03`). Everything
+else is byte-identical, including the single shared Simulation Controls page that
+the trigger fixup targets, so that fixup applies to both transports.
+
+The Action button is silent over USB too: in a 45-second capture of
+`/sys/kernel/debug/hid/0003:045E:0B4E.0009/events` (13,785 reports), two presses
+of A gave four transitions on `Button.0001`, and three presses of the Action
+button gave no transition on any of the fifteen buttons.
+
 What that means for testing the shift mode: the `0x9000B` events seen before the
 remap came from the View button, not from the logo, so the driver appeared to
 have a Guide source when it did not. With `disable_shift_mode=1` a sustained
