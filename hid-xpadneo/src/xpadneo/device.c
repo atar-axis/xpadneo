@@ -30,9 +30,25 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len,
 		return hid_hw_raw_request(hdev, r->report_id, buf, len,
 					  HID_OUTPUT_REPORT, HID_REQ_SET_REPORT);
 	} else {
-		int ret = hid_hw_output_report(hdev, buf, len);
+		__u8 *bounce;
+		int ret;
+
+		/*
+		 * usbhid_output_report() passes the caller's buffer straight to
+		 * usb_interrupt_msg(), which maps it for DMA, so a stack buffer
+		 * triggers "transfer buffer is on stack" and fails the transfer.
+		 * The rumble call sites pass a local struct, and they only reach
+		 * this path on a non-HOGP (wired) device, so bounce through the
+		 * heap.
+		 */
+		bounce = kmemdup(buf, len, GFP_KERNEL);
+		if (!bounce)
+			return -ENOMEM;
+
+		ret = hid_hw_output_report(hdev, bounce, len);
 
 		msleep(20);
+		kfree(bounce);
 		return ret;
 	}
 }
@@ -235,6 +251,30 @@ const __u8 *xpadneo_device_report_fixup(struct hid_device *hdev, __u8 *rdesc, un
 			rdesc[78] = 0x01;	/* Simulation -> Gendesk */
 			rdesc[80] = 0x35;	/* Accelerator -> Rz */
 		}
+	}
+
+	/*
+	 * Some newer BLE descriptors (e.g. the XBOX Nano Controller) declare the
+	 * Simulation Controls page once and then describe both triggers under it,
+	 * instead of repeating the page for each trigger. The fixups above look
+	 * for one page declaration per usage and therefore miss this shape, which
+	 * leaves the triggers reported as ABS_BRAKE/ABS_GAS and never fills the
+	 * ABS_Z/ABS_RZ axes that xpadneo always advertises.
+	 *
+	 * Remap the single page declaration to Generic Desktop so both usages
+	 * resolve there, and rename Brake/Accelerator to Z/Rz. No other usage sits
+	 * between the page declaration and the Accelerator usage, so the page
+	 * change only affects the two triggers.
+	 */
+	if (*rsize >= 60 &&
+	    rdesc[41] == 0x05 && rdesc[42] == 0x02 &&
+	    rdesc[43] == 0x09 && rdesc[44] == 0xC5 &&
+	    rdesc[58] == 0x09 && rdesc[59] == 0xC4) {
+		hid_notice(hdev, "fixing up Z axis\n");
+		rdesc[42] = 0x01;	/* Simulation -> Gendesk */
+		rdesc[44] = 0x32;	/* Brake -> Z */
+		hid_notice(hdev, "fixing up Rz axis\n");
+		rdesc[59] = 0x35;	/* Accelerator -> Rz */
 	}
 
 	/* fixup reported button count for Xbox controllers in Linux mode */

@@ -60,6 +60,14 @@ static const struct hid_device_id core_devices[] = {
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B13),
 	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
 
+	/* XBOX Nano Controller (BLE) */
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B4F),
+	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
+
+	/* XBOX Nano Controller (USB) */
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x0B4E),
+	 .driver_data = XPADNEO_DEVFLAG_CAP_SHARE_BUTTON },
+
 	/* ASUS ROG Raikiri Pro */
 	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK, 0x1ABD),
 	 .driver_data = XPADNEO_DEVFLAG_SKIP_HEURISTICS },

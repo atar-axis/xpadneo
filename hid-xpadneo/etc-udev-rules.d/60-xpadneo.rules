@@ -1,5 +1,7 @@
 # Mark devices supported by xpadneo
-ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0005:045E:*", KERNEL=="*:02FD.*|*:02E0.*|*:0B05.*|*:0B13.*|*:0B20.*|*:0B22.*|*:0B4F.*", ENV{ID_XPADNEO_SUPPORTED}="1"
+# wired transport of the same controllers reports on the USB HID bus (0003)
+ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0003:045E:*", KERNEL=="*:0B4E.*", ENV{ID_XPADNEO_SUPPORTED}="1"
 ACTION=="bind", SUBSYSTEM=="hid", KERNEL=="0005:0B05:1ABD.*", ENV{ID_XPADNEO_SUPPORTED}="1"
 
 # Rebind driver to xpadneo
