@@ -129,6 +129,16 @@ static const struct device_usage_map device_usage_maps[] = {
 	{ 0x0B4F, 0x9000D, EV_KEY, BTN_XBOX },		/* Xbox logo / Guide */
 	{ 0x0B4F, 0x9000E, EV_KEY, BTN_THUMBL },	/* LS */
 	{ 0x0B4F, 0x9000F, EV_KEY, BTN_THUMBR },	/* RS */
+	/* same layout on the wired transport, which keeps its own product ID */
+	{ 0x0B4E, 0x90004, EV_KEY, BTN_X },		/* left face */
+	{ 0x0B4E, 0x90005, EV_KEY, BTN_Y },		/* top face */
+	{ 0x0B4E, 0x90007, EV_KEY, BTN_TL },		/* left shoulder */
+	{ 0x0B4E, 0x90008, EV_KEY, BTN_TR },		/* right shoulder */
+	{ 0x0B4E, 0x9000B, EV_KEY, BTN_SELECT },	/* View */
+	{ 0x0B4E, 0x9000C, EV_KEY, BTN_START },		/* Menu */
+	{ 0x0B4E, 0x9000D, EV_KEY, BTN_XBOX },		/* Xbox logo / Guide */
+	{ 0x0B4E, 0x9000E, EV_KEY, BTN_THUMBL },	/* LS */
+	{ 0x0B4E, 0x9000F, EV_KEY, BTN_THUMBR },	/* RS */
 };
 
 /*
