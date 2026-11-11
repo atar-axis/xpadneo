@@ -78,14 +78,19 @@ found by pressing it on an unconfigured controller: it emits only what it has be
 assigned, and it has no usage, report ID or bit of its own.
 
 Measured with short press assigned to **View**, the profile saved and that profile
-selected: the button emits `BTN_SELECT`, the same key View itself sends. Three
-captures over USB with a working HID binding - `Action x3 + View x1` produced four
-`BTN_SELECT` presses, `View` alone produced one, and `Action x2` with View
-untouched produced two. Nothing distinguishes the assignment from the real button
-in the report, so there is nothing for the driver to map. Pressing it also
-produces no LED change - the logo stays solid white. Whether an on-screen overlay
-appears on Windows or a console was not tested, and neither was the same
-assignment over Bluetooth (all captures were wired).
+selected: the button emits `BTN_SELECT`, the same key View itself sends. Four
+captures - `Action x3 + View x1` produced four `BTN_SELECT` presses, `View` alone
+produced one, `Action x2` with View untouched produced two, and over Bluetooth
+`A, X, LB, Action` produced 304/307/310/314. Nothing distinguishes the assignment
+from the real button in the report, so there is nothing for the driver to map.
+Pressing it also produces no LED change - the logo stays solid white; whether an
+on-screen overlay appears on Windows or a console was not tested.
+
+The other two press types fall back to the same assignment on a PC: with short
+press on View and long/double left at their console-only defaults, a 1.6 s hold
+produced one `BTN_SELECT` and a double press produced two, rather than anything
+resembling the capture actions. Assigning only short press is therefore enough to
+make the button usable on Linux.
 
 What that means for testing the shift mode: the `0x9000B` events seen before the
 remap came from the View button, not from the logo, so the driver appeared to
