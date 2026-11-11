@@ -30,9 +30,25 @@ int xpadneo_device_output_report(struct hid_device *hdev, __u8 *buf, size_t len,
 		return hid_hw_raw_request(hdev, r->report_id, buf, len,
 					  HID_OUTPUT_REPORT, HID_REQ_SET_REPORT);
 	} else {
-		int ret = hid_hw_output_report(hdev, buf, len);
+		__u8 *bounce;
+		int ret;
+
+		/*
+		 * usbhid_output_report() passes the caller's buffer straight to
+		 * usb_interrupt_msg(), which maps it for DMA, so a stack buffer
+		 * triggers "transfer buffer is on stack" and fails the transfer.
+		 * The rumble call sites pass a local struct, and they only reach
+		 * this path on a non-HOGP (wired) device, so bounce through the
+		 * heap.
+		 */
+		bounce = kmemdup(buf, len, GFP_KERNEL);
+		if (!bounce)
+			return -ENOMEM;
+
+		ret = hid_hw_output_report(hdev, bounce, len);
 
 		msleep(20);
+		kfree(bounce);
 		return ret;
 	}
 }
